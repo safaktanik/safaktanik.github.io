@@ -222,7 +222,12 @@ describe('ekonomi ayarları', () => {
     expect(weekStartOf(Date.parse('2026-10-26T00:00:00Z'))).toBe('2026-10-26');
     expect(levelFromXp(0)).toBe(1);
     expect(levelFromXp(100)).toBe(2);
-    expect(payout(3000)).toEqual({ winner: 3000, house: 0 });
+    expect(payout(3000)).toEqual({ winner: 3000, second: 0, house: 0 });
+    expect(payout(3000, 1000, 2)).toEqual({ winner: 3000, second: 0, house: 0 });
+    expect(payout(3000, 1000, 3)).toEqual({ winner: 2000, second: 1000, house: 0 });
+    expect(payout(400, 100, 4)).toEqual({ winner: 300, second: 100, house: 0 });
+    // havuza yalnızca 2 ücret girdiyse (ör. 3 koltuk, 1 bot, arkadaş odası) kazanan hepsini alır
+    expect(payout(200, 100, 3)).toEqual({ winner: 200, second: 0, house: 0 });
   });
 });
 
@@ -252,6 +257,18 @@ describe('modlar', () => {
     s.players[1].territory = 2;
     s.players[2].territory = 5;
     expect(rankedSeats(s)).toEqual([2, 1, 0]);
+  });
+
+  it('Hazine Avı: sandıklar boş alan yayılmasıyla toplu açılamayan karelere konur', () => {
+    for (let seed = 1; seed <= 20; seed++) {
+      const s = createArena(11, 20, ['a', 'b', 'c', 'd'], seededInt(seed), S, 'treasure');
+      const counts = computeCounts(11, s.mines);
+      const mineSet = new Set(s.mines);
+      for (const c of s.chests) {
+        expect(counts[c]).toBeGreaterThan(0);
+        expect(neighbors(11, c).some((n) => !mineSet.has(n) && counts[n] === 0)).toBe(false);
+      }
+    }
   });
 
   it('Hazine Avı: sandıklar güvenli karelerde; bulan alır, mayına basan bir sandık kaybeder; hepsi bulununca biter', () => {
@@ -418,6 +435,8 @@ describe('yeni modlar: Mayın Avcısı ve Yıldırım', () => {
     expect(s.players[0].lives).toBe(2);
     expect(s.cells[6]).toBe(1);
     expect(s.players[0].defused).toBe(0);
+    // sonuç tablosunda hata olarak görünür
+    expect(s.players[0].mineHits).toBe(1);
     const k = createArena(5, 3, ['a', 'b', 'c'], seeded(3), { ...S, shields: 1 }, 'hunter');
     const safe = [...Array(25).keys()].find((i) => !k.mines.includes(i) && k.cells[i] === 0)!;
     const r2 = reveal(k, 0, safe, 'defuse');

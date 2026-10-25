@@ -31,9 +31,13 @@ https://safaktanik.github.io/yeni/ (eski v1 sitenin kökünde). Kullanıcıyla *
 - Tahta boyu oyuncu sayısına göre `BOARDS`'tan gelir; değiştirirsen `npm run sim` ile kontrol et.
 - Git commit kimliği: `safaktanik <safaktanik@users.noreply.github.com>`.
 
+- Ödül: havuza ≥3 ücret girdiyse ikinci ücretini geri alır (`payout()`); çevrimdışında botların ücretini ev öder (`payingSeats`).
+- Bölge renkleri `v2.css`'teki `.match .mc--own.sN` kurallarında (`.match .mc--open` !important'ını ezer).
+
 ## Açık işler / fikirler
+- **Denge (karar bekliyor):** Son Kalan/Yıldırım'da kusursuz mantıkla oynayan herkes tahmin yapmadan bitirebiliyor (14×14/36 ve 12×12/25'te denendi); maç "0 mayın" eşitliğiyle bitiyor ve kazananı açılan kare sayısı (büyük boş alan şansı) belirliyor. Seçenekler: daha yoğun mayın, tur sınırı, hamle başına puan ya da Zincir kuralını klasiğe taşımak. Zincir bu sorunu yaşamıyor.
 - Son Kalan'da eleme seyrek (3 can + kalkan): canı 2'ye indirmek denenebilir.
-- Havuzun tamamı birinciye gidiyor; ikinciye pay düşünülebilir.
+- `server/arena/arena.test.ts` "003 göçü" testi Windows'ta yol hatasıyla düşüyor (`C:\C:\…`, URL→yol dönüşümü); Linux'ta sorun yok.
 - Henüz yok: elmas (gem), mağaza kostümleri, görevler, battle pass, ELO eşleşmesi, Google/Apple girişi, gerçek 3D.
 - Node sunucusunda "hazır" kontrolü ve "izle" yok.
 - Gerçek iPhone/Safari'de test edilmedi.

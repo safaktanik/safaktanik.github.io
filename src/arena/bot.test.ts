@@ -90,10 +90,10 @@ describe('insan gibi bot', () => {
     for (const r of [0, 0.5, 0.99]) {
       const a = botThinkMs(obvious, 3, 1, 'medium', r);
       const b = botThinkMs(guess, 3, 2, 'medium', r);
-      expect(a).toBeGreaterThanOrEqual(2800);
-      expect(a).toBeLessThanOrEqual(5400);
-      expect(b).toBeGreaterThanOrEqual(4000);
-      expect(b).toBeLessThanOrEqual(8000);
+      expect(a).toBeGreaterThanOrEqual(1400);
+      expect(a).toBeLessThanOrEqual(3000);
+      expect(b).toBeGreaterThanOrEqual(2000);
+      expect(b).toBeLessThanOrEqual(4500);
       expect(botThinkMs(guess, 3, 2, 'easy', r, 8)).toBeLessThanOrEqual(5600);
     }
   });

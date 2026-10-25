@@ -248,6 +248,12 @@ button.rc2:active:not(:disabled) { transform: translateY(2px) scale(0.98); }
 .tab2__l { font-size: 0.82rem; text-shadow: 0 2px 0 var(--v2-out); line-height: 1; margin-top: 2px; }
 .tab2__ic { display: grid; filter: drop-shadow(0 2px 0 hsl(222 70% 5% / 0.6)); }
 .tab2__alert { top: -9px; right: -6px; }
+.tab2__soon {
+  position: absolute; bottom: calc(100% + 8px); right: 0; z-index: 7; white-space: nowrap; pointer-events: none;
+  padding: 6px 10px; border-radius: 10px; border: 2.5px solid var(--v2-out); background: #ffd23a; color: #3a2400;
+  font-family: var(--v2-font); font-size: 0.85rem; box-shadow: 0 3px 0 var(--v2-out); animation: soonpop 0.18s ease-out;
+}
+@keyframes soonpop { from { transform: translateY(6px) scale(0.9); opacity: 0; } }
 
 /* ------------------------------------------------------------------ Savaş (ana menü) */
 .bh2 { display: grid; gap: 12px; padding-bottom: 6px; }
@@ -443,6 +449,11 @@ html[data-room] .tr2 { top: var(--room-h); }
 .match .mc--open.n6 { color: #2ff3e0; }
 .match .mc--open.n7 { color: #fff; }
 .match .mc--open.n8 { color: #9aa7c0; }
+/* Bölge Savaşı: açık kare zemini yukarıdaki !important kuralına ezilmesin */
+.match .mc--own.s0 { background: color-mix(in srgb, var(--seat0) 34%, #131d36) !important; }
+.match .mc--own.s1 { background: color-mix(in srgb, var(--seat1) 34%, #131d36) !important; }
+.match .mc--own.s2 { background: color-mix(in srgb, var(--seat2) 34%, #131d36) !important; }
+.match .mc--own.s3 { background: color-mix(in srgb, var(--seat3) 34%, #131d36) !important; }
 .match .mc--flag { background: linear-gradient(160deg, #ff8a7a, #e0284a) !important; }
 .match .mc--sel { background: linear-gradient(160deg, #ffe24a, #ffb000) !important; box-shadow: inset 0 0 0 2px #fff, inset 0 -3px 0 hsl(32 100% 35% / 0.6) !important; z-index: 1; }
 .match .mc--boom { background: radial-gradient(circle, #ffb000, #e0284a) !important; }

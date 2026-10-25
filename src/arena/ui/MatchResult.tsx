@@ -30,6 +30,19 @@ function useCountUp(target: number, ms = 1200): number {
 
 const REASON: Record<string, string> = { lives: 'Canları bitti', afk: 'Süre aşımı', left: 'Masadan ayrıldı' };
 
+type Row = NonNullable<MatchView['results']>[number];
+
+/** İlk iki oyuncu modun ana ölçütünde berabereyse, kazananı neyin belirlediğini söyler. */
+export function tieBreakNote(mode: MatchView['mode'], endReason: MatchView['endReason'], rows: Row[]): string | null {
+  const [a, b] = rows;
+  if (!a || !b || a.eliminationReason || b.eliminationReason) return null;
+  if (mode === 'treasure') return a.chests === b.chests ? 'Eşitlik: sandık sayısı aynı; daha az mayına basan, sonra daha çok kare açan öne geçti.' : null;
+  if (mode === 'hunter') return (a.defused ?? 0) === (b.defused ?? 0) ? 'Eşitlik: imha sayısı aynı; daha az hata yapan öne geçti.' : null;
+  if (mode === 'territory') return a.territory === b.territory ? 'Eşitlik: bölge aynı; daha az mayına basan öne geçti.' : null;
+  if (endReason !== 'cleared' || a.mineHits !== b.mineHits) return null;
+  return a.safeOpened !== b.safeOpened ? 'Eşitlik: mayın sayısı aynı; en çok güvenli kare açan öne geçti.' : 'Eşitlik: mayın ve kare sayısı aynı; kalan can belirledi.';
+}
+
 interface Props {
   m: MatchView;
   meId: string | null;
@@ -52,6 +65,10 @@ export function MatchResult({ m, meId, now, practice, weeklyRank, onLobby, onAga
   const prize = useCountUp(mine?.prize ?? 0);
   const duration = useRef<number | null>(null);
   if (duration.current === null) duration.current = now() - m.startedAt;
+  const tieNote = tieBreakNote(m.mode, m.endReason, rows);
+  // Sıralamayı belirleyen sayı: modun puanı, klasik modlarda açılan güvenli kare (eşitlik bozucu).
+  const scoreLabel = m.mode === 'territory' ? 'Bölge' : m.mode === 'treasure' ? 'Sandık' : m.mode === 'hunter' ? 'İmha' : 'Kare';
+  const scoreOf = (r: (typeof rows)[number]) => (m.mode === 'territory' ? r.territory : m.mode === 'treasure' ? r.chests : m.mode === 'hunter' ? (r.defused ?? 0) : r.safeOpened);
 
   useEffect(() => {
     if (!mine) return;
@@ -98,6 +115,7 @@ export function MatchResult({ m, meId, now, practice, weeklyRank, onLobby, onAga
                         : m.endReason === 'cleared'
                           ? 'Tahta bitti; ayakta kalanlardan en az mayına basan kazanır.'
                           : 'Masada ayakta kalan son oyuncu kazanır.'}
+                  {tieNote ? <><br /><b>{tieNote}</b></> : null}
                 </p>
               ) : null}
               <div className="mres2__btns">
@@ -192,8 +210,8 @@ export function MatchResult({ m, meId, now, practice, weeklyRank, onLobby, onAga
             <tr>
               <th>#</th>
               <th>Oyuncu</th>
-              <th>{m.mode === 'territory' ? 'Bölge' : m.mode === 'treasure' ? 'Sandık' : m.mode === 'hunter' ? 'İmha' : 'Hamle'}</th>
-              <th title="Bastığı mayın">Mayın</th>
+              <th title={scoreLabel === 'Kare' ? 'Açtığı güvenli kare' : undefined}>{scoreLabel}</th>
+              {m.mode === 'hunter' ? <th title="Bastığı mayın + yanlış imha">Hata</th> : <th title="Bastığı mayın">Mayın</th>}
               <th>{practice ? 'Açılan' : 'Ödül'}</th>
             </tr>
           </thead>
@@ -212,7 +230,7 @@ export function MatchResult({ m, meId, now, practice, weeklyRank, onLobby, onAga
                       </span>
                     </span>
                   </td>
-                  <td>{m.mode === 'territory' ? r.territory : m.mode === 'treasure' ? r.chests : m.mode === 'hunter' ? (r.defused ?? 0) : r.moves}</td>
+                  <td>{scoreOf(r)}</td>
                   <td>{r.mineHits}</td>
                   <td>
                     {practice ? (

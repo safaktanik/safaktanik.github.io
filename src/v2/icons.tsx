@@ -65,7 +65,7 @@ export function GearIcon(p: P) {
 
 export function ChestIcon(p: P) {
   return (
-    <Svg {...p} label="Mağaza">
+    <Svg {...p} label="Ödüller">
       <path d="M6 22h36v18a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3z" fill="#e8283f" stroke={OUT} strokeWidth="3" />
       <path d="M6 22c0-8 6-14 18-14s18 6 18 14z" fill="#ff4a5e" stroke={OUT} strokeWidth="3" />
       <path d="M6 22h36" stroke={OUT} strokeWidth="3" />

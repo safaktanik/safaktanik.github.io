@@ -55,7 +55,7 @@ export function ProfileSetup({ onExit }: { onExit(): void }) {
             </>
           ) : local ? (
             <>
-              Masalarda görünecek adını ve avatarını seç. Sunucu olmadığı için masalarda rakiplerin botlardır; bakiyen, mağaza ve sıralama bu cihazda saklanır. Başlangıçta <Coin size={14} /> {fmt(ECONOMY.startingBalance)} DUEL COIN alırsın.
+              Masalarda görünecek adını ve avatarını seç. Sunucu olmadığı için masalarda rakiplerin botlardır; bakiyen, ödüllerin ve sıralama bu cihazda saklanır. Başlangıçta <Coin size={14} /> {fmt(ECONOMY.startingBalance)} DUEL COIN alırsın.
             </>
           ) : (
             <>

@@ -37,7 +37,14 @@ export function Settings({ onBack, onExit }: { onBack(): void; onExit(): void })
         </label>
       </section>
       <section className="apanel">
-        <p className="asmall amuted">Bağlantı: {s.conn === 'online' ? 'çevrimiçi' : s.conn === 'offline' ? 'koptu, yeniden deneniyor' : 'bağlanıyor'}</p>
+        <p className="asmall amuted">
+          Bağlantı:{' '}
+          {arenaClient().local
+            ? 'çevrimdışı mod (rakipler bot, veriler bu cihazda)'
+            : arenaClient().p2p
+              ? s.conn === 'online' ? 'arkadaş odasına bağlı' : s.conn === 'offline' ? 'arkadaş odası koptu, yeniden deneniyor' : 'arkadaş odasına bağlanıyor'
+              : s.conn === 'online' ? 'oyun sunucusuna bağlı' : s.conn === 'offline' ? 'koptu, yeniden deneniyor' : 'bağlanıyor'}
+        </p>
         {feedbackAvailable() ? (
           <button type="button" className="abtn abtn--primary" onClick={() => setFb(true)}>
             💌 Görüşünü yaz / hata bildir

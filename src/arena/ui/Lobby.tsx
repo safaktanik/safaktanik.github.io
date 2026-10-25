@@ -14,6 +14,7 @@ import { FilterSheet } from './FilterSheet';
 import { PasswordPrompt } from './CreateTable';
 import { ModeBadge } from './ModeUi';
 import { shareInvite } from '../share';
+import { matchSettings, turnSeconds } from '../rules';
 
 export type LobbyNav = 'leaderboard' | 'profile' | 'shop' | 'settings' | 'create' | 'quick' | 'exit' | 'practice';
 
@@ -33,7 +34,7 @@ export function LobbyHeader({ me, onNav }: { me: Me; onNav(n: LobbyNav): void })
           </span>
         </span>
       </button>
-      <button type="button" className="lhead__bal" onClick={() => onNav('shop')} aria-label="Bakiye ve mağaza">
+      <button type="button" className="lhead__bal" onClick={() => onNav('shop')} aria-label="Bakiye ve ödüller">
         <Coin size={22} />
         <b data-testid="balance">{fmt(me.balance)}</b>
         <span className="lhead__plus">
@@ -41,7 +42,7 @@ export function LobbyHeader({ me, onNav }: { me: Me; onNav(n: LobbyNav): void })
         </span>
       </button>
       <div className="lhead__tools">
-        <IconBtn label="Mağaza" onClick={() => onNav('shop')} badge={me.dailyAvailable || me.rescueAvailable}>
+        <IconBtn label="Ödüller" onClick={() => onNav('shop')} badge={me.dailyAvailable || me.rescueAvailable}>
           <BagIcon />
         </IconBtn>
         <IconBtn label="Ayarlar" onClick={() => onNav('settings')}>
@@ -64,6 +65,7 @@ export function TableCard({ t, me, onJoin, busy, onWatch, onInvite }: { t: Table
   const free = t.maxPlayers - t.players.length;
   const joinable = t.status === 'waiting' && free > 0;
   const afford = me.balance >= t.entryFee;
+  const eff = t.options ? matchSettings(t.mode, t.options) : null;
   return (
     <article className={`tcard tier--${t.tier}${t.status === 'playing' ? ' tcard--playing' : ''}`} data-table={t.id}>
       <div className="tcard__glow" aria-hidden="true" />
@@ -96,10 +98,11 @@ export function TableCard({ t, me, onJoin, busy, onWatch, onInvite }: { t: Table
         </dl>
         {t.options ? (
           <p className="tcard__opts">
-            <span>⏱ {t.options.turnSeconds} sn</span>
-            <span>♥ {t.options.lives}</span>
-            <span>🛡 {t.options.shields}</span>
-            <span>📡 {t.options.sonars}</span>
+            {/* modun dayattığı kurallar (Yıldırım: 8 sn, 2 can, sonar yok) masada oynanacak değerlerle gösterilir */}
+            <span>⏱ {turnSeconds(t.mode, t.options)} sn</span>
+            <span>♥ {eff!.lives}</span>
+            <span>🛡 {eff!.shields}</span>
+            <span>📡 {eff!.sonars}</span>
             {t.options.smokes ? <span>🌫️ {t.options.smokes}</span> : null}
             {t.options.freezes ? <span>❄️ {t.options.freezes}</span> : null}
             {t.options.bonuses !== false ? <span>🎁 Bonus</span> : null}

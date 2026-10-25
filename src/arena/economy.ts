@@ -131,10 +131,21 @@ export function dayKeyOf(ms: number): string {
   return new Date(ms).toISOString().slice(0, 10);
 }
 
-/** Ödül havuzunun paylaşımı: kazanan hepsini alır (işletim payı düşüldükten sonra). */
-export function payout(pool: number): { winner: number; house: number } {
+/**
+ * Ödül havuzunun paylaşımı (işletim payı düşüldükten sonra).
+ * 3–4 kişilik masada (havuza en az 3 ücret girdiyse) ikinci olan giriş ücretini geri alır, kalanı kazananın;
+ * aksi halde kazanan hepsini alır. Böylece kazanan her zaman en az iki ücret kadar alır.
+ */
+export function payout(pool: number, entryFee = 0, players = 2): { winner: number; second: number; house: number } {
   const house = Math.floor((pool * ECONOMY.houseFeePercent) / 100);
-  return { winner: pool - house, house };
+  const net = pool - house;
+  const second = players >= 3 && entryFee > 0 && net >= 3 * entryFee ? entryFee : 0;
+  return { winner: net - second, second, house };
+}
+
+/** Kural metinlerinde kullanılan kısa açıklama. */
+export function payoutText(players: number): string {
+  return players >= 3 ? 'Kazanan havuzu alır; havuza en az 3 ücret girdiyse ikinci olan giriş ücretini geri alır.' : 'Kazanan havuzun hepsini alır.';
 }
 
 /**

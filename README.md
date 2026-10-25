@@ -113,7 +113,8 @@ Aynı arka uç kodu (`src/arena/hosted/hostedBackend.ts`) claude.ai'de gerçek p
 
 - Gerçek para, satın alma, nakit çekme ya da oyuncular arası transfer **yoktur**.
 - Başlangıç: 3.000. Günlük ödül 500 (+100/seri günü, en fazla +500; günde bir kez, sunucu saatiyle UTC gün). İlk maç ödülü 300. Bakiye en ucuz masanın altına düşerse günde bir kez 400 yardım paketi.
-- Giriş ücreti masaya oturunca tahsil edilir. Havuz = oyuncu sayısı × giriş ücreti, maç başlamadan kesinleşir; işletim payı şu an %0 (`houseFeePercent`), kazanan hepsini alır.
+- Giriş ücreti masaya oturunca tahsil edilir. Havuz = oyuncu sayısı × giriş ücreti, maç başlamadan kesinleşir; işletim payı şu an %0 (`houseFeePercent`). Havuza en az 3 ücret girdiyse ikinci olan ücretini geri alır (`prize2:<maç>`), kalanı kazananın; yoksa kazanan hepsini alır (`payout()` — `economy.ts`).
+- Çevrimdışı masalarda botların ücretini "ev" öder (havuz = kapasite × ücret); arkadaş odasında botlar havuza para eklemez.
 - **İade politikası:** oyun başlamadan ayrılan ya da bekleme odasında bağlantısı 45 sn kopan oyuncuya tam iade; masa sahibi ayrılırsa sahiplik sıradakine geçer, masa boşalırsa kapanır. Sunucu yarıda kalan maçlar (çökme/yeniden başlatma) açılışta **tüm giriş ücretleri iade edilerek** kapatılır.
 - Her bakiye değişikliği `wallet_transactions` kaydı oluşturur (önceki/sonraki bakiye, masa/maç, zaman) ve **benzersiz işlem anahtarı** taşır (`fee:<koltuk>`, `refund:<koltuk>`, `prize:<maç>`, `daily:<kullanıcı>:<gün>` …): aynı istek tekrarlanırsa ikinci kez uygulanmaz. Bakiye eksiye düşemez (veritabanı CHECK kısıtı da var). Maç sonucu tek transaction'da ve yalnızca bir kez kesinleşir (`matches.settled`).
 

@@ -2,7 +2,7 @@ import type { ArenaBackend, LeaderboardData, LeaderRow, MatchRow, TxRow } from '
 import { ArenaHttpError } from '../client';
 import type { ArenaRequest, ArenaSnapshot } from '../client';
 import { botThinkMs, chooseBotMove } from '../bot';
-import { ECONOMY, TIERS, TIER_ORDER, boardFor, boardRange, dayKeyOf, feeRange, levelFromXp, nextWeekStartMs, weekStartOf, xpForLevel } from '../economy';
+import { ECONOMY, TIERS, TIER_ORDER, boardFor, boardRange, dayKeyOf, feeRange, levelFromXp, nextWeekStartMs, payout, weekStartOf, xpForLevel } from '../economy';
 import type { TierId } from '../economy';
 import { cellView, createArena, forfeit, modeView, rankedSeats, reveal, scan, timeoutTurn, usePower } from '../mines';
 import type { ArenaState, MoveOutcome, PowerKind, ScanResult } from '../mines';
@@ -27,6 +27,11 @@ import type { HDb, HDocRef, HNamedRoom, HRoom } from './types';
 
 const BOT_NAMES = ['Bot Mırtı', 'Bot Kıskaç', 'Bot Diş', 'Bot Okta'];
 const BOT_AVATARS = [2, 6, 9, 1];
+/** Botun kalıcı oyuncu belgesinin kimliği ("Bot Mırtı" → "bot-mirti"). */
+function botIdOf(name: string): string {
+  const ascii = name.toLowerCase().replace(/[ıöüçşğ]/g, (ch) => ({ ı: 'i', ö: 'o', ü: 'u', ç: 'c', ş: 's', ğ: 'g' })[ch] ?? ch);
+  return `bot-${ascii.replace(/^bot\s+/, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`;
+}
 const STALE_WAITING_MS = 45 * 60_000;
 const STALE_PLAYING_MS = 20 * 60_000;
 const BOT_DELAY_MS = 1900;
@@ -248,8 +253,22 @@ export class HostedBackend implements ArenaBackend {
 
   // ------------------------------------------------------------------ görünümler
 
+  /** Botun seviyesi her ekranda aynı olsun: kalıcı belgesindeki deneyimden (sıralama da bunu gösterir). */
+  private botLevel(name: string): number {
+    const w = this.weekly.find((x) => x.uid === botIdOf(name));
+    return w ? levelFromXp(w.p.xp) : 1;
+  }
+
   private humans(t: TableDoc): number {
     return t.seats.filter((s) => !s.bot).length;
+  }
+
+  /**
+   * Havuza ücret ödeyen koltuk sayısı. Çevrimdışı modda botların ücretini "ev" öder; yoksa botlara karşı
+   * kazanmak yalnızca kendi ücretini geri getirir ve bakiye hiç büyüyemez. Arkadaş odasında botlar ödemez.
+   */
+  private payingSeats(t: TableDoc, seated: number): number {
+    return this.local ? seated : this.humans(t);
   }
 
   tableView(t: TableDoc): TableView {
@@ -269,8 +288,8 @@ export class HostedBackend implements ArenaBackend {
       players: [...t.seats].sort((a, b) => a.seat - b.seat).map((s) => ({ userId: s.uid, username: s.name, avatar: s.avatar, level: s.level, seat: s.seat, bot: s.bot, ready: s.bot || !!s.ready })),
       status: t.status,
       locked: !!t.pw,
-      prizePool: t.entryFee * this.humans(t),
-      maxPrizePool: t.entryFee * (t.maxPlayers - bots),
+      prizePool: t.entryFee * this.payingSeats(t, t.seats.length),
+      maxPrizePool: t.entryFee * (this.local ? t.maxPlayers : t.maxPlayers - bots),
       houseFeePercent: 0,
       countdownEndsAt: t.countdownEndsAt,
       ownerId: t.ownerUid,
@@ -862,7 +881,7 @@ export class HostedBackend implements ArenaBackend {
       let seat = 0;
       while (taken.has(seat)) seat++;
       const n = t.seats.filter((s) => s.bot).length;
-      t.seats.push({ seat, uid: `bot-${seat}-${t.id}`, bot: true, name: BOT_NAMES[n % BOT_NAMES.length], avatar: BOT_AVATARS[n % BOT_AVATARS.length], level: 1 });
+      t.seats.push({ seat, uid: `bot-${seat}-${t.id}`, bot: true, name: BOT_NAMES[n % BOT_NAMES.length], avatar: BOT_AVATARS[n % BOT_AVATARS.length], level: this.botLevel(BOT_NAMES[n % BOT_NAMES.length]) });
       this.maybeCountdown(t);
       return t;
     });
@@ -977,7 +996,8 @@ export class HostedBackend implements ArenaBackend {
       m.turnEndsAt = null;
       t.status = 'finished';
       const order = rankedSeats(s);
-      const walked = (seat: number) => s.players.filter((x) => x.seat !== seat).every((x) => x.eliminationReason === 'afk' || x.eliminationReason === 'left');
+      const pay = payout(m.pool, t.entryFee, s.players.length);
+      const walked =(seat: number) => s.players.filter((x) => x.seat !== seat).every((x) => x.eliminationReason === 'afk' || x.eliminationReason === 'left');
       m.results = order.map((seat, i): ResultRow => {
         const p = s.players[seat];
         const bot = !!t.seats.find((x) => x.seat === seat)?.bot;
@@ -989,7 +1009,7 @@ export class HostedBackend implements ArenaBackend {
           userId: p.userId,
           seat,
           rank: i + 1,
-          prize: i === 0 && !t.seats.find((x) => x.seat === seat)?.bot ? m.pool : 0,
+          prize: bot ? 0 : i === 0 ? pay.winner : i === 1 ? pay.second : 0,
           pointsDelta: pts,
           xp: bot ? 0 : xpGain({ won: i === 0, safeOpened: p.safeOpened }),
           moves: p.moves,
@@ -1033,7 +1053,7 @@ export class HostedBackend implements ArenaBackend {
             id: rid('m'),
             s: {} as never,
             hid: packHidden(tt.id, s.mines, s.chests, s.bonuses),
-            pool: tt.entryFee * humans,
+            pool: tt.entryFee * this.payingSeats(tt, seats.length),
             humans,
             startedAt: at,
             turnEndsAt: at + turnSeconds(tt.mode, tt.options) * 1000,
@@ -1150,7 +1170,7 @@ export class HostedBackend implements ArenaBackend {
         const now = this.now();
         const seats: SeatDoc[] = Array.from({ length: sp.bots }, (_, i) => {
           const n = (TIER_ORDER.indexOf(sp.tier) + i) % BOT_NAMES.length;
-          return { seat: i, uid: `bot-${i}-${id}`, bot: true, name: BOT_NAMES[n], avatar: BOT_AVATARS[n], level: 1 + ((n * 3 + i) % 6) };
+          return { seat: i, uid: `bot-${i}-${id}`, bot: true, name: BOT_NAMES[n], avatar: BOT_AVATARS[n], level: this.botLevel(BOT_NAMES[n]) };
         });
         const t: TableDoc = {
           id,
@@ -1187,7 +1207,7 @@ export class HostedBackend implements ArenaBackend {
       const used = new Set(tt.seats.map((s) => s.name));
       const n = BOT_NAMES.findIndex((x) => !used.has(x));
       const k = n < 0 ? seat % BOT_NAMES.length : n;
-      tt.seats.push({ seat, uid: `bot-${seat}-${tt.id}`, bot: true, name: BOT_NAMES[k], avatar: BOT_AVATARS[k], level: 1 });
+      tt.seats.push({ seat, uid: `bot-${seat}-${tt.id}`, bot: true, name: BOT_NAMES[k], avatar: BOT_AVATARS[k], level: this.botLevel(BOT_NAMES[k]) });
       this.maybeCountdown(tt);
       return tt;
     });
@@ -1210,8 +1230,7 @@ export class HostedBackend implements ArenaBackend {
     for (const row of m.results ?? []) {
       const seat = t.seats.find((x) => x.seat === row.seat);
       if (!seat?.bot) continue;
-      const ascii = seat.name.toLowerCase().replace(/[ıöüçşğ]/g, (ch) => ({ ı: 'i', ö: 'o', ü: 'u', ç: 'c', ş: 's', ğ: 'g' })[ch] ?? ch);
-      const id = `bot-${ascii.replace(/^bot\s+/, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`;
+      const id = botIdOf(seat.name);
       const ref = this.db.doc(`players/${id}`);
       const snap = await ref.get();
       const now = this.now();
@@ -1272,6 +1291,17 @@ export class HostedBackend implements ArenaBackend {
           : 0;
       const won = row.rank === 1;
       const xp = xpGain({ won, safeOpened: row.safeOpened });
+      if (this.local) {
+        // Botların puanı önce işlensin: yoksa ilk maçta sıralamada tek kişi görünüp "en iyi sıra #1" yazılıyordu.
+        // Bot belgesi yazılamasa bile oyuncunun kendi hesaplaşması engellenmemeli.
+        try {
+          await this.settleBots(t);
+          const q = await this.db.collection('players').where('week', '==', week).get();
+          this.weekly = q.docs.filter((d) => d.exists).map((d) => ({ uid: d.id, p: d.data() as unknown as PlayerDoc }));
+        } catch {
+          /* sıralama bir sonraki anlık görüntüde güncellenir */
+        }
+      }
       await this.updatePlayer((pp) => {
         if (pp.settled?.includes(m.id)) return null;
         if (row.prize > 0) this.tx(pp, 'match-prize', row.prize);
@@ -1304,11 +1334,12 @@ export class HostedBackend implements ArenaBackend {
           settled: [m.id, ...(pp.settled ?? [])].slice(0, 60),
           recent: [recent, ...(pp.recent ?? [])].slice(0, 12),
         };
-        const rankNow = 1 + this.weekly.filter((w) => w.uid !== this.uid && w.p.wGames > 0 && w.p.wPoints > next.wPoints).length;
+        // rankedWeekly ile aynı sıralama: eşit puanda galibiyet, sonra az maç öne geçer
+        const ahead = (o: PlayerDoc) => o.wPoints > next.wPoints || (o.wPoints === next.wPoints && (o.wWins > next.wWins || (o.wWins === next.wWins && o.wGames < next.wGames)));
+        const rankNow = 1 + this.weekly.filter((w) => w.uid !== this.uid && w.p.wGames > 0 && ahead(w.p)).length;
         next.best = next.best === null ? rankNow : Math.min(next.best, rankNow);
         return next;
       });
-      if (this.local) await this.settleBots(t);
       // sonuç ekranında kendi satırımı güncel puan/deneyimle göster
       if (this.snap.match?.id === m.id && this.snap.match.results) {
         const results = this.snap.match.results.map((r) => (r.userId === this.uid ? { ...r, pointsDelta: delta, xp } : r));

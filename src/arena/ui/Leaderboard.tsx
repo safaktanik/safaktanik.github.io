@@ -118,7 +118,7 @@ export function Leaderboard({ onBack }: { onBack(): void }) {
             </ol>
           ) : null}
           {!data.me ? <p className="amuted asmall center">Bu hafta bir maç bitirdiğinde burada yerini göreceksin.</p> : null}
-          <p className="amuted asmall center">Puan: 1. +25 · 2. +10 · 3. 0 · son sıradaki/erken elenen −5 (4 kişilik masada 3. 0 puan). Aynı oyuncularla çok sık oynanan maçlarda puan azalır. Sıralama her pazartesi 00:00 (UTC) sunucu saatiyle sıfırlanır; arkadaş sıralaması sonraki sürümde.</p>
+          <p className="amuted asmall center">Puan: 1. +25 · 2. +10 · 3. 0 · son sıradaki/erken elenen −5 (4 kişilik masada 3. 0 puan). Aynı oyuncularla çok sık oynanan maçlarda puan azalır. Sıralama her pazartesi 00:00'da (UTC) sıfırlanır; arkadaş sıralaması sonraki sürümde.</p>
         </>
       )}
     </div>

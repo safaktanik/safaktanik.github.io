@@ -64,6 +64,8 @@ export async function detectBackend(): Promise<Detected> {
       return local('signed-out');
     }
   }
+  // GitHub Pages yalnızca statik dosya sunar: oyun sunucusu yoktur, /api/config isteği konsola 404 düşürür.
+  if (/\.github\.io$/i.test(window.location.hostname)) return local('no-server');
   const probe = await probeServer();
   if (probe === 'ok') return { kind: 'server', backend: nodeClient() };
   return local(probe);

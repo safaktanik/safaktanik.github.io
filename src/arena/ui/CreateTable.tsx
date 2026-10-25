@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { arenaClient, errorText } from '../client';
-import { ECONOMY, TIERS, TIER_ORDER, boardFor, boardRange, feeRange } from '../economy';
+import { ECONOMY, TIERS, TIER_ORDER, boardFor, boardRange, feeRange, payoutText } from '../economy';
 import { DEFAULT_OPTIONS, DENSITY, OPTION_CHOICES, minesForTable } from '../tableOptions';
 import type { Density, TableOptions } from '../tableOptions';
 import type { TierId } from '../economy';
@@ -100,7 +100,7 @@ export function CreateTable({ onClose }: { onClose(): void }) {
           Oyun alanı: <b>{board}×{board}</b> · {mines} mayın
         </h3>
         <input type="range" min={br.min} max={br.max} value={board} onChange={(e) => setBoard(Number(e.target.value))} aria-label="Oyun alanı" />
-        <p className="asmall amuted">Mayın yoğunluğu masa türüne göre sabit kalır (sınır: {br.min}–{br.max}).</p>
+        <p className="asmall amuted">Alan {br.min}×{br.min} ile {br.max}×{br.max} arasında seçilebilir. Mayın sayısı alanla birlikte büyür; oranı aşağıdaki “Mayın yoğunluğu” belirler.</p>
       </div>
       <div className="afgroup">
         <h3>
@@ -157,7 +157,7 @@ export function CreateTable({ onClose }: { onClose(): void }) {
       </label>
       <div className="poolnote">
         Ödül havuzu: {cap} × <Money value={fee} size={13} /> = <Money value={cap * fee} size={13} />
-        {ECONOMY.houseFeePercent ? ` (işletim payı %${ECONOMY.houseFeePercent})` : ' · işletim payı yok, kazanan hepsini alır'}
+        {ECONOMY.houseFeePercent ? ` (işletim payı %${ECONOMY.houseFeePercent})` : ' · işletim payı yok'}. {payoutText(cap)}
       </div>
       <p className="asmall amuted">Giriş ücreti masayı açınca tahsil edilir. Oyun başlamadan ayrılırsan tamamı iade edilir.</p>
       {!afford ? <p className="aerror">Bakiyen bu giriş ücreti için yetmiyor.</p> : null}

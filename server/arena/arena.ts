@@ -617,7 +617,7 @@ export class Arena {
       if (!row || row.settled) return;
       const winnerSeat = order[0];
       const winner = s.players[winnerSeat];
-      const pay = payout(m.prizePool);
+      const pay = payout(m.prizePool, m.prizePool / Math.max(1, s.players.length), s.players.length);
       const ids = s.players.map((p) => p.userId).sort();
       // Aynı oyuncu kümesiyle bu hafta biten maç sayısı (anlaşmalı puan toplamayı zorlaştırır).
       const candidates = this.db.all<{ match_id: string }>(
@@ -637,7 +637,7 @@ export class Arena {
         const p = s.players[seat];
         const rank = i + 1;
         const won = rank === 1;
-        const prize = won ? pay.winner : 0;
+        const prize = won ? pay.winner : rank === 2 ? pay.second : 0;
         const delta = weeklyPointsDelta({
           capacity: m.capacity,
           tier: m.tier,
@@ -651,7 +651,8 @@ export class Arena {
         });
         const xp = xpGain({ won, safeOpened: p.safeOpened });
         const u = this.db.get<{ experience: number; games_played: number }>('SELECT experience, games_played FROM users WHERE id = ?', p.userId)!;
-        if (prize > 0) applyWalletTx(this.db, { userId: p.userId, type: 'match-prize', amount: prize, key: `prize:${m.id}`, matchId: m.id, tableId: m.tableId, now });
+        // ikincinin iadesi ayrı anahtarla: aynı anahtar ikinci işlemi "zaten yapıldı" sayıp yutuyordu
+        if (prize > 0) applyWalletTx(this.db, { userId: p.userId, type: 'match-prize', amount: prize, key: won ? `prize:${m.id}` : `prize2:${m.id}`, matchId: m.id, tableId: m.tableId, now });
         if (u.games_played === 0 && ECONOMY.firstMatchBonus > 0)
           applyWalletTx(this.db, { userId: p.userId, type: 'first-match-bonus', amount: ECONOMY.firstMatchBonus, key: `first-match:${p.userId}`, matchId: m.id, now });
         const newXp = u.experience + xp;

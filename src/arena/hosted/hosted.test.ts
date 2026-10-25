@@ -101,6 +101,7 @@ describe('test sunucusu (paylaşılan veritabanı)', () => {
     const pa = player('ayse');
     const pb = player('burak');
     const base = ECONOMY.startingBalance - TIERS.bronze.fee + ECONOMY.firstMatchBonus;
+    // havuzda 2 ücret var (bot ödemez): ikinciye iade yok, kazanan hepsini alır
     expect(pa.balance).toBe(base + (winner.userId === 'ayse' ? done.match!.pool : 0));
     expect(pb.balance).toBe(base + (winner.userId === 'burak' ? done.match!.pool : 0));
     expect(pa.games).toBe(1);

@@ -145,11 +145,14 @@ describe('arena: gerçek WebSocket', () => {
     const final = a.match!;
     const winner = final.players[final.winnerSeat!];
     expect(final.results!.find((r) => r.rank === 1)!.userId).toBe(winner.userId);
-    expect(final.results!.find((r) => r.rank === 1)!.prize).toBe(4 * TIERS.bronze.fee);
+    // 4 kişilik masa: kazanan 3 ücret, ikinci kendi ücretini geri alır
+    expect(final.results!.find((r) => r.rank === 1)!.prize).toBe(3 * TIERS.bronze.fee);
+    const secondId = final.results!.find((r) => r.rank === 2)!.userId;
+    expect(final.results!.find((r) => r.rank === 2)!.prize).toBe(TIERS.bronze.fee);
     // bakiyeler sunucudan
     for (const x of players) {
       const me = (await (await fetch(`http://127.0.0.1:${port}/api/me`, { headers: { authorization: `Bearer ${x.token}` } })).json()) as { me: { balance: number } };
-      const expected = ECONOMY.startingBalance - TIERS.bronze.fee + ECONOMY.firstMatchBonus + (x.userId === winner.userId ? 4 * TIERS.bronze.fee : 0);
+      const expected = ECONOMY.startingBalance - TIERS.bronze.fee + ECONOMY.firstMatchBonus + (x.userId === winner.userId ? 3 * TIERS.bronze.fee : x.userId === secondId ? TIERS.bronze.fee : 0);
       expect(me.me.balance).toBe(expected);
     }
     const lb = (await (await fetch(`http://127.0.0.1:${port}/api/leaderboard`)).json()) as { list: { userId: string }[] };

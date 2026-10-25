@@ -4,6 +4,7 @@
  * CurrencyPill, TopBar, TabBar ve 2.5D Chibi karakter + kaide.
  * Görsel dil: lacivert zemin, kalın koyu çerçeve, neon vurgu (altın / elektrik mavisi / mor / neon yeşil).
  */
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Character } from '../arena/ui/characters';
 import type { Mood } from '../arena/ui/characters';
@@ -108,7 +109,7 @@ export function TopBar({ coins, level, xpFrac, onSettings, onCoins, extra }: { c
 
 export type Tab = 'shop' | 'hero' | 'battle' | 'rank' | 'quests';
 const TABS: { id: Tab; label: string; icon: (s: number) => ReactNode; locked?: boolean }[] = [
-  { id: 'shop', label: 'Mağaza', icon: (s) => <ChestIcon size={s} /> },
+  { id: 'shop', label: 'Ödüller', icon: (s) => <ChestIcon size={s} /> },
   { id: 'hero', label: 'Karakter', icon: (s) => <HeroIcon size={s} /> },
   { id: 'battle', label: 'Savaş', icon: (s) => <BattleIcon size={s} /> },
   { id: 'rank', label: 'Sıralama', icon: (s) => <TrophyIcon size={s} /> },
@@ -116,6 +117,13 @@ const TABS: { id: Tab; label: string; icon: (s: number) => ReactNode; locked?: b
 ];
 
 export function TabBar({ tab, onTab, alerts = {} }: { tab: Tab; onTab(t: Tab): void; alerts?: Partial<Record<Tab, boolean>> }) {
+  // kilitli sekmeye dokununca kısa "yakında" balonu (yoksa dokunuş hiçbir tepki vermiyordu)
+  const [soon, setSoon] = useState<Tab | null>(null);
+  useEffect(() => {
+    if (!soon) return;
+    const id = window.setTimeout(() => setSoon(null), 1600);
+    return () => window.clearTimeout(id);
+  }, [soon]);
   return (
     <nav className="tab2" aria-label="Ana menü">
       {TABS.map((t) => {
@@ -127,8 +135,9 @@ export function TabBar({ tab, onTab, alerts = {} }: { tab: Tab; onTab(t: Tab): v
             className={`tab2__b${on ? ' is-on' : ''}${t.id === 'battle' ? ' tab2__b--main' : ''}${t.locked ? ' is-locked' : ''}`}
             aria-current={on ? 'page' : undefined}
             aria-label={t.locked ? `${t.label} (yakında)` : t.label}
-            onClick={() => !t.locked && onTab(t.id)}
+            onClick={() => (t.locked ? setSoon(t.id) : onTab(t.id))}
           >
+            {soon === t.id ? <span className="tab2__soon" role="status">{t.label} yakında geliyor!</span> : null}
             <span className="tab2__ic">{t.locked ? <LockIcon size={30} /> : t.icon(t.id === 'battle' ? 44 : 32)}</span>
             {on || t.id === 'battle' ? <span className="tab2__l">{t.label}</span> : null}
             {alerts[t.id] && !t.locked ? <i className="tab2__alert">!</i> : null}

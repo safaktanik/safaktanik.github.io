@@ -223,10 +223,14 @@ export function createArena(size: number, mineCount: number, userIds: string[], 
   const cells = new Array<CellState>(total).fill(0);
   const island = settings.island === false ? [] : chooseIsland(size, mineSet, counts, rng);
   for (const c of island) cells[c] = 1;
-  // Sandıklar: başlangıç adası dışındaki güvenli karelerden.
+  // Sandıklar: başlangıç adası dışındaki güvenli karelerden. Önce boş alan yayılmasıyla açılamayan kareler
+  // (sıfıra komşu olmayan sayılı kareler) seçilir; böylece ilk büyük yayılma birden çok sandığı şansla toplamaz.
   let chests: number[] = [];
   if (mode === 'treasure') {
-    const pool = idx.filter((i) => !mineSet.has(i) && cells[i] === 0);
+    const free = idx.filter((i) => !mineSet.has(i) && cells[i] === 0);
+    const isolated = free.filter((i) => counts[i] > 0 && !neighbors(size, i).some((n) => !mineSet.has(n) && counts[n] === 0));
+    const want = chestCountFor(size, mineCount);
+    const pool = isolated.length > want ? isolated : free;
     const n = Math.min(pool.length - 1, chestCountFor(size, mineCount));
     for (let i = 0; i < n; i++) {
       const j = i + rng(pool.length - i);
@@ -490,7 +494,8 @@ function defuse(s: ArenaState, p: ArenaPlayer, index: number, isMine: boolean, m
     s.owners[index] = seat;
     p.defused++;
   } else {
-    // yanlış imha: kare açılır (bilgi herkese), oyuncu ceza alır
+    // yanlış imha: kare açılır (bilgi herkese), oyuncu ceza alır; sonuç tablosunda "hata" olarak sayılır
+    p.mineHits++;
     const newly = floodOpen(s, index, mineSet);
     opened = newly.length;
     for (const c of newly) s.owners[c] = seat;

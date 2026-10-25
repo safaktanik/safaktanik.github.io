@@ -13,12 +13,13 @@ export const BOT_PERSONA: Record<BotLevel, { notice: number; noise: number; reck
 };
 
 /**
- * İnsan gibi düşünme süresi (ms): bariz hamlede ~3–5,5 sn, tahmin gerekiyorsa ~4–8 sn.
+ * İnsan gibi düşünme süresi (ms): bariz hamlede ~1,4–3 sn, tahmin gerekiyorsa ~2–4,5 sn.
+ * (4 kişilik masada insan oyuncu kendi sırasını 20 sn'ye kadar bekliyordu; tempo için kısaltıldı.)
  * r: 0..1 (rastgele ya da herkesin aynı hesapladığı sözde rastgele). Süreli turda tur süresinin %70'ini aşmaz.
  */
 export function botThinkMs(cells: readonly number[], size: number, mineCount: number, level: BotLevel, r: number, turnSeconds = 0): number {
   const obvious = analyze(cells, size, mineCount).safe.length > 0;
-  const ms = ((obvious ? 2800 : 4000) + r * (obvious ? 2600 : 4000)) * BOT_PERSONA[level].think;
+  const ms = ((obvious ? 1400 : 2000) + r * (obvious ? 1600 : 2500)) * BOT_PERSONA[level].think;
   return Math.round(turnSeconds > 0 ? Math.min(ms, turnSeconds * 1000 * 0.7) : ms);
 }
 

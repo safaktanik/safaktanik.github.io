@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import type { Detected } from '../detect';
 import { playSound } from '../../audio/sound';
 import { LogoMark } from './art';
-import { Character } from './characters';
+import { CHARACTERS, Character } from './characters';
 import { Spinner } from './common';
 import { SoundButton } from './SoundButton';
 import { FeedbackSheet, feedbackAvailable } from './Feedback';
@@ -130,7 +130,7 @@ const CARDS: { icon: ReactNode; title: string; text: string; chips?: string[] }[
     icon: <Character id={1} size={64} mood="happy" />,
     title: 'Emoji at, karakterini seç',
     text: 'Maç sırasında alttaki emojilere tek dokunuşla rakiplerine laf at. Karakter sekmesinden kendine yeni bir karakter seç; bazıları seviye atladıkça açılır.',
-    chips: ['😂 😱 👏', '12 karakter'],
+    chips: ['😂 😱 👏', `${CHARACTERS.length} karakter`],
   },
 ];
 

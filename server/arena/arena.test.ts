@@ -300,15 +300,19 @@ describe('maç', () => {
     }
     expect(s.players[s.winnerSeat!].userId).toBe(winner);
     const pool = 3 * TIERS.bronze.fee;
-    const prizeTx = k.db.all<{ user_id: string; amount: number }>("SELECT user_id, amount FROM wallet_transactions WHERE match_id = ? AND transaction_type = 'match-prize'", matchId);
-    expect(prizeTx).toEqual([{ user_id: winner, amount: pool }]);
+    const fee = TIERS.bronze.fee;
+    const second = k.db.get<{ user_id: string }>('SELECT user_id FROM match_players WHERE match_id = ? AND final_rank = 2', matchId)!.user_id;
+    const prizeTx = k.db.all<{ user_id: string; amount: number }>("SELECT user_id, amount FROM wallet_transactions WHERE match_id = ? AND transaction_type = 'match-prize' ORDER BY amount DESC", matchId);
+    // 3 kişilik masa: kazanan havuzdan ikincinin ücretini düşerek alır, ikinci ücretini geri alır
+    expect(prizeTx).toEqual([{ user_id: winner, amount: pool - fee }, { user_id: second, amount: fee }]);
     // ikinci kesinleştirme denemesi hiçbir şey değiştirmez
     (k.arena as unknown as { settle(m: unknown): void }).settle((k.arena as unknown as { recent: Map<string, unknown> }).recent.get(matchId));
-    expect(k.db.get<{ n: number }>("SELECT COUNT(*) n FROM wallet_transactions WHERE transaction_type = 'match-prize'")!.n).toBe(1);
+    expect(k.db.get<{ n: number }>("SELECT COUNT(*) n FROM wallet_transactions WHERE transaction_type = 'match-prize'")!.n).toBe(2);
     const first = ECONOMY.firstMatchBonus;
-    expect(k.balance(winner)).toBe(ECONOMY.startingBalance - TIERS.bronze.fee + pool + first);
+    expect(k.balance(winner)).toBe(ECONOMY.startingBalance - TIERS.bronze.fee + pool - fee + first);
+    expect(k.balance(second)).toBe(ECONOMY.startingBalance + first);
     for (const u of users.filter((x) => x !== winner)) {
-      expect(k.balance(u)).toBe(ECONOMY.startingBalance - TIERS.bronze.fee + first);
+      if (u !== second) expect(k.balance(u)).toBe(ECONOMY.startingBalance - TIERS.bronze.fee + first);
       expect(k.db.get<{ n: number }>("SELECT COUNT(*) n FROM wallet_transactions WHERE user_id = ? AND transaction_type='entry-fee' AND amount = ?", u, -TIERS.bronze.fee)!.n).toBe(1);
     }
     const me = k.accounts.me(winner);
@@ -318,7 +322,7 @@ describe('maç', () => {
     const lb = k.arena.leaderboard(winner);
     expect(lb.list[0].userId).toBe(winner);
     expect(lb.list[0].points).toBe(ECONOMY.points.byCapacity[3][0]);
-    expect(lb.list[0].coinsWon).toBe(pool);
+    expect(lb.list[0].coinsWon).toBe(pool - fee);
     expect(lb.list.find((r) => r.points < 0)).toBeDefined(); // ilk elenen −5
     const mp = k.db.all<{ final_rank: number }>('SELECT final_rank FROM match_players WHERE match_id = ? ORDER BY final_rank', matchId).map((r) => r.final_rank);
     expect(mp).toEqual([1, 2, 3]);

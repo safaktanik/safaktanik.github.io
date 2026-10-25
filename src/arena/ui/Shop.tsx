@@ -32,7 +32,7 @@ export function Shop({ onBack }: { onBack(): void }) {
         <button type="button" className="aback" onClick={onBack}>
           <BackIcon size={18} /> Lobi
         </button>
-        <h1>Mağaza</h1>
+        <h1>Ödüller</h1>
       </header>
       <div className="shop__bal apanel">
         <Coin size={40} />
@@ -47,7 +47,7 @@ export function Shop({ onBack }: { onBack(): void }) {
         <div>
           <h3>Günlük ödül</h3>
           <p className="asmall amuted">
-            Her gün bir kez (sunucu saatiyle). Seri: {me.streak} gün. Art arda gelen her gün +{ECONOMY.daily.streakBonus}, en fazla +{ECONOMY.daily.maxStreakBonus}.
+            Her gün bir kez ({c.local ? 'bu cihazın saatiyle' : 'sunucu saatiyle'}). Seri: {me.streak} gün. Art arda gelen her gün +{ECONOMY.daily.streakBonus}, en fazla +{ECONOMY.daily.maxStreakBonus}.
           </p>
         </div>
         <button type="button" className="abtn abtn--gold" disabled={!me.dailyAvailable || busy !== null} onClick={() => void claim('/api/rewards/daily', 'daily')}>
@@ -72,7 +72,7 @@ export function Shop({ onBack }: { onBack(): void }) {
         <Coin size={30} />
         <div>
           <h3>İlk maç ödülü</h3>
-          <p className="asmall amuted">İlk maçını bitirdiğinde <Money value={ECONOMY.firstMatchBonus} size={12} /> otomatik eklenir. Haftalık sıralamada ilk 3’e girenler de ödül alır.</p>
+          <p className="asmall amuted">İlk maçını bitirdiğinde <Money value={ECONOMY.firstMatchBonus} size={12} /> otomatik eklenir.{c.local ? ' Maç kazanınca havuzu alırsın; 3–4 kişilik masada ikinci olursan giriş ücretin geri gelir.' : ' Haftalık sıralamada ilk 3’e girenler de ödül alır.'}</p>
         </div>
       </article>
 

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { arenaClient, errorText } from '../client';
-import { ECONOMY } from '../economy';
+import { ECONOMY, payoutText } from '../economy';
+import { matchSettings, turnSeconds } from '../rules';
 import { playSound } from '../../audio/sound';
 import { Avatar, LevelBadge, Money, TierBadge, useArena, useTick } from './common';
 import { ExitIcon, GridIcon, LockIcon, MineIcon, PlusIcon, UserIcon } from './icons';
@@ -113,7 +114,7 @@ export function WaitingRoom() {
           <button type="button" className="abtn abtn--ghost" disabled={busy || !t.players.some((p) => p.userId.startsWith('bot-'))} onClick={() => void botAct('remove')}>
             Bot kaldır
           </button>
-          <p className="asmall amuted">Test için: botlar havuza para eklemez; yalnızca gerçek oyuncuların ücreti havuzdadır.</p>
+          <p className="asmall amuted">Arkadaş odasında botlar havuza para eklemez; yalnızca gerçek oyuncuların ücreti havuzdadır.</p>
         </div>
       ) : null}
       {rules ? <RulesSheet focus={t.mode} onClose={() => setRules(false)} /> : null}
@@ -159,17 +160,17 @@ export function WaitingRoom() {
         <div><dt>Kapasite</dt><dd>{t.maxPlayers} kişi</dd></div>
         {t.options ? (
           <>
-            <div><dt>Tur süresi</dt><dd>{t.mode === 'blitz' ? Math.min(8, t.options.turnSeconds) : t.options.turnSeconds} sn</dd></div>
-            <div><dt>Can</dt><dd>{t.mode === 'blitz' ? Math.min(2, t.options.lives) : t.options.lives}</dd></div>
-            <div><dt>Kalkan · Sonar</dt><dd>{t.options.shields} · {t.mode === 'blitz' ? 0 : t.options.sonars}</dd></div>
+            <div><dt>Tur süresi</dt><dd>{turnSeconds(t.mode, t.options)} sn</dd></div>
+            <div><dt>Can</dt><dd>{matchSettings(t.mode, t.options).lives}</dd></div>
+            <div><dt>Kalkan · Sonar</dt><dd>{matchSettings(t.mode, t.options).shields} · {matchSettings(t.mode, t.options).sonars}</dd></div>
             <div><dt>Bonus kutuları</dt><dd>{t.options.bonuses !== false ? '🎁 Açık' : 'Kapalı'}</dd></div>
           </>
         ) : null}
         <div><dt>Hazır oyuncu</dt><dd>{t.players.length} / {t.maxPlayers}</dd></div>
       </dl>
       <p className="poolnote">
-        Havuz = {t.maxPlayers} × <Money value={t.entryFee} size={12} /> = <Money value={t.maxPrizePool} size={12} />
-        {ECONOMY.houseFeePercent ? ` − %${ECONOMY.houseFeePercent} işletim payı` : ''}. Kazanan hepsini alır. Başlamadan ayrılırsan ücretin iade edilir.
+        Havuz = {Math.round(t.maxPrizePool / Math.max(1, t.entryFee))} × <Money value={t.entryFee} size={12} /> = <Money value={t.maxPrizePool} size={12} />
+        {ECONOMY.houseFeePercent ? ` − %${ECONOMY.houseFeePercent} işletim payı` : ''}. {payoutText(t.maxPlayers)} Başlamadan ayrılırsan ücretin iade edilir.
       </p>
       {err ? <p className="aerror">{err}</p> : null}
 
