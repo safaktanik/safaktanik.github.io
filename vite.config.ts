@@ -9,6 +9,9 @@ export default defineConfig({
   // Göreli yollar: site bir alt klasörde (ör. /yeni) de çalışsın.
   base: './',
   plugins: [react()],
+  // Site tek dosya (scripts/build-site.mjs yalnızca index.html'i yayınlar): arayüz seti görselleri
+  // (en büyüğü ~8 KB) ayrı dosya olarak çıkarsa yayında kırık görünür; hepsi data: adresi olarak gömülsün.
+  build: { assetsInlineLimit: 64 * 1024 },
   server: {
     proxy: {
       '/api': { target, changeOrigin: true },
