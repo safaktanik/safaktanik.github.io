@@ -31,7 +31,7 @@ describe('madalyalar', () => {
     expect(badgesFor(lost({ bonusFound: [{ i: 1, k: 'extra', seat: 0 }, { i: 3, k: 'life', seat: 1 }] }), 0, base)).toEqual([]);
     // izleyici (koltuksuz) de kâhin olabilir
     expect(badgesFor(lost(), null, { ...base, oracleRight: 3 })).toEqual(['oracle']);
-    expect(badgesFor(view({}, {}, 3), 0, { ...base, usedHint: false })).toEqual(['first_victory', 'perfect_logic', 'sharp_mind']);
-    expect(badgesFor(view({}, {}, 3), 0, { ...base, usedHint: true })).toEqual(['first_victory', 'perfect_logic']);
+    expect(badgesFor(view({}, {}, 3), 0, { ...base, usedPower: false })).toEqual(['first_victory', 'perfect_logic', 'sharp_mind']);
+    expect(badgesFor(view({}, {}, 3), 0, { ...base, usedPower: true })).toEqual(['first_victory', 'perfect_logic']);
   });
 });

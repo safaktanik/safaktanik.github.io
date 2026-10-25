@@ -18,12 +18,12 @@ export interface TableOptions {
   shields: number;
   /** Tahtada bonus kutuları (+kalkan, +sonar, +can, ekstra tur). */
   bonuses: boolean;
-  /** Güç kuralları: oyuncu başına Duman ve Zaman Dondurma hakkı. */
-  smokes: number;
-  freezes: number;
+  /** Güç kuralları: oyuncu başına Pas ve Zorla hakkı. */
+  passes: number;
+  forces: number;
 }
 
-export const DEFAULT_OPTIONS: TableOptions = { turnSeconds: 20, lives: 3, density: 'normal', sonars: 1, shields: 1, bonuses: true, smokes: 1, freezes: 1 };
+export const DEFAULT_OPTIONS: TableOptions = { turnSeconds: 20, lives: 3, density: 'normal', sonars: 1, shields: 1, bonuses: true, passes: 1, forces: 1 };
 
 export const OPTION_CHOICES = {
   turnSeconds: [10, 15, 20, 30, 45],
@@ -31,8 +31,8 @@ export const OPTION_CHOICES = {
   density: ['easy', 'normal', 'hard'] as Density[],
   sonars: [0, 1, 2, 3],
   shields: [0, 1, 2],
-  smokes: [0, 1, 2],
-  freezes: [0, 1, 2],
+  passes: [0, 1, 2],
+  forces: [0, 1, 2],
 };
 
 export const DENSITY: Record<Density, { label: string; factor: number }> = {
@@ -45,6 +45,7 @@ export const DENSITY: Record<Density, { label: string; factor: number }> = {
 export function parseOptions(v: unknown): TableOptions | null {
   if (v === undefined || v === null) return { ...DEFAULT_OPTIONS };
   if (typeof v !== 'object') return null;
+  // 2.3 ve öncesi kayıtlardaki smokes/freezes alanları yok sayılır (güçler değişti)
   const o = { ...DEFAULT_OPTIONS, ...(v as Partial<TableOptions>) };
   if (!OPTION_CHOICES.turnSeconds.includes(o.turnSeconds)) return null;
   if (!OPTION_CHOICES.lives.includes(o.lives)) return null;
@@ -52,9 +53,9 @@ export function parseOptions(v: unknown): TableOptions | null {
   if (!OPTION_CHOICES.sonars.includes(o.sonars)) return null;
   if (!OPTION_CHOICES.shields.includes(o.shields)) return null;
   if (typeof o.bonuses !== 'boolean') return null;
-  if (!OPTION_CHOICES.smokes.includes(o.smokes)) return null;
-  if (!OPTION_CHOICES.freezes.includes(o.freezes)) return null;
-  return { turnSeconds: o.turnSeconds, lives: o.lives, density: o.density, sonars: o.sonars, shields: o.shields, bonuses: o.bonuses, smokes: o.smokes, freezes: o.freezes };
+  if (!OPTION_CHOICES.passes.includes(o.passes)) return null;
+  if (!OPTION_CHOICES.forces.includes(o.forces)) return null;
+  return { turnSeconds: o.turnSeconds, lives: o.lives, density: o.density, sonars: o.sonars, shields: o.shields, bonuses: o.bonuses, passes: o.passes, forces: o.forces };
 }
 
 /** Kayıtlı (eski kayıtlarda eksik olabilen) seçenekler. */

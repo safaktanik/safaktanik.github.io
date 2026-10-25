@@ -745,7 +745,7 @@ html[data-room] .match.ascreen { padding-top: 8px; }
 .rtray--docked .rtray__panel { max-width: calc(100vw - 20px); }
 
 /* ==========================================================================
-   EĞLENCE KATMANI: bonus kutuları, ipucu feneri, seri alevi, son can,
+   EĞLENCE KATMANI: bonus kutuları, seri alevi, son can,
    bayrak kontrolü, izleyici tahmini, maç karnesi
    ========================================================================== */
 .mc { position: relative; }
@@ -755,20 +755,7 @@ html[data-room] .match.ascreen { padding-top: 8px; }
 .mc--bonusghost { box-shadow: inset 0 0 0 1px hsl(300 80% 70% / 0.6) !important; }
 .mbanner--bonus { background: linear-gradient(90deg, hsl(290 70% 38%), hsl(325 75% 45%)); border-color: hsl(310 100% 80%); color: #fff; animation-duration: 2.6s; }
 .mbanner--zap { background: linear-gradient(90deg, hsl(48 95% 45%), hsl(36 95% 50%)); border-color: hsl(55 100% 80%); color: hsl(30 80% 10%); }
-.mbanner--hint { background: linear-gradient(90deg, hsl(50 80% 30%), hsl(42 85% 36%)); border-color: hsl(50 100% 72%); color: #fff8d6; }
-
-/* ipucu feneri */
-.mc--hint { z-index: 2; }
-.mc--hint-safe { box-shadow: 0 0 0 2px hsl(52 100% 65%), 0 0 18px hsl(52 100% 60% / 0.9) !important; }
-.mc--hint-mine { box-shadow: 0 0 0 2px hsl(10 100% 65%), 0 0 18px hsl(10 100% 55% / 0.9) !important; }
-.mhintglow { position: absolute; inset: -40%; border-radius: 50%; pointer-events: none; background: radial-gradient(circle, hsl(52 100% 75% / 0.55), transparent 60%); animation: hintglow 1.2s ease-in-out infinite alternate; }
-.mc--hint-mine .mhintglow { background: radial-gradient(circle, hsl(10 100% 65% / 0.5), transparent 60%); }
-@keyframes hintglow { from { transform: scale(0.7); opacity: 0.6; } to { transform: scale(1.1); opacity: 1; } }
 .mbar__ico { font-size: 22px; line-height: 26px; }
-.mbar__hint:not(:disabled) .mbar__ico { animation: hintbulb 2.4s ease-in-out infinite; }
-@keyframes hintbulb { 50% { filter: drop-shadow(0 0 6px hsl(52 100% 60%)); } }
-.mbar__hint em { background: hsl(46 85% 42%); }
-.mbar__hint.is-on { border-color: hsl(52 100% 60%); color: hsl(52 100% 80%); background: hsl(46 50% 16%); }
 
 /* bayrak kontrolü (maç sonu) */
 .mflagok, .mflagbad { position: absolute; right: 1px; bottom: 0; font-size: 0.55em; font-weight: 900; line-height: 1; padding: 1px 2px; border-radius: 4px; pointer-events: none; }
@@ -914,12 +901,11 @@ html[data-room] .match.ascreen { padding-top: 8px; }
 /* süre azalırken: yalnızca büyüyüp küçülme */
 @keyframes hurry { to { transform: scale(1.08); } }
 .match.is-hurry .mtimer { will-change: transform; }
-/* ipucu ampulü, sonar mayını, botun seçtiği kare */
-@keyframes hintbulb { 50% { transform: scale(1.15); } }
+/* sonar mayını, botun seçtiği kare */
 .mc--sonarmine { animation: sonarmine 1.6s ease-in-out 3 !important; }
 .mc--aim { animation: none !important; }
 .mc--aim::before { content: ''; position: absolute; inset: 0; background: var(--seatc-aim, hsl(45 100% 60%)); opacity: 0; animation: aimfade 0.8s ease-in-out infinite alternate; pointer-events: none; will-change: opacity; }
 @keyframes aimfade { to { opacity: 0.35; } }
-.maim, .pchip__think i, .mhintglow, .match.is-lastlife::after { will-change: transform, opacity; }
+.maim, .pchip__think i, .match.is-lastlife::after { will-change: transform, opacity; }
 /* sayfa arka plandayken hiçbir şey dönmesin */
 html.is-hidden .ar-root *, html.is-hidden .ar-root *::before, html.is-hidden .ar-root *::after { animation-play-state: paused !important; }

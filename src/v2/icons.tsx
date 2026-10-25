@@ -189,44 +189,6 @@ export function ShieldIcon2(p: P) {
   );
 }
 
-export function SmokeIcon(p: P) {
-  return (
-    <Svg {...p} label="Duman">
-      <path d="M10 34a7 7 0 0 1 2-13.7A10 10 0 0 1 31 15a8 8 0 0 1 9 8 6 6 0 0 1-1 11.6z" fill="#cdb8ff" stroke={OUT} strokeWidth="3" strokeLinejoin="round" />
-      <path d="M8 40h12M24 40h16M14 45h18" stroke="#b800ff" strokeWidth="3.4" strokeLinecap="round" />
-      <circle cx="18" cy="27" r="3" fill="#8d5cff" opacity="0.7" />
-      <circle cx="29" cy="24" r="4" fill="#8d5cff" opacity="0.6" />
-      <Shine d="M14 22a7 7 0 0 1 6-5a1 1 0 0 1 .4 2a5 5 0 0 0-4 3.5z" />
-    </Svg>
-  );
-}
-
-export function FreezeIcon(p: P) {
-  return (
-    <Svg {...p} label="Zaman Dondurma">
-      <circle cx="24" cy="26" r="17" fill="#a8f0ff" stroke={OUT} strokeWidth="3" />
-      <rect x="19" y="3" width="10" height="6" rx="2" fill="#00d2ff" stroke={OUT} strokeWidth="2.6" />
-      <path d="M24 14v12l7 5" fill="none" stroke={OUT} strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" />
-      {/* kar tanesi */}
-      <path d="M36 32l6 6M42 32l-6 6M39 30v10M34 35h10" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" />
-      <path d="M36 32l6 6M42 32l-6 6M39 30v10M34 35h10" stroke="#00a6ff" strokeWidth="1.2" strokeLinecap="round" />
-      <Shine d="M12 22a13 13 0 0 1 9-8a1.5 1.5 0 0 1 .5 3a10 10 0 0 0-6.6 6z" />
-    </Svg>
-  );
-}
-
-export function BulbIcon(p: P) {
-  return (
-    <Svg {...p} label="İpucu">
-      <path d="M24 4a14 14 0 0 1 8 25.5V34H16v-4.5A14 14 0 0 1 24 4z" fill="#ffe14d" stroke={OUT} strokeWidth="3" strokeLinejoin="round" />
-      <path d="M17 34h14v4a4 4 0 0 1-4 4h-6a4 4 0 0 1-4-4z" fill="#8aa0c4" stroke={OUT} strokeWidth="3" strokeLinejoin="round" />
-      <path d="M19 38h10" stroke={OUT} strokeWidth="2" />
-      <path d="M20 22l4 4 4-4M24 26v7" fill="none" stroke="#e08a00" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-      <Shine d="M15 16a10 10 0 0 1 7-8a1.5 1.5 0 0 1 .7 2.8a7 7 0 0 0-4.8 5.6z" />
-    </Svg>
-  );
-}
-
 export function EmoteIcon(p: P) {
   return (
     <Svg {...p} label="Emoji">

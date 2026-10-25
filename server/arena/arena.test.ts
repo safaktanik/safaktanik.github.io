@@ -118,7 +118,7 @@ describe('masalar', () => {
     expect(k.balance(a)).toBe(ECONOMY.startingBalance - TIERS.bronze.fee);
     expect(t.players.map((p) => p.userId)).toEqual([a]);
     expect(t.boardSize).toBe(TIERS.bronze.board);
-    expect(t.options).toEqual({ turnSeconds: 20, lives: 3, density: 'normal', sonars: 1, shields: 1, bonuses: true, smokes: 1, freezes: 1 });
+    expect(t.options).toEqual({ turnSeconds: 20, lives: 3, density: 'normal', sonars: 1, shields: 1, bonuses: true, passes: 1, forces: 1 });
     // Son Kalan'da mayın ×1,5 (MODE_MINE_FACTOR): 16 → 24
     expect(t.mineCount).toBe(Math.round(TIERS.bronze.mines * MODE_MINE_FACTOR.classic));
     expect(k.arena.listTables().some((x) => x.id === t.id)).toBe(true);
@@ -393,22 +393,31 @@ describe('maç', () => {
     expect(k.arena.matchView(matchId, me)!.players.find((p) => p.userId === me)!.sonar).toBe(0);
   });
 
-  it('güçler: Zaman Dondurma sunucuda süreyi uzatır, Duman sıradakine işler; sırası olmayan kullanamaz', async () => {
+  it('güçler: Zorla sunucuda kurulur ve sıradakini kısıtlar, Pas sırayı geçirir; sırası olmayan kullanamaz', async () => {
     const k = await makeKit();
     const { matchId, users } = await fullTable(k, 3);
     const me = cur(k, matchId);
     const other = users.find((u) => u !== me)!;
-    expect(code(() => k.arena.power(other, matchId, 'freeze'))).toBe('not-your-turn');
-    const before = k.arena.matchView(matchId, me)!.turnEndsAt!;
-    expect(k.arena.power(me, matchId, 'freeze').extendMs).toBe(10_000);
-    expect(k.arena.matchView(matchId, me)!.turnEndsAt).toBe(before + 10_000);
-    expect(code(() => k.arena.power(me, matchId, 'freeze'))).toBe('no-power'); // varsayılan 1 hak
+    expect(code(() => k.arena.power(other, matchId, 'pass'))).toBe('not-your-turn');
     expect(code(() => k.arena.power(me, matchId, 'nuke'))).toBe('bad-request');
-    k.arena.power(me, matchId, 'smoke');
-    const v = k.arena.matchView(matchId, other)!;
-    expect(v.smoke).toEqual({ by: v.players.find((p) => p.userId === me)!.seat, turnNo: v.turnNo + 1 });
-    expect(v.lastPower?.kind).toBe('smoke');
-    expect(v.players.find((p) => p.userId === me)!.smoke).toBe(0);
+    expect(k.arena.power(me, matchId, 'force')).toEqual({ kind: 'force' });
+    expect(code(() => k.arena.power(me, matchId, 'force'))).toBe('no-power'); // varsayılan 1 hak
+    expect(k.arena.matchView(matchId, me)!.forceArmed).toBe(true);
+    k.arena.move(me, matchId, safeCell(k.state(matchId)));
+    const next = cur(k, matchId);
+    const v = k.arena.matchView(matchId, next)!;
+    // yayılma büyükse izinli kare kalmayabilir; kaldıysa kısıtı dayatan benim
+    if (v.allowed) expect(v.forcedBy).toBe(v.players.find((p) => p.userId === me)!.seat);
+    expect(v.lastPower?.kind).toBe('force');
+    expect(v.players.find((p) => p.userId === me)!.force).toBe(0);
+    // Pas: sıra geçer, süre yenilenir
+    const turnNo = v.turnNo;
+    expect(k.arena.power(next, matchId, 'pass')).toEqual({ kind: 'pass' });
+    const after = k.arena.matchView(matchId, next)!;
+    expect(after.turnNo).toBe(turnNo + 1);
+    expect(cur(k, matchId)).not.toBe(next);
+    expect(after.allowed).toBeNull();
+    expect(after.lastMove?.kind).toBe('pass');
   });
 
   it('20) sunucu yeniden başlarsa: maç durumu veritabanındadır; yarıda kalan maç iade edilerek kapatılır', async () => {

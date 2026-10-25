@@ -15,7 +15,7 @@ Sunucu seçenekleri: Node + WebSocket + SQLite (yetkili sunucu) ya da sunucusuz 
 1. Ana menü (Savaş sekmesi) → OYNA (hızlı eşleşme) / Masalar / Masa Aç / Arkadaşlarla / Antrenman.
 2. Masa açılır → bekleme odası: koltuklar, davet, bot oturtma, emoji, HAZIRIM.
 3. Masa dolu ve herkes hazır → 3 sn geri sayım; hazır olmayan varsa 15 sn sonra otomatik başlar.
-4. Maç: sıra tabanlı; süre sunucu saatiyle senkron. Güçler: Kalkan, Sonar (Radar), Duman (5 sn sis), Dondur (süre ekler).
+4. Maç: sıra tabanlı; süre sunucu saatiyle senkron. Güçler: Kalkan, Sonar (Radar), Pas (sırayı geç), Zorla (sıradakini açtığın yerin yanına it). Duman/Dondur/İpucu 2.4'te kaldırıldı.
 5. Sonuç ekranı: sıralama, ödül, tekrar oyna.
 
 ## Henüz yok (sonraki fazlar)

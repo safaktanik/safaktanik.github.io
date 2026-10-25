@@ -32,6 +32,8 @@ https://safaktanik.github.io/yeni/ (eski v1 sitenin kökünde). Kullanıcıyla *
 - Git commit kimliği: `safaktanik <safaktanik@users.noreply.github.com>`.
 
 - Ödül: havuza ≥3 ücret girdiyse ikinci ücretini geri alır (`payout()`); çevrimdışında botların ücretini ev öder (`payingSeats`).
+- Güçler (2.4): Sonar + Pas + Zorla (+ Avcı'da İmha). `usePower` (`mines.ts`); Zorla `forceArmed` → hamlede `applyRestriction` ile `allowed`/`forcedBy`; Pas/süre aşımı `dropForce`. Botlar `chooseBotPower` (`bot.ts`). Ölçüm: `npx tsx src/arena/powers.sim.ts 600`. Duman/Dondur/İpucu kaldırıldı (eski kayıtlar `normalizeState`/`parseOptions` ile uyumlu).
+- Antrenman ekranı `PracticeGame.resume()` çağırır: React StrictMode (geliştirme) efekt temizliğindeki `dispose()` maçı dondurmasın.
 - Bölge renkleri `v2.css`'teki `.match .mc--own.sN` kurallarında (`.match .mc--open` !important'ını ezer).
 
 ## Açık işler / fikirler

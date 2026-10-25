@@ -89,8 +89,8 @@ export interface MatchPlayerView extends PlayerSeatView {
   /** Mayın Avcısı: imha edilen mayın. */
   defused: number;
   /** Güç hakları (eski kayıtlarda yok olabilir). */
-  smoke?: number;
-  freeze?: number;
+  pass?: number;
+  force?: number;
 }
 
 /** Emoji atışması: maçtaki herkese anlık iletilir, saklanmaz. */
@@ -139,14 +139,16 @@ export interface MatchView {
   /** Tüm sandıklar — yalnızca maç bitince. */
   chestsAll: number[] | null;
   chestTotal: number;
-  /** Zincir: bu tur açılabilecek kareler. */
+  /** Zincir ya da Zorla: bu tur açılabilecek kareler. */
   allowed: number[] | null;
   /** Bulunan bonus kutuları (kim, ne buldu) ve maç bitince hepsi. */
   bonusFound?: { i: number; k: BonusKind; seat: number }[];
   bonusAll?: { i: number; k: BonusKind }[] | null;
   bonusTotal?: number;
-  /** Duman: bu turda (`turnNo`) `by` dışındaki oyuncuların tahtası ilk 5 sn sisli. */
-  smoke?: { by: number; turnNo: number } | null;
+  /** Zorla: `allowed` kısıtını dayatan koltuk (Zincir modunda null). */
+  forcedBy?: number | null;
+  /** Bu turda sıradaki oyuncu Zorla kurdu (hamlesinden sonra devreye girer). */
+  forceArmed?: boolean;
   /** Son kullanılan güç (animasyon); n her kullanımda artar. */
   lastPower?: { seat: number; kind: PowerKind; n: number; turnNo: number } | null;
   /** Botun (düşünürken) seçtiği kare: açmadan önce herkes görür. */
@@ -286,7 +288,7 @@ export function parseArenaMessage(raw: unknown): ArenaClientMessage | null {
       if (!needRid() || !str(m.matchId, 64) || !isInt(m.index)) return null;
       return { t: 'scan', rid: rid as number, matchId: m.matchId, index: m.index };
     case 'power':
-      if (!needRid() || !str(m.matchId, 64) || (m.kind !== 'smoke' && m.kind !== 'freeze')) return null;
+      if (!needRid() || !str(m.matchId, 64) || (m.kind !== 'pass' && m.kind !== 'force')) return null;
       return { t: 'power', rid: rid as number, matchId: m.matchId, kind: m.kind };
     case 'react':
       if (!str(m.matchId, 64) || !isReaction(m.emoji)) return null;

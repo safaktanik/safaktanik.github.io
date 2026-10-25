@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ECONOMY, TIERS, boardFor, boardRange, feeRange, levelFromXp, minesForBoard, payout, weekStartOf } from './economy';
-import { alivePlayers, cellView, chestCountFor, computeCounts, createArena, forfeit, modeView, neighbors, rankedSeats, reveal, scan, timeoutTurn, usePower, FREEZE_MS } from './mines';
+import { alivePlayers, cellView, chestCountFor, computeCounts, createArena, forfeit, modeView, neighbors, rankedSeats, reveal, scan, timeoutTurn, usePower } from './mines';
 import type { ArenaState } from './mines';
 import { minesForTable } from './tableOptions';
 
@@ -565,37 +565,114 @@ describe('bonus kutuları', () => {
   });
 });
 
-describe('güçler: Duman ve Zaman Dondurma', () => {
-  const P = { lives: 3, afkTurns: 3, island: false, shields: 0, smokes: 1, freezes: 1 };
-  it('varsayılan olarak hak yok; ayarla verilir', () => {
-    expect(createArena(9, 10, ['a', 'b'], seeded(1), S).players[0].smoke).toBe(0);
+describe('güçler: Pas ve Zorla', () => {
+  const P = { lives: 3, afkTurns: 3, island: false, shields: 0, passes: 1, forces: 1 };
+  /** Gizli komşusu olan, sayılı (yayılmayan) güvenli bir kare. */
+  const numbered = (s: ReturnType<typeof createArena>) => {
+    const counts = computeCounts(s.size, s.mines);
+    return [...Array(s.size * s.size).keys()].find((i) => !s.mines.includes(i) && s.cells[i] === 0 && counts[i] > 0 && neighbors(s.size, i).some((n) => s.cells[n] === 0))!;
+  };
+
+  it('varsayılan olarak hak yok; ayarla verilir; Zincir modunda Zorla hakkı verilmez', async () => {
+    const { matchSettings } = await import('./rules');
+    expect(createArena(9, 10, ['a', 'b'], seeded(1), S).players[0].pass).toBe(0);
     const s = createArena(9, 10, ['a', 'b'], seeded(1), P);
-    expect([s.players[0].smoke, s.players[0].freeze]).toEqual([1, 1]);
+    expect([s.players[0].pass, s.players[0].force]).toEqual([1, 1]);
+    expect(matchSettings('chain').forces).toBe(0);
+    expect(matchSettings('classic').forces).toBe(1);
   });
-  it('yalnızca sırası gelen kullanır; sıra değişmez', () => {
-    const s = createArena(9, 10, ['a', 'b'], seeded(2), P);
-    expect(usePower(s, 1, 'smoke')).toEqual({ error: 'not-your-turn' });
-    const r = usePower(s, 0, 'smoke');
-    expect(r).toEqual({ kind: 'smoke', extendMs: 0 });
+
+  it('Pas: sıra geçer, hak düşer, süre aşımı sayılmaz, hamle sonucu döner', () => {
+    const s = createArena(9, 10, ['a', 'b', 'c'], seeded(2), P);
+    expect(usePower(s, 1, 'pass')).toEqual({ error: 'not-your-turn' });
+    s.players[0].timeouts = 2;
+    const turn = s.turnNo;
+    const r = usePower(s, 0, 'pass');
+    expect(r).toEqual({ kind: 'pass', outcome: { seat: 0, index: -1, kind: 'pass', opened: 0, livesLeft: 3, eliminated: false, finished: false } });
+    expect(s.current).toBe(1);
+    expect(s.turnNo).toBe(turn + 1);
+    expect(s.players[0].pass).toBe(0);
+    expect(s.players[0].timeouts).toBe(0);
+    expect(s.players[0].eliminated).toBe(false);
+    expect(s.lastPower).toEqual({ seat: 0, kind: 'pass', n: 1, turnNo: turn });
+    // hak bitti
+    usePower(s, 1, 'pass');
+    usePower(s, 2, 'pass');
+    expect(usePower(s, 0, 'pass')).toEqual({ error: 'no-power' });
+  });
+
+  it('Zorla: kurulur (sıra değişmez), hamleden sonra sıradaki yalnızca açılan karenin yanından açabilir', () => {
+    const s = createArena(9, 10, ['a', 'b'], seeded(3), { ...P, forces: 2 });
+    const c = numbered(s);
+    expect(usePower(s, 0, 'force')).toEqual({ kind: 'force', outcome: null });
     expect(s.current).toBe(0);
-    expect(s.smoke).toEqual({ by: 0, turnNo: s.turnNo + 1 });
-    expect(usePower(s, 0, 'smoke')).toEqual({ error: 'no-power' });
-    expect(s.lastPower).toEqual({ seat: 0, kind: 'smoke', n: 1, turnNo: s.turnNo });
-    // görünüm: duman sıradaki tur için
-    expect(modeView(s, false).smoke).toEqual({ by: 0, turnNo: s.turnNo + 1 });
+    expect(usePower(s, 0, 'force')).toEqual({ error: 'already-armed' });
+    expect(modeView(s, false).forceArmed).toBe(true);
+    reveal(s, 0, c);
+    expect(s.current).toBe(1);
+    const ring = neighbors(s.size, c).filter((n) => s.cells[n] === 0).sort((a, b) => a - b);
+    expect(s.allowed).toEqual(ring);
+    expect(modeView(s, false).forcedBy).toBe(0);
+    expect(modeView(s, false).forceArmed).toBe(false);
+    const outside = [...Array(81).keys()].find((i) => s.cells[i] === 0 && !ring.includes(i))!;
+    expect(reveal(s, 1, outside)).toEqual({ error: 'not-allowed' });
+    // kısıt yalnızca bir tur sürer
+    reveal(s, 1, ring.find((i) => !s.mines.includes(i)) ?? ring[0]);
+    expect(s.allowed).toBeNull();
+    expect(modeView(s, false).forcedBy).toBeNull();
   });
-  it('Zaman Dondurma: süre uzar, tur başına bir kez', () => {
-    const s = createArena(9, 10, ['a', 'b'], seeded(3), { ...P, freezes: 2 });
-    expect(usePower(s, 0, 'freeze')).toEqual({ kind: 'freeze', extendMs: FREEZE_MS });
-    expect(usePower(s, 0, 'freeze')).toEqual({ error: 'already-frozen' });
-    expect(s.players[0].freeze).toBe(1);
-    const b = createArena(9, 10, ['a', 'b'], seeded(3), P, 'blitz');
-    expect(usePower(b, 0, 'freeze')).toEqual({ kind: 'freeze', extendMs: FREEZE_MS / 2 });
-  });
-  it('elenmiş ya da bitmiş maçta kullanılamaz', () => {
+
+  it('Zorla kurulmadan oynanan hamle sıradakini kısıtlamaz; kurulu Zorla hamleyle tüketilir', () => {
     const s = createArena(9, 10, ['a', 'b'], seeded(4), P);
+    reveal(s, 0, numbered(s));
+    expect(s.allowed).toBeNull();
+    usePower(s, 1, 'force');
+    expect(s.players[1].force).toBe(0);
+    reveal(s, 1, numbered(s));
+    expect(s.forceArmed).toBeNull();
+    expect(s.allowed).not.toBeNull();
+  });
+
+  it('Zorlanan oyuncu Pas ile kurtulur; süre aşımında da kısıt düşer', () => {
+    const s = createArena(9, 10, ['a', 'b', 'c'], seeded(5), { ...P, passes: 1 });
+    usePower(s, 0, 'force');
+    reveal(s, 0, numbered(s));
+    expect(s.allowed).not.toBeNull();
+    usePower(s, 1, 'pass');
+    expect(s.current).toBe(2);
+    expect(s.allowed).toBeNull();
+    // süre aşımı
+    usePower(s, 2, 'force');
+    reveal(s, 2, numbered(s));
+    expect(s.allowed).not.toBeNull();
+    timeoutTurn(s, 0, 3);
+    expect(s.allowed).toBeNull();
+  });
+
+  it('Zincir modunda Zorla kullanılamaz; Pas zincir kısıtını sıradakine bırakır', () => {
+    const s = createArena(9, 10, ['a', 'b', 'c'], seeded(6), P, 'chain');
+    expect(usePower(s, 0, 'force')).toEqual({ error: 'not-in-mode' });
+    reveal(s, 0, numbered(s));
+    const chain = s.allowed;
+    expect(chain).not.toBeNull();
+    usePower(s, 1, 'pass');
+    expect(s.allowed).toEqual(chain);
+    expect(modeView(s, false).forcedBy).toBeNull();
+  });
+
+  it('Mayın Avcısı: Zorla kısıtı imha hamlesinde de geçerli', () => {
+    const s = createArena(9, 10, ['a', 'b'], seeded(7), P, 'hunter');
+    usePower(s, 0, 'force');
+    const c = numbered(s);
+    reveal(s, 0, c);
+    const far = s.mines.find((m) => !neighbors(s.size, c).includes(m))!;
+    expect(reveal(s, 1, far, 'defuse')).toEqual({ error: 'not-allowed' });
+  });
+
+  it('elenmiş ya da bitmiş maçta kullanılamaz', () => {
+    const s = createArena(9, 10, ['a', 'b'], seeded(8), P);
     forfeit(s, 1);
-    expect(usePower(s, 0, 'smoke')).toEqual({ error: 'not-playing' });
+    expect(usePower(s, 0, 'pass')).toEqual({ error: 'not-playing' });
   });
 });
 

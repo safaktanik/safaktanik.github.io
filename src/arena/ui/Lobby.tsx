@@ -103,8 +103,8 @@ export function TableCard({ t, me, onJoin, busy, onWatch, onInvite }: { t: Table
             <span>♥ {eff!.lives}</span>
             <span>🛡 {eff!.shields}</span>
             <span>📡 {eff!.sonars}</span>
-            {t.options.smokes ? <span>🌫️ {t.options.smokes}</span> : null}
-            {t.options.freezes ? <span>❄️ {t.options.freezes}</span> : null}
+            {t.options.passes ? <span title="Pas">⏭️ {t.options.passes}</span> : null}
+            {eff!.forces ? <span title="Zorla">👉 {eff!.forces}</span> : null}
             {t.options.bonuses !== false ? <span>🎁 Bonus</span> : null}
             {t.options.density !== 'normal' ? <span>{t.options.density === 'hard' ? 'Çok mayın' : 'Az mayın'}</span> : null}
           </p>

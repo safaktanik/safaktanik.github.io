@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { analyze, botThinkMs, chooseBotCell } from './bot';
+import { analyze, botThinkMs, chooseBotCell, chooseBotPower } from './bot';
 import { cellView, createArena, reveal } from './mines';
 
 function seeded(seed: number) {
@@ -80,6 +80,22 @@ describe('bot: Mayın Avcısı', () => {
     expect(m).toEqual({ index: 0, action: 'defuse' });
     const c = chooseBotMove(cells, 3, 1, 'hard', () => 0.1, null, 'classic');
     expect(c.action).toBe('open');
+  });
+});
+
+describe('bot güçleri (Pas / Zorla)', () => {
+  // 3×3: ortada "1", çevresi gizli → kesin güvenli kare yok, her komşu %12,5 risk; tamamen gizli tahta %25+ risk
+  const stuck = [-1, -1, -1, -1, -1, -1, -1, -1, -1];
+  const easySafe = [9, -1, -1, -1, 1, -1, -1, -1, -1]; // patlamış mayın + "1" → diğerleri kesin güvenli
+  it('tıkanınca (kesin güvenli kare yok, risk yüksek) Pas geçer; hakkı yoksa geçmez', () => {
+    expect(chooseBotPower(stuck, 3, 3, 'medium', { pass: 1, force: 0 }, () => 0)).toBe('pass');
+    expect(chooseBotPower(stuck, 3, 3, 'medium', { pass: 0, force: 1 }, () => 0)).toBeNull();
+  });
+  it('kesin güvenli kare varken Pas geçmez; arada bir Zorla kurar; Zincir modunda Zorla yok', () => {
+    expect(chooseBotPower(easySafe, 3, 1, 'medium', { pass: 1, force: 0 }, () => 0)).toBeNull();
+    expect(chooseBotPower(easySafe, 3, 1, 'medium', { pass: 1, force: 1 }, () => 0)).toBe('force');
+    expect(chooseBotPower(easySafe, 3, 1, 'medium', { pass: 1, force: 1 }, () => 0.99)).toBeNull();
+    expect(chooseBotPower(easySafe, 3, 1, 'medium', { pass: 1, force: 1 }, () => 0, null, 'chain')).toBeNull();
   });
 });
 

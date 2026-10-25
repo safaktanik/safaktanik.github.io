@@ -14,10 +14,13 @@ export type ElimReason = 'lives' | 'afk' | 'left';
 /** Bonus kutusu: açan oyuncuya +1 kalkan, +1 sonar, +1 can ya da ekstra tur verir. */
 export type BonusKind = 'shield' | 'sonar' | 'life' | 'extra';
 export const MAX_LIVES = 5;
-/** Etkin güçler: Duman (rakibin sıradaki turunda tahtası 5 sn sisli), Zaman Dondurma (kendi turuna ek süre). */
-export type PowerKind = 'smoke' | 'freeze';
-export const FREEZE_MS = 10_000;
-export const SMOKE_MS = 5_000;
+/**
+ * Etkin güçler (sırayı harcamadan kullanılır):
+ * - Pas: sıranı geçer; tahmin zorunluyken riski sıradakine bırakırsın.
+ * - Zorla: bu turdaki hamlenden sonra sıradaki rakip, açtığın karelerin hemen yanından açmak zorunda kalır.
+ * (Eski Duman / Zaman Dondurma 2.4'te kaldırıldı: botları etkilemiyor, süre bu oyunda nadiren kısıt.)
+ */
+export type PowerKind = 'pass' | 'force';
 
 export interface ArenaPlayer {
   userId: string;
@@ -43,9 +46,9 @@ export interface ArenaPlayer {
   sonar: number;
   /** Mayın Avcısı: doğru imha edilen mayın sayısı (puan). */
   defused: number;
-  /** Güç hakları: Duman ve Zaman Dondurma. */
-  smoke: number;
-  freeze: number;
+  /** Güç hakları: Pas ve Zorla. */
+  pass: number;
+  force: number;
 }
 
 export interface ArenaState {
@@ -60,7 +63,7 @@ export interface ArenaState {
   chests: number[];
   /** Bulunmuş sandıklar. */
   chestsFound: number[];
-  /** Zincir: bu tur açılabilecek kareler (null: serbest). */
+  /** Zincir ya da Zorla: bu tur açılabilecek kareler (null: serbest). */
   allowed: number[] | null;
   players: ArenaPlayer[];
   current: number;
@@ -73,10 +76,10 @@ export interface ArenaState {
   /** Bonus kutuları (gizli güvenli kareler) ve bulunanlar. */
   bonuses: { i: number; k: BonusKind }[];
   bonusFound: { i: number; k: BonusKind; seat: number }[];
-  /** Duman: `by` koltuğu attı; `turnNo` turunda diğer oyuncuların tahtası sislenir. */
-  smoke: { by: number; turnNo: number } | null;
-  /** Bu turda Zaman Dondurma kullanıldı mı (tur başına bir kez). */
-  frozenTurn: number | null;
+  /** Zorla bu turda (turnNo) kuruldu: hamleden sonra sıradakine `allowed` dayatılır. */
+  forceArmed: number | null;
+  /** Zincir dışı modlarda `allowed`ı Zorla ile dayatan koltuk. */
+  forcedBy: number | null;
   /** Son kullanılan güç (herkese animasyon için); n her kullanımda artar. */
   lastPower: { seat: number; kind: PowerKind; n: number; turnNo: number } | null;
 }
@@ -91,9 +94,9 @@ export interface Settings {
   sonars?: number;
   /** Tahtaya bonus kutuları serpiştirilsin mi (varsayılan kapalı; masa ayarı açar). */
   bonuses?: boolean;
-  /** Oyuncu başına Duman ve Zaman Dondurma hakkı (varsayılan 0). */
-  smokes?: number;
-  freezes?: number;
+  /** Oyuncu başına Pas ve Zorla hakkı (varsayılan 0). */
+  passes?: number;
+  forces?: number;
 }
 
 export type MoveError = 'not-playing' | 'not-your-turn' | 'out-of-bounds' | 'already-open' | 'eliminated' | 'not-allowed' | 'no-defuse';
@@ -101,7 +104,7 @@ export type MoveError = 'not-playing' | 'not-your-turn' | 'out-of-bounds' | 'alr
 export interface MoveOutcome {
   seat: number;
   index: number;
-  kind: 'safe' | 'mine' | 'timeout' | 'left' | 'defused' | 'misdefuse';
+  kind: 'safe' | 'mine' | 'timeout' | 'left' | 'defused' | 'misdefuse' | 'pass';
   /** Bu hamleyle açılan (taşan) güvenli kare sayısı. */
   opened: number;
   livesLeft: number;
@@ -278,8 +281,8 @@ export function createArena(size: number, mineCount: number, userIds: string[], 
       shield: settings.shields ?? 1,
       sonar: settings.sonars ?? 1,
       defused: 0,
-      smoke: settings.smokes ?? 0,
-      freeze: settings.freezes ?? 0,
+      pass: settings.passes ?? 0,
+      force: settings.forces ?? 0,
     })),
     current: 0,
     turnNo: 1,
@@ -290,8 +293,8 @@ export function createArena(size: number, mineCount: number, userIds: string[], 
     safeLeft: total - mineCount - island.length,
     bonuses,
     bonusFound: [],
-    smoke: null,
-    frozenTurn: null,
+    forceArmed: null,
+    forcedBy: null,
     lastPower: null,
   };
 }
@@ -400,6 +403,28 @@ function chainFrom(s: ArenaState, from: number[]): number[] | null {
   return set.size ? [...set].sort((a, b) => a - b) : null;
 }
 
+/**
+ * Hamle sonrası kısıt: Zincir modunda her zaman; diğer modlarda yalnızca bu turda Zorla kurulduysa
+ * sıradaki oyuncu `from` karelerinin yanından açmak zorunda. Kurulu Zorla her durumda tüketilir.
+ */
+function applyRestriction(s: ArenaState, seat: number, from: number[], armed: boolean): void {
+  if (s.mode === 'chain') s.allowed = chainFrom(s, from);
+  else {
+    s.allowed = armed ? chainFrom(s, from) : null;
+    s.forcedBy = s.allowed ? seat : null;
+  }
+  s.forceArmed = null;
+}
+
+/** Hamle yapılmadan sıra geçince (süre aşımı, Pas): Zincir kısıtı sürer; Zorla kısıtı ve kurulu Zorla düşer. */
+function dropForce(s: ArenaState): void {
+  if (s.mode !== 'chain') {
+    s.allowed = null;
+    s.forcedBy = null;
+  }
+  s.forceArmed = null;
+}
+
 export function validateMove(s: ArenaState, seat: number, index: number, action: MoveAction = 'open'): MoveError | null {
   if (s.phase !== 'playing') return 'not-playing';
   const p = s.players[seat];
@@ -409,7 +434,8 @@ export function validateMove(s: ArenaState, seat: number, index: number, action:
   if (!Number.isInteger(index) || index < 0 || index >= s.size * s.size) return 'out-of-bounds';
   if (s.cells[index] !== 0) return 'already-open';
   if (action === 'defuse' && s.mode !== 'hunter') return 'no-defuse';
-  if (s.mode === 'chain' && s.allowed && s.allowed.length && !s.allowed.includes(index)) return 'not-allowed';
+  // Zincir ya da Zorla kısıtı (allowed yalnızca bu ikisinde dolu olur)
+  if (s.allowed && s.allowed.length && !s.allowed.includes(index)) return 'not-allowed';
   return null;
 }
 
@@ -467,8 +493,9 @@ export function reveal(s: ArenaState, seat: number, index: number, action: MoveA
     }
     bonuses = collectBonuses(s, p, newly);
   }
-  if (s.mode === 'chain') s.allowed = chainFrom(s, isMine ? [index] : newly);
   const extra = bonuses.includes('extra') && !p.eliminated;
+  // Ekstra turda Zorla kendine dayatılmaz (kurulu Zorla boşa gitmez sayılmaz: tüketilir)
+  applyRestriction(s, seat, isMine ? [index] : newly, s.forceArmed === s.turnNo && !extra);
   if (extra) stay(s);
   else pass(s, seat);
   const out: MoveOutcome = { seat, index, kind: isMine ? 'mine' : 'safe', opened, livesLeft: p.lives, eliminated, finished: (s.phase as string) === 'finished' };
@@ -489,6 +516,7 @@ function defuse(s: ArenaState, p: ArenaPlayer, index: number, isMine: boolean, m
   let eliminated = false;
   let shielded = false;
   let bonuses: BonusKind[] = [];
+  let newly: number[] = [index];
   if (isMine) {
     s.cells[index] = 3;
     s.owners[index] = seat;
@@ -496,7 +524,7 @@ function defuse(s: ArenaState, p: ArenaPlayer, index: number, isMine: boolean, m
   } else {
     // yanlış imha: kare açılır (bilgi herkese), oyuncu ceza alır; sonuç tablosunda "hata" olarak sayılır
     p.mineHits++;
-    const newly = floodOpen(s, index, mineSet);
+    newly = floodOpen(s, index, mineSet);
     opened = newly.length;
     for (const c of newly) s.owners[c] = seat;
     s.safeLeft -= opened;
@@ -511,6 +539,7 @@ function defuse(s: ArenaState, p: ArenaPlayer, index: number, isMine: boolean, m
       eliminated = true;
     }
   }
+  applyRestriction(s, seat, newly, s.forceArmed === s.turnNo);
   pass(s, seat);
   const out: MoveOutcome = { seat, index, kind: isMine ? 'defused' : 'misdefuse', opened, livesLeft: p.lives, eliminated, finished: (s.phase as string) === 'finished' };
   if (shielded) out.shielded = true;
@@ -537,28 +566,34 @@ function floodOpen(s: ArenaState, index: number, mineSet: Set<number>): number[]
   return newly;
 }
 
-export type PowerError = 'not-playing' | 'not-your-turn' | 'eliminated' | 'no-power' | 'already-frozen';
+export type PowerError = 'not-playing' | 'not-your-turn' | 'eliminated' | 'no-power' | 'already-armed' | 'not-in-mode';
 
 /**
- * Güç kullanımı (sırayı harcamaz). Duman: sıradaki turda rakiplerin tahtası 5 sn sislenir.
- * Zaman Dondurma: bu turun süresine ek (tur başına bir kez); arka uç süreyi `extendMs` kadar uzatır.
+ * Güç kullanımı. Pas: sıra hamle yapılmadan geçer (süre aşımı sayılmaz; seni kısıtlayan Zorla da düşer;
+ * Zincir kısıtı sıradakine aynen geçer) → hamle sonucu döner, arka uç bunu hamle gibi işler.
+ * Zorla: bu turda kurulur, hamlenden sonra sıradakine dayatılır (Zincir modunda zaten kısıt var: kullanılamaz).
  */
-export function usePower(s: ArenaState, seat: number, kind: PowerKind): { error: PowerError } | { kind: PowerKind; extendMs: number } {
+export function usePower(s: ArenaState, seat: number, kind: PowerKind): { error: PowerError } | { kind: PowerKind; outcome: MoveOutcome | null } {
   if (s.phase !== 'playing') return { error: 'not-playing' };
   const p = s.players[seat];
   if (!p) return { error: 'not-your-turn' };
   if (p.eliminated) return { error: 'eliminated' };
   if (seat !== s.current) return { error: 'not-your-turn' };
   if ((p[kind] ?? 0) <= 0) return { error: 'no-power' };
-  let extendMs = 0;
-  if (kind === 'freeze') {
-    if (s.frozenTurn === s.turnNo) return { error: 'already-frozen' };
-    s.frozenTurn = s.turnNo;
-    extendMs = s.mode === 'blitz' ? FREEZE_MS / 2 : FREEZE_MS;
-  } else s.smoke = { by: seat, turnNo: s.turnNo + 1 };
+  if (kind === 'force') {
+    if (s.mode === 'chain') return { error: 'not-in-mode' };
+    if (s.forceArmed === s.turnNo) return { error: 'already-armed' };
+  }
   p[kind]--;
   s.lastPower = { seat, kind, n: (s.lastPower?.n ?? 0) + 1, turnNo: s.turnNo };
-  return { kind, extendMs };
+  if (kind === 'force') {
+    s.forceArmed = s.turnNo;
+    return { kind, outcome: null };
+  }
+  p.timeouts = 0;
+  dropForce(s);
+  pass(s, seat);
+  return { kind, outcome: { seat, index: -1, kind: 'pass', opened: 0, livesLeft: p.lives, eliminated: false, finished: (s.phase as string) === 'finished' } };
 }
 
 export type ScanError = 'not-playing' | 'not-your-turn' | 'eliminated' | 'out-of-bounds' | 'no-sonar';
@@ -595,6 +630,7 @@ export function timeoutTurn(s: ArenaState, seat: number, afkTurns: number): Move
     eliminate(s, p, 'afk');
     eliminated = true;
   }
+  dropForce(s);
   pass(s, seat);
   return { seat, index: -1, kind: 'timeout', opened: 0, livesLeft: p.lives, eliminated, finished: (s.phase as string) === 'finished' };
 }
@@ -604,8 +640,10 @@ export function forfeit(s: ArenaState, seat: number): MoveOutcome | null {
   const p = s.players[seat];
   if (s.phase !== 'playing' || !p || p.eliminated) return null;
   eliminate(s, p, 'left');
-  if (seat === s.current) pass(s, seat);
-  else checkEnd(s);
+  if (seat === s.current) {
+    dropForce(s);
+    pass(s, seat);
+  } else checkEnd(s);
   return { seat, index: -1, kind: 'left', opened: 0, livesLeft: p.lives, eliminated: true, finished: (s.phase as string) === 'finished' };
 }
 
@@ -628,7 +666,9 @@ export function modeView(s: ArenaState, finished: boolean) {
     bonusFound: (s.bonusFound ?? []).map((b) => ({ ...b })),
     bonusAll: finished ? (s.bonuses ?? []).map((b) => ({ ...b })) : null,
     bonusTotal: (s.bonuses ?? []).length,
-    smoke: s.phase === 'playing' && s.smoke && s.smoke.turnNo >= s.turnNo ? { ...s.smoke } : null,
+    /** Zorla: kısıtı dayatan koltuk (Zincir modunda null) ve bu turda kurulu bir Zorla var mı. */
+    forcedBy: s.phase === 'playing' && s.mode !== 'chain' && s.allowed ? s.forcedBy : null,
+    forceArmed: s.phase === 'playing' && s.forceArmed === s.turnNo,
     lastPower: s.lastPower ? { ...s.lastPower } : null,
   };
 }
@@ -643,8 +683,10 @@ export function normalizeState(s: ArenaState): ArenaState {
   s.allowed ??= null;
   s.bonuses ??= [];
   s.bonusFound ??= [];
-  s.smoke ??= null;
-  s.frozenTurn ??= null;
+  s.forceArmed ??= null;
+  s.forcedBy ??= null;
+  // 2.3 ve öncesi kayıtlar: Duman/Dondur alanları ve güç kayıtları yeni güçlerle anlamsız
+  if (s.lastPower && s.lastPower.kind !== 'pass' && s.lastPower.kind !== 'force') s.lastPower = null;
   s.lastPower ??= null;
   for (const p of s.players) {
     p.territory ??= p.safeOpened ?? 0;
@@ -652,8 +694,8 @@ export function normalizeState(s: ArenaState): ArenaState {
     p.shield ??= 0;
     p.sonar ??= 0;
     p.defused ??= 0;
-    p.smoke ??= 0;
-    p.freeze ??= 0;
+    p.pass ??= 0;
+    p.force ??= 0;
   }
   return s;
 }

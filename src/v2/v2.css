@@ -426,9 +426,6 @@ html[data-room] .tr2 { top: var(--room-h); }
 .match .mtimer i { background: linear-gradient(90deg, #ffb000, #ffe24a) !important; }
 .match .mtimer i.is-low { background: linear-gradient(90deg, #ff2d55, #ff8a3d) !important; }
 .match .mtimer b { font-family: var(--v2-font); font-weight: 400; }
-.match.is-frozen .mtimer { border-color: #9ff3ff !important; box-shadow: 0 0 12px hsl(190 100% 70% / 0.8); }
-.match.is-frozen .mtimer i { background: linear-gradient(90deg, #6ee7ff, #e6fdff) !important; }
-.match.is-frozen .mtimer::after { content: '❄️'; position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 0.9rem; }
 
 /* tahta: kaideli 3D tabla */
 .match .mboard { border-radius: 18px; border: 3px solid var(--v2-out); background: radial-gradient(ellipse at 50% 30%, hsl(214 50% 18%), hsl(222 60% 8%)) !important; box-shadow: inset 0 0 30px hsl(222 80% 2% / 0.7), 0 6px 0 #0b1426, 0 6px 0 3px var(--v2-out) !important; }
@@ -490,19 +487,12 @@ html[data-room] .tr2 { top: var(--room-h); }
   .match .mbar2 .rtray--docked { flex-basis: 44px; }
 }
 
-/* duman sisi (5 sn) */
-.msmoke { position: absolute; inset: 0; z-index: 9; border-radius: inherit; overflow: hidden; pointer-events: none; background: hsl(260 30% 60% / 0.55); -webkit-backdrop-filter: blur(9px); backdrop-filter: blur(9px); animation: smokein 0.5s ease-out, smokeout 0.8s ease-in 4.2s forwards; display: grid; place-items: center; }
-.msmoke i { position: absolute; width: 70%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, hsl(260 40% 92% / 0.9), hsl(260 40% 80% / 0) 70%); will-change: transform; animation: smokedrift 3s ease-in-out infinite alternate; }
-.msmoke i:nth-child(1) { left: -10%; top: -10%; }
-.msmoke i:nth-child(2) { right: -15%; top: 20%; animation-delay: -1s; }
-.msmoke i:nth-child(3) { left: 10%; bottom: -20%; animation-delay: -2s; }
-.msmoke i:nth-child(4) { right: 5%; bottom: -10%; width: 50%; animation-delay: -0.5s; }
-.msmoke b { position: relative; font-family: var(--v2-font); font-weight: 400; font-size: 1.6rem; color: #fff; text-shadow: 0 3px 0 #4a2a8a, 0 0 1px #000; }
-@keyframes smokein { from { opacity: 0; transform: scale(1.1); } }
-@keyframes smokeout { to { opacity: 0; } }
-@keyframes smokedrift { to { transform: translate(8%, -6%) scale(1.15); } }
-.mbanner--smoke { background: linear-gradient(90deg, #7d1fd1, #b800ff) !important; border-color: #e0a8ff !important; color: #fff !important; }
-.mbanner--freeze { background: linear-gradient(90deg, #0a7cff, #00d2ff) !important; border-color: #bff4ff !important; color: #fff !important; }
+/* güçler: Pas ve Zorla */
+.mbanner--pass { background: linear-gradient(90deg, #0a7cff, #00d2ff) !important; border-color: #bff4ff !important; color: #fff !important; }
+.mbanner--force { background: linear-gradient(90deg, #d1451f, #ff8a00) !important; border-color: #ffd0a8 !important; color: #fff !important; }
+/* Zorlanan oyuncu: tahta turuncu çerçeve (izinli kareler zaten parlıyor) */
+.match.is-forced .mboard { box-shadow: inset 0 0 0 3px #ff8a00, 0 0 22px hsl(30 100% 55% / 0.45) !important; }
+.match .mstatus--force { background: linear-gradient(180deg, hsl(24 85% 32%), hsl(18 75% 22%)) !important; color: #ffe0c2 !important; }
 .match .mbanner { font-family: var(--v2-font); font-weight: 400; border: 2.5px solid var(--v2-out) !important; box-shadow: 0 4px 0 var(--v2-out) !important; }
 
 /* ==========================================================================
@@ -588,11 +578,10 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .match .mradial__btn--open.is-small { width: 60px; height: 60px; margin: -30px 0 0 -30px; }
 .match .mradial__lbl { font-family: var(--v2-font); font-weight: 400; font-size: 0.66rem; }
 .match .mradial__btn em { background: #fff; color: #0d1527; border: 2px solid var(--v2-out); font-family: var(--v2-font); font-weight: 400; }
-.mradial__btn--hint { background: radial-gradient(circle at 35% 30%, #c7d3ea, #6d7fa6); }
-.mradial__btn--smoke { background: radial-gradient(circle at 35% 30%, #d58bff, #8a00cc); }
-.mradial__btn--freeze { background: radial-gradient(circle at 35% 30%, #ffe47a, #e09a00); }
-.mradial__btn--smoke em { color: #8a00cc; }
-.mradial__btn--freeze em { color: #a36a00; }
+.mradial__btn--pass { background: radial-gradient(circle at 35% 30%, #8fe3ff, #0a7cff); }
+.mradial__btn--force { background: radial-gradient(circle at 35% 30%, #ffc27a, #e0570a); }
+.mradial__btn--pass em { color: #0a5fd0; }
+.mradial__btn--force em { color: #a33a00; }
 
 /* alt panel */
 .mdock { flex: none; height: 58px; display: flex; align-items: stretch; gap: 6px; position: relative; z-index: 12; }

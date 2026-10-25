@@ -29,7 +29,10 @@ function loadOpts(): PracticeOptions {
 
 function Running({ opts, onExit, onAgain }: { opts: PracticeOptions; onExit(): void; onAgain(): void }) {
   const game = useMemo(() => new PracticeGame(opts), [opts]);
-  useEffect(() => () => game.dispose(), [game]);
+  useEffect(() => {
+    game.resume();
+    return () => game.dispose();
+  }, [game]);
   const subscribe = useCallback((fn: (e: ReactionEvent) => void) => game.onReact(fn), [game]);
   const view = useSyncExternalStore(
     (fn) => game.subscribe(fn),

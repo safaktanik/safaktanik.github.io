@@ -1,5 +1,5 @@
 /**
- * İpucu feneri: yalnızca herkesin gördüğü bilgilerle (açık sayılar + patlamış/imha edilmiş mayınlar)
+ * Kesin çıkarım (eski İpucu feneri; şimdilik yalnızca testlerde ve araçlarda): yalnızca herkesin gördüğü bilgilerle (açık sayılar + patlamış/imha edilmiş mayınlar)
  * kesin çıkarım yapar. Gizli mayın bilgisini kullanmaz; bayrakları da kullanmaz (yanlış olabilirler).
  * Görünüm kodları: -1 gizli, 0–8 sayı, 9 patlamış mayın, 10 açılmamış mayın (bitişte), 11 imha edilmiş mayın.
  */

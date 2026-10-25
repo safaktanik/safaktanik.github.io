@@ -5,7 +5,7 @@ import { loadPrefs, savePrefs } from '../app/prefs';
  * Tarayıcılar sesi ilk kullanıcı etkileşiminden önce engellediği için bağlam tembel oluşturulur.
  */
 
-export type SoundId = 'click' | 'aim' | 'splash' | 'hit' | 'sunk' | 'boom' | 'place' | 'turn' | 'win' | 'lose' | 'reveal' | 'tick' | 'go' | 'seat' | 'coins' | 'out' | 'shield' | 'sonar' | 'pop' | 'streak' | 'warn' | 'flag' | 'unflag' | 'timeup' | 'bonus' | 'extra' | 'zap' | 'heart' | 'hint' | 'right' | 'wrong' | 'smoke' | 'freeze';
+export type SoundId = 'click' | 'aim' | 'splash' | 'hit' | 'sunk' | 'boom' | 'place' | 'turn' | 'win' | 'lose' | 'reveal' | 'tick' | 'go' | 'seat' | 'coins' | 'out' | 'shield' | 'sonar' | 'pop' | 'streak' | 'warn' | 'flag' | 'unflag' | 'timeup' | 'bonus' | 'extra' | 'zap' | 'heart' | 'right' | 'wrong' | 'pass' | 'force';
 
 interface Tone {
   /** Başlangıç frekansı (Hz). */
@@ -105,21 +105,16 @@ const SOUNDS: Record<SoundId, Tone[]> = {
     { f: 70, to: 50, at: 0, dur: 0.12, type: 'sine', vol: 1 },
     { f: 60, to: 42, at: 0.2, dur: 0.14, type: 'sine', vol: 0.8 },
   ],
-  // İpucu feneri: yumuşak çan.
-  hint: [
-    { f: 1047, at: 0, dur: 0.5, type: 'sine', vol: 0.45 },
-    { f: 1568, at: 0.05, dur: 0.45, type: 'sine', vol: 0.25 },
+  // Pas: hızlı, yukarı kayan "fırlatma"
+  pass: [
+    { f: 300, to: 900, at: 0, dur: 0.22, type: 'triangle', vol: 0.4 },
+    { f: 600, to: 1400, at: 0.08, dur: 0.2, type: 'sine', vol: 0.25 },
   ],
-  // Duman: hışırtılı alçalan ses
-  smoke: [
-    { f: 900, to: 120, at: 0, dur: 0.6, type: 'sawtooth', vol: 0.18 },
-    { f: 300, to: 80, at: 0.05, dur: 0.7, type: 'triangle', vol: 0.35 },
-  ],
-  // Zaman Dondurma: buz kristali çınlaması
-  freeze: [
-    { f: 2093, at: 0, dur: 0.25, type: 'sine', vol: 0.4 },
-    { f: 2637, at: 0.08, dur: 0.3, type: 'sine', vol: 0.3 },
-    { f: 3136, at: 0.16, dur: 0.4, type: 'sine', vol: 0.25 },
+  // Zorla: iki kalın vuruş (kapan kurulur)
+  force: [
+    { f: 220, to: 160, at: 0, dur: 0.12, type: 'square', vol: 0.25 },
+    { f: 330, to: 240, at: 0.14, dur: 0.16, type: 'square', vol: 0.25 },
+    { f: 660, at: 0.3, dur: 0.18, type: 'triangle', vol: 0.3 },
   ],
   right: [
     { f: 660, at: 0, dur: 0.08, type: 'triangle', vol: 0.5 },

@@ -41,16 +41,16 @@ const TABLES: { tier: TierId; cap: 2 | 3 | 4 }[] = [
   { tier: 'diamond', cap: 4 },
 ];
 
-function rngOf(seed: number) {
+export function rngOf(seed: number) {
   let s = seed >>> 0;
   return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 2 ** 32);
 }
 
-function viewOf(s: ArenaState, counts: Uint8Array): number[] {
+export function viewOf(s: ArenaState, counts: Uint8Array): number[] {
   return s.cells.map((c, i) => (c === 0 ? -1 : c === 1 ? counts[i] : c === 2 ? 9 : 11));
 }
 
-function countsOf(s: ArenaState): Uint8Array {
+export function countsOf(s: ArenaState): Uint8Array {
   const c = new Uint8Array(s.size * s.size);
   const ms = new Set(s.mines);
   for (let k = 0; k < c.length; k++) {

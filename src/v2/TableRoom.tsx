@@ -188,8 +188,8 @@ export function TableRoom() {
           <span>❤️ {t.mode === 'blitz' ? Math.min(2, o.lives) : o.lives}</span>
           <span>🛡️ {o.shields}</span>
           <span>📡 {t.mode === 'blitz' ? 0 : o.sonars}</span>
-          <span>🌫️ {o.smokes}</span>
-          <span>❄️ {o.freezes}</span>
+          <span title="Pas">⏭️ {o.passes}</span>
+          {t.mode !== 'chain' ? <span title="Zorla">👉 {o.forces}</span> : null}
           {o.bonuses ? <span>🎁 Bonus</span> : null}
           <span>
             <CoinIcon size={16} /> {fmt(t.entryFee)}

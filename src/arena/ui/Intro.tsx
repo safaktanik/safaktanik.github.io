@@ -111,8 +111,8 @@ const CARDS: { icon: ReactNode; title: string; text: string; chips?: string[] }[
   {
     icon: <Big>✨</Big>,
     title: 'Güçler kare menüsünde',
-    text: 'Sıra sendeyken bir kareye dokun; güçlerin de menüde çıkar. Hakkı biten güç menüden kalkar.',
-    chips: ['📡 Sonar: 3×3 alandaki mayınları gösterir', '💡 İpucu: kesin güvenli kare', '🌫️ Duman: rakibin tahtası 5 sn sis', '❄️ Dondur: turuna ek süre'],
+    text: 'Sıra sendeyken bir kareye dokun; güçlerin de menüde çıkar. En işe yaradıkları an: kesin güvenli kare kalmadığında. Hakkı biten güç menüden kalkar.',
+    chips: ['📡 Sonar: 3×3 alandaki mayınları gösterir', '⏭️ Pas: sıranı geç, risk sıradakinde', '👉 Zorla: sıradaki, açtığın yerin yanından açar'],
   },
   {
     icon: <Big>🎁</Big>,

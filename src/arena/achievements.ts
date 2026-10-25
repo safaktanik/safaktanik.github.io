@@ -16,7 +16,7 @@ export const BADGES: Record<BadgeId, { name: string; desc: string }> = {
   flag_master: { name: 'Bayrak Ustası', desc: 'En az 4 bayrak koy, hepsi mayının üstünde çıksın.' },
   bonus_hunter: { name: 'Kutu Avcısı', desc: 'Bir maçta en az 2 bonus kutusu bul.' },
   oracle: { name: 'Kâhin', desc: 'İzlerken en az 3 hamleyi doğru tahmin et.' },
-  sharp_mind: { name: 'Keskin Zekâ', desc: 'Hiç yardım almadan (ipucu ve sonar yok) ve mayına basmadan kazan.' },
+  sharp_mind: { name: 'Keskin Zekâ', desc: 'Hiç güç kullanmadan (sonar, Pas, Zorla yok) ve mayına basmadan kazan.' },
 };
 /** Paket görseli olmayan yeni madalyalar için simge. */
 export const BADGE_EMOJI: Partial<Record<BadgeId, string>> = { lightning: '⚡', flag_master: '🚩', bonus_hunter: '🎁', oracle: '🔮', sharp_mind: '🧠' };
@@ -29,7 +29,8 @@ export interface MatchExtras {
   flagsRight?: number;
   flagsTotal?: number;
   oracleRight?: number;
-  usedHint?: boolean;
+  /** Pas ya da Zorla kullandı mı. */
+  usedPower?: boolean;
 }
 
 /** Bu maçta kazanılan madalyalar (yalnızca oyuncunun kendisi için). */
@@ -53,7 +54,7 @@ export function badgesFor(m: MatchView, seat: number | null, x: MatchExtras): Ba
   if ((x.flagsTotal ?? 0) >= 4 && x.flagsRight === x.flagsTotal) out.push('flag_master');
   if ((m.bonusFound ?? []).filter((b) => b.seat === seat).length >= 2) out.push('bonus_hunter');
   if ((x.oracleRight ?? 0) >= 3) out.push('oracle');
-  if (won && x.usedHint === false && !x.usedSonar && row.mineHits === 0) out.push('sharp_mind');
+  if (won && x.usedPower === false && !x.usedSonar && row.mineHits === 0) out.push('sharp_mind');
   return out;
 }
 

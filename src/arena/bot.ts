@@ -76,6 +76,35 @@ export function analyze(cells: readonly number[], size: number, mineCount: numbe
   return { safe: [...safe].filter((i) => cells[i] === -1), mines, risk, hidden: hiddenAll };
 }
 
+/**
+ * Bot güç kararı (hamleden önce): kesin güvenli kare yokken risk yüksekse Pas; kesin güvenli kare
+ * açacakken arada bir Zorla kurar (rakibi açtığı yerin yanına iter). Zincir modunda Zorla yok.
+ */
+export function chooseBotPower(
+  cells: readonly number[],
+  size: number,
+  mineCount: number,
+  level: BotLevel,
+  have: { pass: number; force: number },
+  rnd: () => number = Math.random,
+  allowed: readonly number[] | null = null,
+  mode = 'classic',
+): 'pass' | 'force' | null {
+  const a = analyze(cells, size, mineCount);
+  const allow = allowed && allowed.length ? new Set(allowed) : null;
+  const safe = allow ? a.safe.filter((i) => allow.has(i)) : a.safe;
+  if (!safe.length) {
+    if (have.pass <= 0) return null;
+    const hidden = (allow ? a.hidden.filter((i) => allow.has(i)) : a.hidden).filter((i) => !a.mines.has(i));
+    const least = hidden.reduce((m, i) => Math.min(m, a.risk.get(i) ?? 1), 1);
+    // zor bot riski daha iyi tartar: yalnızca gerçekten riskliyse pas geçer
+    const threshold = level === 'hard' ? 0.25 : level === 'medium' ? 0.18 : 0.1;
+    return least >= threshold && rnd() < BOT_PERSONA[level].notice ? 'pass' : null;
+  }
+  if (have.force > 0 && mode !== 'chain' && rnd() < 0.3) return 'force';
+  return null;
+}
+
 /** Mayın Avcısı dahil bot hamlesi: kesin bilinen gizli mayını (seviyesine göre) imha eder, yoksa kare açar. */
 export function chooseBotMove(
   cells: readonly number[],

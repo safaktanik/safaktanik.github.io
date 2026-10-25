@@ -9,9 +9,7 @@ import { ChestIcon, ExitIcon, FlagIcon, MineIcon } from './icons';
 import { BoardMine, DefusedMine, EyeIcon, SeaMine } from './art';
 import { FxCanvas, fx, fxAtCell } from './Fx';
 import { badgesFor, recordBadges } from '../achievements';
-import { deduce } from '../solver';
 import type { BonusKind, PowerKind, ScanResult } from '../mines';
-import { SMOKE_MS } from '../mines';
 import { FlagIcon2 } from '../../v2/icons';
 import { PackIcon } from './PackIcon';
 import { PACK } from './packArt';
@@ -62,8 +60,6 @@ interface BoardProps {
   /** Bulunmuş bonus kutuları ve (bitişte) bulunmamış olanlar. */
   bonusAt: Map<number, BonusKind> | null;
   bonusGhost: Map<number, BonusKind> | null;
-  /** İpucu feneri: parlayan kare. */
-  hint: { index: number; kind: 'safe' | 'mine'; key: number } | null;
   /** Maç bitti: bayrak kontrolü gösterilir. */
   finished: boolean;
   onCell(i: number): void;
@@ -74,7 +70,7 @@ interface BoardProps {
 }
 
 /** Ortak tahta: tek tıklama dinleyicisi (900 kareye kadar akıcı). */
-const BoardGrid = memo(function BoardGrid({ size, cells, owners, chests, hiddenChests, allowed, myTurn, cellPx, selected, last, lastKind, boom, interactive, flags, sonarMines, sonarSafe, aim, ping, overlay, done, bonusAt, bonusGhost, hint, finished, onCell, onLong, onFlag }: BoardProps) {
+const BoardGrid = memo(function BoardGrid({ size, cells, owners, chests, hiddenChests, allowed, myTurn, cellPx, selected, last, lastKind, boom, interactive, flags, sonarMines, sonarSafe, aim, ping, overlay, done, bonusAt, bonusGhost, finished, onCell, onLong, onFlag }: BoardProps) {
   // iPhone'da sağ tık yok: kareye uzun basınca (0,45 sn) bayrak konur/kalkar.
   const press = useRef<{ t: number; i: number; x: number; y: number } | null>(null);
   const suppress = useRef(false);
@@ -180,7 +176,6 @@ const BoardGrid = memo(function BoardGrid({ size, cells, owners, chests, hiddenC
           cls += ' mc--bonusghost';
           content = <span className="mbonus mbonus--ghost">🎁</span>;
         }
-        if (hint && hint.index === i) cls += ` mc--hint mc--hint-${hint.kind}`;
         const sMine = v === -1 && sonarMines.has(i);
         if (sMine) {
           cls += ' mc--sonarmine';
@@ -196,7 +191,6 @@ const BoardGrid = memo(function BoardGrid({ size, cells, owners, chests, hiddenC
             {bonus ? <span className={`mbonus mbonus--${bonus}`} title={BONUS_INFO[bonus].gain}>{BONUS_INFO[bonus].icon}</span> : null}
             {finished && v === 10 && flags.has(i) ? <span className="mflagok">✓</span> : null}
             {finished && v === -1 && flags.has(i) ? <span className="mflagbad">✗</span> : null}
-            {hint && hint.index === i ? <i key={hint.key} className="mhintglow" /> : null}
             {sMine ? <span className="msonartag" aria-label="Sonar: mayın">📡</span> : null}
             {aim && aim.index === i && v === -1 ? <span className="maim" aria-hidden="true">🤔</span> : null}
             {boom && boom.index === i ? <i key={boom.key} className="mboom" /> : null}
@@ -386,7 +380,7 @@ export interface MatchScreenProps {
   move(index: number, action?: 'open' | 'defuse'): Promise<unknown>;
   /** Sonar: 3×3 alandaki mayın sayısı (yalnızca sana). */
   scan?(index: number): Promise<ScanResult>;
-  /** Güç kullan (Duman / Zaman Dondurma). */
+  /** Güç kullan (Pas / Zorla). */
   power?(kind: PowerKind): Promise<unknown>;
   /** Masadan çık: elenmediysen hükmen elenirsin; maçın bitmesi beklenmez. */
   exit(): Promise<unknown> | void;
@@ -472,13 +466,13 @@ export function MatchScreen({ m, meId, now, move, scan, power, exit, react, subs
   const seenSeq = useRef(m.seq);
   const wasMyTurn = useRef(myTurn);
   const streaks = useRef(new Map<number, number>());
-  // Eğlence katmanı (bu cihazda): seri alevi, şimşek hamle, ipucu feneri, izleyici tahmini.
+  // Eğlence katmanı (bu cihazda): seri alevi, şimşek hamle, izleyici tahmini.
   const [fire, setFire] = useState<Record<number, number>>({});
   const turnStart = useRef(0);
   const lightning = useRef(0);
-  const [hintsLeft, setHintsLeft] = useState(1);
-  const [hint, setHint] = useState<{ index: number; kind: 'safe' | 'mine'; key: number } | null>(null);
-  const usedHint = useRef(false);
+  // Pas / Zorla kullanımı (madalya ve maç karnesi için)
+  const usedPower = useRef(false);
+  const powersUsed = useRef(0);
   const [guess, setGuess] = useState<{ turnNo: number; seat: number; g: 'safe' | 'mine' } | null>(null);
   const guessRef = useRef<typeof guess>(guess);
   guessRef.current = guess;
@@ -496,38 +490,26 @@ export function MatchScreen({ m, meId, now, move, scan, power, exit, react, subs
     maxStreak.current = 0;
     setFire({});
     lightning.current = 0;
-    setHintsLeft(1);
-    setHint(null);
-    usedHint.current = false;
+    usedPower.current = false;
+    powersUsed.current = 0;
     setGuess(null);
     setOracle({ right: 0, total: 0 });
   }, [m.id]);
 
-  // Güçler (Duman / Zaman Dondurma): kullanılınca herkese duyuru; duman kurbanında 5 sn sis.
+  // Güçler (Pas / Zorla): kullanılınca herkese duyuru.
   const seenPower = useRef(m.lastPower?.n ?? 0);
   useEffect(() => {
     const lp = m.lastPower;
     if (!lp || lp.n === seenPower.current) return;
     seenPower.current = lp.n;
-    const who = lp.seat === mySeat ? 'Sen' : m.players[lp.seat]?.username ?? 'Biri';
-    if (lp.kind === 'smoke') {
-      playSound('smoke');
-      setBanner({ text: lp.seat === mySeat ? '🌫️ Duman attın! Sıradakinin tahtası 5 sn sisli olacak' : `🌫️ ${who} duman attı!`, tone: 'smoke', key: Date.now() });
-    } else {
-      playSound('freeze');
-      setBanner({ text: lp.seat === mySeat ? '❄️ Zamanı dondurdun: turuna ek süre!' : `❄️ ${who} zamanı dondurdu: ek süre`, tone: 'freeze', key: Date.now() });
-    }
+    const isMe = lp.seat === mySeat;
+    const who = m.players[lp.seat]?.username ?? 'Biri';
+    playSound(lp.kind);
+    if (lp.kind === 'pass') setBanner({ text: isMe ? '⏭️ Pas geçtin: risk sıradakinde!' : `⏭️ ${who} pas geçti!`, tone: 'pass', key: Date.now() });
+    else setBanner({ text: isMe ? '👉 Zorla hazır: hamlenden sonra sıradaki, açtığın yerin yanından açmak zorunda' : `👉 ${who} Zorla kurdu! Hamlesinden sonra sıradaki onun yanından açacak`, tone: 'force', key: Date.now() });
   }, [m.lastPower, mySeat, m.players]);
-  const [fogUntil, setFogUntil] = useState(0);
-  const fogTurn = useRef(-1);
-  useEffect(() => {
-    const sm = m.smoke;
-    if (!sm || sm.turnNo !== m.turnNo || m.phase !== 'playing' || mySeat === null || sm.by === mySeat || fogTurn.current === m.turnNo) return;
-    fogTurn.current = m.turnNo;
-    setFogUntil(Date.now() + SMOKE_MS);
-  }, [m.smoke, m.turnNo, m.phase, mySeat]);
-  const fogged = fogUntil > Date.now();
-  const frozenNow = !!m.lastPower && m.lastPower.kind === 'freeze' && m.lastPower.turnNo === m.turnNo && m.phase === 'playing';
+  // Zorla dayatılan oyuncu: kısıtı fark etsin
+  const forcedOnMe = myTurn && m.forcedBy != null && m.forcedBy !== mySeat && !!m.allowed?.length;
   const usePowerUp = useCallback(
     async (kind: PowerKind) => {
       if (!power) return;
@@ -535,7 +517,9 @@ export function MatchScreen({ m, meId, now, move, scan, power, exit, react, subs
       setErr(null);
       try {
         await power(kind);
-        if (kind === 'freeze') navigator.vibrate?.([20, 40, 20]);
+        usedPower.current = true;
+        powersUsed.current++;
+        navigator.vibrate?.(kind === 'force' ? [20, 40, 20] : 15);
       } catch (e) {
         setErr(errorText(e));
       } finally {
@@ -644,7 +628,7 @@ export function MatchScreen({ m, meId, now, move, scan, power, exit, react, subs
     }
     // İzleyici tahmini
     const gs = guessRef.current;
-    if (gs && gs.seat === lm.seat && lm.kind !== 'timeout' && lm.kind !== 'left') {
+    if (gs && gs.seat === lm.seat && lm.kind !== 'timeout' && lm.kind !== 'left' && lm.kind !== 'pass') {
       const safeMove = lm.kind === 'safe' || lm.kind === 'defused';
       const ok = (gs.g === 'safe') === safeMove;
       setOracle((o) => ({ right: o.right + (ok ? 1 : 0), total: o.total + 1 }));
@@ -668,7 +652,7 @@ export function MatchScreen({ m, meId, now, move, scan, power, exit, react, subs
   }, [m.phase, m.cells, flags]);
   const badges = useMemo(() => {
     if (m.phase !== 'finished') return [];
-    const b = badgesFor(m, mySeat, { maxStreak: maxStreak.current, usedSonar: scans.length > 0, lightning: lightning.current, flagsRight: flagStats.right, flagsTotal: flagStats.total, oracleRight: oracle.right, usedHint: usedHint.current });
+    const b = badgesFor(m, mySeat, { maxStreak: maxStreak.current, usedSonar: scans.length > 0, lightning: lightning.current, flagsRight: flagStats.right, flagsTotal: flagStats.total, oracleRight: oracle.right, usedPower: usedPower.current });
     recordBadges(m.id, b);
     return b;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -917,59 +901,10 @@ export function MatchScreen({ m, meId, now, move, scan, power, exit, react, subs
     for (const x of scans) for (const a of x.area) if (m.cells[a] === -1 && !x.mines.includes(a)) out.add(a);
     return out;
   }, [scans, m.cells]);
-  // İpucu feneri: yalnızca görünen bilgilerden kesin çıkarım (maç başına 1 hak; çıkarım yoksa hak gitmez).
-  const fireHint = useCallback(() => {
-    if (!myTurn || hintsLeft <= 0 || busy) return;
-    const d = deduce(m.cells, m.size, sonarMines);
-    const allowedOk = (i: number) => !(m.mode === 'chain' && m.allowed && m.allowed.length) || m.allowed.includes(i);
-    const pick = (xs: number[]) => xs[Math.floor(Math.random() * xs.length)];
-    // Yeni bilgi ver: sonarın zaten gösterdiği kareleri ve kendi bayraklarını tercih etme.
-    const fresh = d.safe.filter((i) => allowedOk(i) && !sonarSafe.has(i));
-    const safe = fresh.length ? fresh : d.safe.filter(allowedOk);
-    d.mines = d.mines.filter((i) => !sonarMines.has(i) && !flags.has(i));
-    const key = Date.now();
-    if (m.mode === 'hunter' && d.mines.length) {
-      const i = pick(d.mines);
-      setHint({ index: i, kind: 'mine', key });
-      setTool('defuse');
-      setSel(i);
-      setBanner({ text: '💡 Fener: parlayan kare kesin mayın. İmha et, puanı kap!', tone: 'hint', key });
-    } else if (safe.length) {
-      const unflagged = safe.filter((x) => !flags.has(x));
-      const i = pick(unflagged.length ? unflagged : safe);
-      const wrongFlag = flags.has(i);
-      if (wrongFlag)
-        setFlags((f) => {
-          const n = new Set(f);
-          n.delete(i);
-          return n;
-        });
-      setHint({ index: i, kind: 'safe', key });
-      setTool('open');
-      setSel(i);
-      setBanner({ text: wrongFlag ? '💡 Fener: buradaki bayrağın yanlıştı, kaldırdım. Bu kare kesinlikle güvenli!' : '💡 Fener: parlayan kare kesinlikle güvenli', tone: 'hint', key });
-    } else if (d.mines.length) {
-      const i = pick(d.mines);
-      setHint({ index: i, kind: 'mine', key });
-      setFlags((f) => new Set(f).add(i));
-      setBanner({ text: '💡 Fener kesin bir mayın buldu ve bayrakladı. Güvenli kare için risk alman gerek.', tone: 'hint', key });
-    } else {
-      playSound('wrong');
-      setBanner({ text: '💡 Fener: şu an kesin bir çıkarım yok, şansını dene! (hakkın duruyor)', tone: 'warn', key });
-      return;
-    }
-    playSound('hint');
-    usedHint.current = true;
-    setHintsLeft((n) => n - 1);
-  }, [myTurn, hintsLeft, busy, m.cells, m.size, m.mode, m.allowed, sonarMines, sonarSafe, flags]);
-  useEffect(() => {
-    if (hint && m.cells[hint.index] !== -1) setHint(null);
-  }, [m.cells, hint]);
-  useAutoClear(hint, () => setHint(null), 6000);
-
   const chestSet = useMemo(() => (m.mode === 'treasure' ? new Set(m.chestsFound) : null), [m.mode, m.chestsFound]);
   const ghostChests = useMemo(() => (m.mode === 'treasure' && m.chestsAll ? new Set(m.chestsAll.filter((c) => !m.chestsFound.includes(c))) : null), [m.mode, m.chestsAll, m.chestsFound]);
-  const allowedSet = useMemo(() => (m.mode === 'chain' && m.allowed && m.allowed.length ? new Set(m.allowed) : null), [m.mode, m.allowed]);
+  // Zincir ya da Zorla kısıtı (allowed yalnızca bu ikisinde dolu)
+  const allowedSet = useMemo(() => (m.allowed && m.allowed.length ? new Set(m.allowed) : null), [m.allowed]);
   // Çevresindeki bayrak + bilinen mayın sayısı kendi sayısına eşit olan kareler "tamam" (soluk): kalan güvenli komşuları bulmak kolaylaşır.
   const doneSet = useMemo(() => {
     const out = new Set<number>();
@@ -1001,7 +936,7 @@ export function MatchScreen({ m, meId, now, move, scan, power, exit, react, subs
       if (!myTurn || busy || m.cells[i] !== -1) return;
       if (action === 'open' && flags.has(i)) return setErr('Bu karede bayrağın var. Önce bayrağı kaldır.');
       if (action === 'open' && sonarMines.has(i)) return setErr('📡 Sonar burada mayın buldu! Başka bir kare seç.');
-      if (allowedSet && !allowedSet.has(i)) return setErr('Zincir kuralı: parlayan karelerden birini açmalısın.');
+      if (allowedSet && !allowedSet.has(i)) return setErr(m.mode === 'chain' ? 'Zincir kuralı: parlayan karelerden birini açmalısın.' : 'Zorlandın: parlayan karelerden birini açmalısın.');
       void reveal(i, action);
     },
     [myTurn, busy, m.cells, flags, sonarMines, allowedSet, reveal],
@@ -1122,14 +1057,14 @@ export function MatchScreen({ m, meId, now, move, scan, power, exit, react, subs
       if (tool === 'sonar') return { text: 'Sonar: taranacak alanın ortasına dokun', tone: 'sonar' };
       if (tool === 'defuse') return { text: sel === null ? 'İmha: mayın olan kareyi seç' : 'Emin misin? Tekrar dokun', tone: 'defuse' };
       if (tool === 'flag') return { text: 'Bayrak: şüpheli karelere dokun', tone: 'go' };
-      return {
-        text: sel === null ? (m.mode === 'chain' && m.allowed?.length ? 'Sıra sende: zincirdeki parlayan karelerden birini seç' : 'Sıra sende: bir kare seç') : `Seçili: ${cellName(m.size, sel)}. Açmak için tekrar dokun`,
-        tone: 'go',
-      };
+      if (sel !== null) return { text: `Seçili: ${cellName(m.size, sel)}. Açmak için tekrar dokun`, tone: 'go' };
+      if (forcedOnMe) return { text: `👉 ${m.players[m.forcedBy!]?.username ?? 'Rakibin'} seni zorladı: parlayan karelerden birini aç (Pas'la kurtulabilirsin)`, tone: 'force' };
+      if (m.forceArmed) return { text: '👉 Zorla hazır: şimdi kareni aç, sıradaki onun yanından açacak', tone: 'force' };
+      return { text: m.mode === 'chain' && m.allowed?.length ? 'Sıra sende: zincirdeki parlayan karelerden birini seç' : 'Sıra sende: bir kare seç', tone: 'go' };
     }
     if (mySeat === null) return { text: `İzleyici · sıra: ${cur.username}`, tone: 'spect' };
     return { text: `Sıra: ${cur.username}${tool === 'flag' ? ' · bayrak koyabilirsin' : ''}`, tone: 'wait' };
-  }, [m.phase, meP, myTurn, sel, cur, m.size, mySeat, m.mode, m.allowed, tool]);
+  }, [m.phase, meP, myTurn, sel, cur, m.size, mySeat, m.mode, m.allowed, tool, forcedOnMe, m.forcedBy, m.forceArmed, m.players]);
 
   const sonarLeft = meP?.sonar ?? 0;
 
@@ -1153,7 +1088,7 @@ export function MatchScreen({ m, meId, now, move, scan, power, exit, react, subs
     const open: RadialAction = {
       id: 'open',
       icon: '⛏️',
-      label: flagged ? 'Bayraklı' : sMine ? 'Mayın!' : blocked ? 'Zincir dışı' : 'Aç',
+      label: flagged ? 'Bayraklı' : sMine ? 'Mayın!' : blocked ? (m.mode === 'chain' ? 'Zincir dışı' : 'Zorla dışı') : 'Aç',
       tone: 'open',
       disabled: flagged || sMine || blocked || busy,
       onClick: () => tryOpen(i, 'open'),
@@ -1175,47 +1110,35 @@ export function MatchScreen({ m, meId, now, move, scan, power, exit, react, subs
         },
       });
     // Güçler de kare menüsünde (tahtanın altında ayrı çubuk yok). Hakkı biten güç menüden kalkar.
-    if (hintsLeft > 0)
+    if (power && (meP?.pass ?? 0) > 0)
       out.push({
-        id: 'hint',
-        icon: '💡',
-        label: 'İpucu',
-        tone: 'hint',
-        badge: hintsLeft,
+        id: 'pass',
+        icon: '⏭️',
+        label: 'Pas',
+        tone: 'pass',
+        badge: meP?.pass ?? 0,
         disabled: busy,
         onClick: () => {
           setMenu(null);
-          fireHint();
+          void usePowerUp('pass');
         },
       });
-    if (power && (meP?.smoke ?? 0) > 0)
+    // Zorla hamleden önce kurulur; Zincir'de zaten kısıt var
+    if (power && (meP?.force ?? 0) > 0 && m.mode !== 'chain' && !m.forceArmed)
       out.push({
-        id: 'smoke',
-        icon: '🌫️',
-        label: 'Duman',
-        tone: 'smoke',
-        badge: meP?.smoke ?? 0,
+        id: 'force',
+        icon: '👉',
+        label: 'Zorla',
+        tone: 'force',
+        badge: meP?.force ?? 0,
         disabled: busy,
         onClick: () => {
           setMenu(null);
-          void usePowerUp('smoke');
-        },
-      });
-    if (power && (meP?.freeze ?? 0) > 0 && m.turnEndsAt && !frozenNow)
-      out.push({
-        id: 'freeze',
-        icon: '❄️',
-        label: 'Dondur',
-        tone: 'freeze',
-        badge: meP?.freeze ?? 0,
-        disabled: busy,
-        onClick: () => {
-          setMenu(null);
-          void usePowerUp('freeze');
+          void usePowerUp('force');
         },
       });
     return out;
-  }, [menu, flags, allowedSet, sonarMines, myTurn, busy, m.mode, scan, sonarLeft, toggleFlag, tryOpen, doScan, hintsLeft, fireHint, power, meP, m.turnEndsAt, frozenNow, usePowerUp]);
+  }, [menu, flags, allowedSet, sonarMines, myTurn, busy, m.mode, scan, sonarLeft, toggleFlag, tryOpen, doScan, power, meP, m.forceArmed, usePowerUp]);
 
   // Kalan mayın göstergesi: toplam − patlayan − imha edilen − benim bayraklarım.
   const knownMines = useMemo(() => m.cells.reduce((n, v) => n + (v === 9 || v === 11 ? 1 : 0), 0), [m.cells]);
@@ -1230,7 +1153,7 @@ export function MatchScreen({ m, meId, now, move, scan, power, exit, react, subs
       out.push({ icon: '🔥', label: 'En uzun seri', value: `${maxStreak.current}` });
       out.push({ icon: '⚡', label: 'Şimşek hamle', value: `${lightning.current}` });
       if (m.bonusTotal) out.push({ icon: '🎁', label: 'Bonus kutusu', value: `${(m.bonusFound ?? []).filter((b) => b.seat === mySeat).length}` });
-      out.push({ icon: '💡', label: 'İpucu', value: usedHint.current ? 'Kullandın' : 'Kullanmadın' });
+      if (powersUsed.current) out.push({ icon: '⏭️', label: 'Kullanılan güç', value: `${powersUsed.current}` });
     }
     if (oracle.total) out.push({ icon: '🔮', label: 'Doğru tahmin', value: `${oracle.right}/${oracle.total}` });
     return out;
@@ -1239,7 +1162,7 @@ export function MatchScreen({ m, meId, now, move, scan, power, exit, react, subs
   const activeMe = playing && meP && !meP.eliminated;
 
   return (
-    <div className={`ar-root ascreen match tier--${m.tier}${shake ? ` is-shaking is-shaking--${shake}` : ''}${myTurn ? ' is-myturn' : ''}${myTurn && secsLeft <= 5 ? ' is-hurry' : ''}${lastLife ? ' is-lastlife' : ''}${frozenNow ? ' is-frozen' : ''}`}>
+    <div className={`ar-root ascreen match tier--${m.tier}${shake ? ` is-shaking is-shaking--${shake}` : ''}${myTurn ? ' is-myturn' : ''}${myTurn && secsLeft <= 5 ? ' is-hurry' : ''}${lastLife ? ' is-lastlife' : ''}${forcedOnMe ? ' is-forced' : ''}`}>
       {flash ? <div key={flash.key} className={`mflash mflash--${flash.tone}`} aria-hidden="true" /> : null}
       {/* Üst bar: tek satır, telefonda taşmaz. Solda çıkış, ortada mod (+ bonus sayacı), sağda kalan mayın ve ödül. */}
       <header className="mh2" title={m.tableName}>
@@ -1331,7 +1254,6 @@ export function MatchScreen({ m, meId, now, move, scan, power, exit, react, subs
           done={doneSet}
           bonusAt={bonusAt}
           bonusGhost={bonusGhost}
-          hint={hint}
           finished={m.phase === 'finished'}
           onCell={onCell}
           onLong={onLong}
@@ -1339,16 +1261,6 @@ export function MatchScreen({ m, meId, now, move, scan, power, exit, react, subs
         />
         </div>
         {menu !== null ? <RadialMenu index={menu} wrap={wrap} actions={menuActions} onGone={() => setMenu(null)} /> : null}
-        {fogged ? (
-          <div key={fogUntil} className="msmoke" aria-label="Duman: tahta birkaç saniye görünmüyor" role="img">
-            <i />
-            <i />
-            <i />
-            <i />
-            <b>🌫️ Duman!</b>
-          </div>
-        ) : null}
-
         {banner ? (
           <div key={banner.key} className={`mbanner mbanner--${banner.tone}`}>
             {banner.text}

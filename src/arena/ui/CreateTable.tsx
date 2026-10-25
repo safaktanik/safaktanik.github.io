@@ -137,15 +137,15 @@ export function CreateTable({ onClose }: { onClose(): void }) {
       </div>
       <div className="afgroup optgrid">
         <div>
-          <h3>🌫️ Duman</h3>
-          <Seg label="Duman" value={opts.smokes} onChange={(v) => setO({ smokes: v as number })} options={OPTION_CHOICES.smokes.map((n) => ({ v: n, label: n ? `${n}` : 'Yok' }))} />
+          <h3>⏭️ Pas</h3>
+          <Seg label="Pas" value={opts.passes} onChange={(v) => setO({ passes: v as number })} options={OPTION_CHOICES.passes.map((n) => ({ v: n, label: n ? `${n}` : 'Yok' }))} />
         </div>
         <div>
-          <h3>❄️ Dondur</h3>
-          <Seg label="Zaman Dondurma" value={opts.freezes} onChange={(v) => setO({ freezes: v as number })} options={OPTION_CHOICES.freezes.map((n) => ({ v: n, label: n ? `${n}` : 'Yok' }))} />
+          <h3>👉 Zorla {mode === 'chain' ? <small className="amuted">(Zincir'de yok)</small> : null}</h3>
+          <Seg label="Zorla" value={opts.forces} onChange={(v) => setO({ forces: v as number })} options={OPTION_CHOICES.forces.map((n) => ({ v: n, label: n ? `${n}` : 'Yok' }))} />
         </div>
       </div>
-      <p className="asmall amuted">Güç kuralları: Duman, sıradaki rakibin tahtasını 5 sn sisler; Zaman Dondurma kendi turuna +10 sn ekler (Yıldırım'da +5).</p>
+      <p className="asmall amuted">Güç kuralları: Pas sıranı geçer, riski sıradakine bırakır. Zorla'yı hamlenden önce kurarsın: sıradaki rakip, açtığın karelerin hemen yanından açmak zorunda kalır.</p>
       <div className="afgroup">
         <h3>Bonus kutuları</h3>
         <Seg label="Bonus kutuları" value={opts.bonuses ? 1 : 0} onChange={(v) => setO({ bonuses: v === 1 })} options={[{ v: 1, label: '🎁 Açık' }, { v: 0, label: 'Kapalı' }]} />

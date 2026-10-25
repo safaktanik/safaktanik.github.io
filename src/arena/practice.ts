@@ -1,6 +1,6 @@
 import { ECONOMY, TIERS, boardFor } from './economy';
 import type { TierId } from './economy';
-import { botThinkMs, chooseBotMove } from './bot';
+import { botThinkMs, chooseBotMove, chooseBotPower } from './bot';
 import type { BotLevel } from './bot';
 import { matchSettings, turnSeconds } from './rules';
 import { minesForTable } from './tableOptions';
@@ -94,9 +94,13 @@ export class PracticeGame {
       const delay = botThinkMs(view, s.size, s.mineCount, this.o.level, Math.random(), secs);
       this.botTimer = setTimeout(() => {
         if (this.state.turnNo !== turnNo || this.state.phase !== 'playing') return;
-        // Bot bazen Duman atar (rakibin bir sonraki turunu zorlaştırır).
+        // Bot güç kullanır: tıkanınca Pas (sıra geçer, hamle yok), güvenli hamlede arada bir Zorla.
         const bp = this.state.players[this.state.current];
-        if ((bp.smoke ?? 0) > 0 && Math.random() < 0.3) usePower(this.state, bp.seat, 'smoke');
+        const pw = chooseBotPower(cellView(this.state, false), s.size, s.mineCount, this.o.level, { pass: bp.pass ?? 0, force: bp.force ?? 0 }, Math.random, this.state.allowed, s.mode);
+        if (pw) {
+          const r = usePower(this.state, bp.seat, pw);
+          if (!('error' in r) && r.outcome) return this.after(r.outcome);
+        }
         const bm = chooseBotMove(cellView(this.state, false), s.size, s.mineCount, this.o.level, Math.random, this.state.allowed, s.mode);
         this.aim = { seat: this.state.current, index: bm.index, turnNo };
         this.emit();
@@ -174,22 +178,13 @@ export class PracticeGame {
     this.after(r.outcome);
   }
 
-  /** Güç kullan (Duman / Zaman Dondurma); sıra değişmez, Dondurma süreyi uzatır. */
-  power(kind: PowerKind): { kind: PowerKind; extendMs: number } {
+  /** Güç kullan: Pas sırayı geçirir (hamle gibi işlenir); Zorla bu turdaki hamlenden sonra devreye girer. */
+  power(kind: PowerKind): { kind: PowerKind } {
     const r = usePower(this.state, 0, kind);
     if ('error' in r) throw Object.assign(new Error(r.error), { code: r.error });
-    if (r.extendMs && this.turnEndsAt !== null) {
-      const turnNo = this.state.turnNo;
-      this.turnEndsAt += r.extendMs;
-      if (this.timer) clearTimeout(this.timer);
-      this.timer = setTimeout(() => {
-        if (this.state.turnNo !== turnNo || this.state.phase !== 'playing') return;
-        const out = timeoutTurn(this.state, this.state.current, ECONOMY.afkEliminationTurns);
-        if (out) this.after(out);
-      }, Math.max(0, this.turnEndsAt - Date.now()));
-    }
-    this.emit();
-    return r;
+    if (r.outcome) this.after(r.outcome);
+    else this.emit();
+    return { kind: r.kind };
   }
 
   /** Sonar: sonucu yalnızca oyuncu görür; sıra değişmez. */
@@ -216,9 +211,18 @@ export class PracticeGame {
   dispose(): void {
     if (this.timer) clearTimeout(this.timer);
     if (this.botTimer) clearTimeout(this.botTimer);
+    this.timer = this.botTimer = null;
     for (const t of this.reactTimers) clearTimeout(t);
     this.listeners.clear();
     this.reactListeners.clear();
+  }
+
+  /**
+   * Ekran yeniden bağlanınca zamanlayıcıları geri kurar. React StrictMode (geliştirme) efektleri
+   * bağla → temizle → bağla diye çalıştırır; yoksa ilk temizlikteki dispose() maçı dondururdu.
+   */
+  resume(): void {
+    if (!this.timer && !this.botTimer) this.arm();
   }
 
   view(): MatchView {
@@ -256,8 +260,8 @@ export class PracticeGame {
         shield: p.shield ?? 0,
         sonar: p.sonar ?? 0,
         defused: p.defused ?? 0,
-        smoke: p.smoke ?? 0,
-        freeze: p.freeze ?? 0,
+        pass: p.pass ?? 0,
+        force: p.force ?? 0,
       })),
       viewerSeat: 0,
       current: s.current,

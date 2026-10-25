@@ -1,7 +1,7 @@
 import type { ArenaBackend, LeaderboardData, LeaderRow, MatchRow, TxRow } from '../backend';
 import { ArenaHttpError } from '../client';
 import type { ArenaRequest, ArenaSnapshot } from '../client';
-import { botThinkMs, chooseBotMove } from '../bot';
+import { botThinkMs, chooseBotMove, chooseBotPower } from '../bot';
 import { ECONOMY, TIERS, TIER_ORDER, boardFor, boardRange, dayKeyOf, feeRange, levelFromXp, nextWeekStartMs, payout, weekStartOf, xpForLevel } from '../economy';
 import type { TierId } from '../economy';
 import { cellView, createArena, forfeit, modeView, rankedSeats, reveal, scan, timeoutTurn, usePower } from '../mines';
@@ -330,8 +330,8 @@ export class HostedBackend implements ArenaBackend {
           shield: p.shield ?? 0,
           sonar: p.sonar ?? 0,
           defused: p.defused ?? 0,
-        smoke: p.smoke ?? 0,
-        freeze: p.freeze ?? 0,
+          pass: p.pass ?? 0,
+          force: p.force ?? 0,
         };
       }),
       viewerSeat: s.players.find((p) => p.userId === this.uid)?.seat ?? null,
@@ -927,12 +927,11 @@ export class HostedBackend implements ArenaBackend {
     if (drop.length) await this.updatePlayer((pp) => ({ ...pp, pending: (pp.pending ?? []).filter((x) => !drop.includes(x)) }));
   }
 
-  /** Sonar: 3×3 alandaki mayın sayısı yalnızca bana döner; sıra geçmez. */
-  /** Güç kullan (Duman / Zaman Dondurma). Sıra değişmez; Dondurma tur süresini uzatır. */
-  private async power(matchId: string, kind: PowerKind): Promise<{ kind: PowerKind; extendMs: number }> {
+  /** Güç kullan: Pas (sıra geçer) ya da Zorla (bu turdaki hamleden sonra sıradakine kısıt). */
+  private async power(matchId: string, kind: PowerKind): Promise<{ kind: PowerKind }> {
     const t0 = this.tableDoc;
     if (!t0 || t0.match?.id !== matchId) throw new ArenaHttpError('match-not-found', 404);
-    let res: { kind: PowerKind; extendMs: number } | null = null;
+    let res: { kind: PowerKind } | null = null;
     await this.mutateTable(t0.id, (t) => {
       if (!t.match || t.match.id !== matchId || t.status !== 'playing') throw new ArenaHttpError('not-playing', 409);
       const s = stateOf(t);
@@ -940,9 +939,10 @@ export class HostedBackend implements ArenaBackend {
       if (!me) throw new ArenaHttpError('not-in-match', 403);
       const r = usePower(s, me.seat, kind);
       if ('error' in r) throw new ArenaHttpError(r.error, 409);
-      res = r;
-      if (r.extendMs && t.match.turnEndsAt) t.match.turnEndsAt += r.extendMs;
-      storeState(t, s);
+      res = { kind: r.kind };
+      // Pas sırayı geçirir: hamle gibi işlenir (süre yenilenir, bitiş denetlenir)
+      if (r.outcome) this.applyOutcome(t, s, r.outcome, false);
+      else storeState(t, s);
       return t;
     });
     return res!;
@@ -1088,8 +1088,7 @@ export class HostedBackend implements ArenaBackend {
           await this.mutateTable(t.id, (tt) => {
             if (!tt.match || tt.status !== 'playing' || tt.match.s.turnNo !== s.turnNo || tt.match.aim?.turnNo === s.turnNo) return null;
             const st = stateOf(tt);
-            const bp = st.players[st.current];
-            if ((bp.smoke ?? 0) > 0 && Math.random() < 0.3) usePower(st, bp.seat, 'smoke');
+            if (this.botPower(tt, st)) return tt;
             const bm = chooseBotMove(cellView(st, false), st.size, st.mineCount, 'medium', Math.random, st.allowed, st.mode);
             tt.match.aim = { seat: st.current, index: bm.index, turnNo: st.turnNo, action: bm.action, at: this.now() };
             storeState(tt, st);
@@ -1110,6 +1109,7 @@ export class HostedBackend implements ArenaBackend {
           await this.mutateTable(t.id, (tt) => {
             if (!tt.match || tt.status !== 'playing' || tt.match.s.turnNo !== s.turnNo) return null;
             const st = stateOf(tt);
+            if (this.botPower(tt, st)) return tt;
             const bm = chooseBotMove(cellView(st, false), st.size, st.mineCount, 'medium', Math.random, st.allowed, st.mode);
             const r = reveal(st, st.current, bm.index, bm.action);
             if ('error' in r) return null;
@@ -1134,6 +1134,24 @@ export class HostedBackend implements ArenaBackend {
       this.ticking = false;
     }
     await this.settlePending().catch(() => undefined);
+  }
+
+  /**
+   * Botun güç kullanımı (hamleden önce). Pas sırayı bitirir → true (hamle yapılmaz);
+   * Zorla yalnızca kurulur → false (bot hamlesine devam eder).
+   */
+  private botPower(t: TableDoc, st: ArenaState): boolean {
+    const bp = st.players[st.current];
+    const kind = chooseBotPower(cellView(st, false), st.size, st.mineCount, 'medium', { pass: bp.pass ?? 0, force: bp.force ?? 0 }, Math.random, st.allowed, st.mode);
+    if (!kind) return false;
+    const r = usePower(st, bp.seat, kind);
+    if ('error' in r) return false;
+    if (r.outcome) {
+      t.match!.aim = null;
+      this.applyOutcome(t, st, r.outcome, false);
+      return true;
+    }
+    return false;
   }
 
   /** Aynı işi kısa sürede tekrar denememek için (kilit beklerken). */

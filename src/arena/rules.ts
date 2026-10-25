@@ -10,7 +10,7 @@ export function matchSettings(mode: ArenaMode = 'classic', opts?: Partial<TableO
   const o = optionsOf(opts);
   const blitz = mode === 'blitz';
   // Yıldırım kendi kurallarını dayatır (2 can, sonar yok); kalkan masa ayarından.
-  return { lives: blitz ? Math.min(2, o.lives) : o.lives, afkTurns: ECONOMY.afkEliminationTurns, island: ECONOMY.startIsland, shields: o.shields, sonars: blitz ? 0 : o.sonars, bonuses: o.bonuses, smokes: o.smokes, freezes: o.freezes };
+  return { lives: blitz ? Math.min(2, o.lives) : o.lives, afkTurns: ECONOMY.afkEliminationTurns, island: ECONOMY.startIsland, shields: o.shields, sonars: blitz ? 0 : o.sonars, bonuses: o.bonuses, passes: o.passes, forces: mode === 'chain' ? 0 : o.forces };
 }
 
 /** Moda ve masa ayarına göre tur süresi (sn). Yıldırım her zaman en fazla 8 sn. */

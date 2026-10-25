@@ -225,8 +225,8 @@ export class Arena {
           shield: p.shield ?? 0,
           sonar: p.sonar ?? 0,
           defused: p.defused ?? 0,
-        smoke: p.smoke ?? 0,
-        freeze: p.freeze ?? 0,
+          pass: p.pass ?? 0,
+          force: p.force ?? 0,
         };
       }),
       viewerSeat: s.players.find((p) => p.userId === viewerId)?.seat ?? null,
@@ -517,25 +517,21 @@ export class Arena {
     return r.outcome;
   }
 
-  /** Güç kullan (Duman / Zaman Dondurma): sıra değişmez; Dondurma tur süresini uzatır. */
-  power(userId: string, matchId: string, kind: unknown): { kind: PowerKind; extendMs: number } {
+  /** Güç kullan: Pas sırayı geçirir (hamle gibi işlenir); Zorla bu turdaki hamleden sonra sıradakini kısıtlar. */
+  power(userId: string, matchId: string, kind: unknown): { kind: PowerKind } {
     const m = this.live.get(matchId);
     if (!m) throw new ApiError('match-not-found', 404);
     const p = m.state.players.find((x) => x.userId === userId);
     if (!p) throw new ApiError('not-in-match', 403);
-    if (kind !== 'smoke' && kind !== 'freeze') throw new ApiError('bad-request');
+    if (kind !== 'pass' && kind !== 'force') throw new ApiError('bad-request');
     const r = usePower(m.state, p.seat, kind);
     if ('error' in r) throw new ApiError(r.error, 409);
-    if (r.extendMs && m.turnEndsAt !== null) {
-      const turnNo = m.state.turnNo;
-      m.turnEndsAt += r.extendMs;
-      if (m.timer !== null) this.sched.clear(m.timer);
-      m.timer = this.sched.set(() => this.onTimeout(m.id, turnNo), Math.max(0, m.turnEndsAt - this.now()));
-      this.db.run('UPDATE matches SET turn_ends_at = ? WHERE id = ?', m.turnEndsAt, m.id);
+    if (r.outcome) this.afterMove(m, r.outcome);
+    else {
+      this.db.run('UPDATE matches SET board_state = ? WHERE id = ?', JSON.stringify(m.state), m.id);
+      this.notify.match(m.id, m.state.players.map((x) => x.userId));
     }
-    this.db.run('UPDATE matches SET board_state = ? WHERE id = ?', JSON.stringify(m.state), m.id);
-    this.notify.match(m.id, m.state.players.map((x) => x.userId));
-    return r;
+    return { kind: r.kind };
   }
 
   /** Sonar: sonuç yalnızca kullanana döner; sıra değişmez. */

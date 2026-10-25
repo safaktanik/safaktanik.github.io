@@ -190,6 +190,57 @@ describe('test sunucusu (paylaşılan veritabanı)', () => {
     b.stop();
   }, 90000);
 
+  it('çevrimdışı güçler: oyuncu Pas ve Zorla kullanır, botlar güçleriyle birlikte maçı bitirir', async () => {
+    const mem = createMemoryDb();
+    const b = new HostedBackend(mem.forUser('yerel', { anyWrite: true }), 'yerel', { botDelayMs: 5, countdownMs: 20, autoTick: false, local: true });
+    b.start();
+    await until(() => !!b.state.needsProfile);
+    await b.createProfile('Kaptan', 3);
+    await until(() => !!b.state.me);
+    const tv = await b.request<{ id: string }>({ t: 'table.create', tier: 'bronze', capacity: 3, name: 'Güç' });
+    await b.addBot!(tv.id);
+    await b.addBot!(tv.id);
+    const tdoc = () => mem.docs.get(`tables/${tv.id}`) as unknown as TableDoc;
+    await until(() => tdoc().status === 'countdown');
+    await sleep(40);
+    await b.tick();
+    await until(() => tdoc().status === 'playing');
+    const myTurn = async () => {
+      for (let g = 0; g < 200 && tdoc().status === 'playing'; g++) {
+        const t = tdoc();
+        if (!t.seats.find((x) => x.seat === t.match!.s.current)!.bot) return until(() => b.state.match?.seq === t.match!.seq);
+        await sleep(10);
+        await b.tick();
+      }
+    };
+    // Pas
+    await myTurn();
+    if (tdoc().status === 'playing') {
+      const before = tdoc().match!.s.turnNo;
+      await b.request({ t: 'power', matchId: tdoc().match!.id, kind: 'pass' });
+      const s = stateOf(tdoc());
+      expect(s.turnNo).toBe(before + 1);
+      expect(tdoc().match!.lastMove?.kind).toBe('pass');
+      expect(s.players.find((p) => p.userId === 'yerel')!.pass).toBe(0);
+      await expect(b.request({ t: 'power', matchId: tdoc().match!.id, kind: 'pass' })).rejects.toMatchObject({ code: expect.stringMatching(/not-your-turn|no-power/) });
+    }
+    // Zorla: kur, hamle yap; izinli kare kaldıysa sıradakine dayatılmış olmalı
+    await myTurn();
+    if (tdoc().status === 'playing') {
+      await b.request({ t: 'power', matchId: tdoc().match!.id, kind: 'force' });
+      expect(stateOf(tdoc()).forceArmed).toBe(stateOf(tdoc()).turnNo);
+      const s0 = stateOf(tdoc());
+      const pool = s0.cells.map((c, i) => (c === 0 && !s0.mines.includes(i) ? i : -1)).filter((i) => i >= 0);
+      await b.request({ t: 'move', matchId: tdoc().match!.id, index: pool[0] });
+      const s1 = stateOf(tdoc());
+      if (s1.phase === 'playing' && s1.allowed) expect(s1.forcedBy).toBe(s1.players.find((p) => p.userId === 'yerel')!.seat);
+      expect(s1.forceArmed).toBeNull();
+    }
+    await playOut([b], tv.id, tdoc);
+    expect(tdoc().status).toBe('finished');
+    b.stop();
+  }, 60000);
+
   it('çevrimdışı lobi: kural değişikliğinden önce açılmış (eski mayın sayılı) bot masası yenisiyle değiştirilir', async () => {
     const mem = createMemoryDb();
     const now = Date.now();
