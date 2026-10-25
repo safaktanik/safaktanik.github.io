@@ -1,0 +1,40 @@
+{
+  "name": "mine-duel",
+  "private": true,
+  "version": "2.2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p server/tsconfig.json",
+    "server": "node scripts/check-node.mjs && tsx server/index.ts",
+    "start": "npm run build && npm run server",
+    "db:migrate": "tsx server/arena/migrate.ts",
+    "test-store": "tsx server/teststore.ts",
+    "site": "npm run build && node scripts/build-site.mjs",
+    "sim": "npx tsx src/arena/balance.sim.ts 300 classic"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@types/ws": "^8.5.13",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.8"
+  },
+  "description": "Mine Duel 2 — Okey usulü masalarda 2–4 kişilik ortak mayın tarlası düellosu (web, React + TypeScript)",
+  "engines": {
+    "node": ">=22.5"
+  }
+}

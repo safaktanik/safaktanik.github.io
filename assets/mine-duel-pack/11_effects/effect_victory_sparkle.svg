@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+    
+    <defs>
+      <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#F8FAFC"/><stop offset="100%" stop-color="#8FA0B5"/>
+      </linearGradient>
+      <linearGradient id="cyanGlow" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#69F4FF"/><stop offset="100%" stop-color="#20D9E8"/>
+      </linearGradient>
+      <linearGradient id="orangeGlow" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#FFD09A"/><stop offset="100%" stop-color="#FF8A32"/>
+      </linearGradient>
+    </defs><path d="M55 45 V75 M40 60 H70" stroke="#FFC857" stroke-width="5" stroke-linecap="round"/><path d="M195 60 V90 M180 75 H210" stroke="#20D9E8" stroke-width="5" stroke-linecap="round"/><path d="M75 175 V205 M60 190 H90" stroke="#FF8A32" stroke-width="5" stroke-linecap="round"/><path d="M195 180 V210 M180 195 H210" stroke="#9D83FF" stroke-width="5" stroke-linecap="round"/><path d="M128 23 V53 M113 38 H143" stroke="#F8FAFC" stroke-width="5" stroke-linecap="round"/><path d="M130 205 V235 M115 220 H145" stroke="#FFC857" stroke-width="5" stroke-linecap="round"/></svg>

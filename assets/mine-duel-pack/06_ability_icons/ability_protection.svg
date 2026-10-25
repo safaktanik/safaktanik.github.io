@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+    
+    <defs>
+      <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#F8FAFC"/><stop offset="100%" stop-color="#8FA0B5"/>
+      </linearGradient>
+      <linearGradient id="cyanGlow" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#69F4FF"/><stop offset="100%" stop-color="#20D9E8"/>
+      </linearGradient>
+      <linearGradient id="orangeGlow" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#FFD09A"/><stop offset="100%" stop-color="#FF8A32"/>
+      </linearGradient>
+    </defs><circle cx="128" cy="128" r="100" fill="#1B2638" stroke="#20D9E8" stroke-width="8"/><circle cx="128" cy="128" r="86" fill="#20D9E8" opacity=".13" stroke="#20D9E8" stroke-width="7"/><path d="M128 60 L181 82 V126 Q174 166 128 192 Q82 166 75 126 V82 Z" fill="#35D08A" opacity=".45" stroke="#35D08A" stroke-width="6"/></svg>

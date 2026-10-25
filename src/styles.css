@@ -1,0 +1,149 @@
+/* ==========================================================================
+   Mine Duel — temel stiller ve tasarım jetonları ("gece seyir haritası").
+   Masa sistemi bileşenleri: src/arena/ui/arena.css; zemin ve tipografi: src/theme.css.
+   ========================================================================== */
+
+:root {
+  color-scheme: dark;
+
+  /* Gece seyir haritası: derin lacivert yüzey, sonar turkuazı (eylem) ve pirinç (ödül). */
+  --h: 212;
+  --s: 62%;
+  --a1: 170;
+  --a1s: 74%;
+  --a1l: 58%;
+  --a2: 41;
+  --a2s: 79%;
+  --a2l: 60%;
+
+  /* yüzey rampası: koyudan açığa */
+  --k0: hsl(var(--h) var(--s) 6%);
+  --k1: hsl(var(--h) var(--s) 9%);
+  --k2: hsl(var(--h) var(--s) 11%);
+  --k3: hsl(var(--h) var(--s) 13%);
+  --k4: hsl(var(--h) calc(var(--s) - 8%) 15%);
+  --k5: hsl(var(--h) calc(var(--s) - 12%) 18%);
+  --k6: hsl(var(--h) calc(var(--s) - 16%) 22%);
+  --k7: hsl(var(--h) calc(var(--s) - 20%) 27%);
+  --k8: hsl(var(--h) calc(var(--s) - 24%) 33%);
+  --k9: hsl(var(--h) calc(var(--s) - 28%) 40%);
+
+  --bg: var(--k1);
+  --bg-2: var(--k2);
+  --panel: hsl(var(--h) calc(var(--s) - 6%) 13% / 0.86);
+  --panel-2: var(--k5);
+  --glass: hsl(var(--h) var(--s) 100% / 0.045);
+  --glass-line: hsl(var(--h) 30% 100% / 0.09);
+  --line: hsl(var(--h) 56% 28%);
+  --line-soft: hsl(var(--h) 56% 20%);
+  --text: hsl(206 67% 94%);
+  --text-soft: hsl(206 40% 84%);
+  --muted: hsl(208 22% 66%);
+  --muted-hi: hsl(208 26% 76%);
+  --faint: hsl(208 18% 50%);
+
+  --teal: hsl(var(--a1) var(--a1s) var(--a1l));
+  --teal-strong: hsl(var(--a1) var(--a1s) calc(var(--a1l) + 6%));
+  --teal-hi: hsl(var(--a1) var(--a1s) calc(var(--a1l) + 14%));
+  --teal-deep: hsl(var(--a1) 45% 16%);
+  --orange: hsl(var(--a2) var(--a2s) var(--a2l));
+  --orange-strong: hsl(var(--a2) var(--a2s) calc(var(--a2l) + 5%));
+  --orange-hi: hsl(var(--a2) var(--a2s) calc(var(--a2l) + 12%));
+  --danger: hsl(358 100% 68%);
+  --danger-hi: hsl(358 100% 76%);
+
+  /* oyun durumları */
+  --mine: hsl(24 100% 62%);
+
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 18px 40px hsl(var(--h) 80% 3% / 0.55);
+  --glow-teal: 0 0 0 1px hsl(var(--a1) var(--a1s) var(--a1l) / 0.45), 0 0 18px hsl(var(--a1) var(--a1s) var(--a1l) / 0.12);
+  --font: 'Nunito Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  --display: 'Saira Condensed', 'Arial Narrow', 'Roboto Condensed', ui-sans-serif, sans-serif;
+  --stencil: 'Saira Stencil One', 'Saira Condensed', 'Arial Narrow', sans-serif;
+  --mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: hsl(212 60% 16%);
+}
+
+@keyframes toast {
+  0% { opacity: 0; transform: translate(-50%, 10px) scale(0.9); }
+  12% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -6px); }
+}
+@keyframes shake {
+  10%, 90% { transform: translate3d(-2px, 0, 0); }
+  20%, 80% { transform: translate3d(4px, 1px, 0); }
+  30%, 50%, 70% { transform: translate3d(-7px, -1px, 0); }
+  40%, 60% { transform: translate3d(7px, 1px, 0); }
+}
+@keyframes hurt {
+  0% { transform: scale(1.35); filter: brightness(2); }
+  100% { transform: none; filter: none; }
+}
+@keyframes boom-core {
+  0% {
+    transform: scale(0.2);
+    opacity: 1;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+    
+    <defs>
+      <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#F8FAFC"/><stop offset="100%" stop-color="#8FA0B5"/>
+      </linearGradient>
+      <linearGradient id="cyanGlow" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#69F4FF"/><stop offset="100%" stop-color="#20D9E8"/>
+      </linearGradient>
+      <linearGradient id="orangeGlow" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#FFD09A"/><stop offset="100%" stop-color="#FF8A32"/>
+      </linearGradient>
+    </defs>
+<rect width="1920" height="1080" fill="#101827"/>
+<defs><radialGradient id="v"><stop offset="0%" stop-color="#1B3B50"/><stop offset="100%" stop-color="#101827"/></radialGradient></defs>
+<rect width="1920" height="1080" fill="url(#v)"/>
+<g stroke="#20D9E8" stroke-width="2" opacity=".08">
+<path d="M0 0 V1080"/><path d="M64 0 V1080"/><path d="M128 0 V1080"/><path d="M192 0 V1080"/><path d="M256 0 V1080"/><path d="M320 0 V1080"/><path d="M384 0 V1080"/><path d="M448 0 V1080"/><path d="M512 0 V1080"/><path d="M576 0 V1080"/><path d="M640 0 V1080"/><path d="M704 0 V1080"/><path d="M768 0 V1080"/><path d="M832 0 V1080"/><path d="M896 0 V1080"/><path d="M960 0 V1080"/><path d="M1024 0 V1080"/><path d="M1088 0 V1080"/><path d="M1152 0 V1080"/><path d="M1216 0 V1080"/><path d="M1280 0 V1080"/><path d="M1344 0 V1080"/><path d="M1408 0 V1080"/><path d="M1472 0 V1080"/><path d="M1536 0 V1080"/><path d="M1600 0 V1080"/><path d="M1664 0 V1080"/><path d="M1728 0 V1080"/><path d="M1792 0 V1080"/><path d="M1856 0 V1080"/><path d="M1920 0 V1080"/>
+<path d="M0 0 H1920"/><path d="M0 64 H1920"/><path d="M0 128 H1920"/><path d="M0 192 H1920"/><path d="M0 256 H1920"/><path d="M0 320 H1920"/><path d="M0 384 H1920"/><path d="M0 448 H1920"/><path d="M0 512 H1920"/><path d="M0 576 H1920"/><path d="M0 640 H1920"/><path d="M0 704 H1920"/><path d="M0 768 H1920"/><path d="M0 832 H1920"/><path d="M0 896 H1920"/><path d="M0 960 H1920"/><path d="M0 1024 H1920"/>
+</g>
+<circle cx="1600" cy="160" r="220" fill="#20D9E8" opacity=".035"/><circle cx="260" cy="900" r="280" fill="#FF8A32" opacity=".035"/>
+</svg>

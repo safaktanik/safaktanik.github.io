@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+    
+    <defs>
+      <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#F8FAFC"/><stop offset="100%" stop-color="#8FA0B5"/>
+      </linearGradient>
+      <linearGradient id="cyanGlow" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#69F4FF"/><stop offset="100%" stop-color="#20D9E8"/>
+      </linearGradient>
+      <linearGradient id="orangeGlow" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#FFD09A"/><stop offset="100%" stop-color="#FF8A32"/>
+      </linearGradient>
+    </defs><circle cx="128" cy="128" r="90" fill="none" stroke="#FF8A32" stroke-width="8" stroke-dasharray="12 12"/><path d="M128 28 V5 M128 228 V251 M28 128 H5 M228 128 H251" stroke="#FFC857" stroke-width="8" stroke-linecap="round" transform="rotate(0 128 128)"/><path d="M128 28 V5 M128 228 V251 M28 128 H5 M228 128 H251" stroke="#FFC857" stroke-width="8" stroke-linecap="round" transform="rotate(45 128 128)"/><path d="M128 28 V5 M128 228 V251 M28 128 H5 M228 128 H251" stroke="#FFC857" stroke-width="8" stroke-linecap="round" transform="rotate(90 128 128)"/><path d="M128 28 V5 M128 228 V251 M28 128 H5 M228 128 H251" stroke="#FFC857" stroke-width="8" stroke-linecap="round" transform="rotate(135 128 128)"/><path d="M128 28 V5 M128 228 V251 M28 128 H5 M228 128 H251" stroke="#FFC857" stroke-width="8" stroke-linecap="round" transform="rotate(180 128 128)"/><path d="M128 28 V5 M128 228 V251 M28 128 H5 M228 128 H251" stroke="#FFC857" stroke-width="8" stroke-linecap="round" transform="rotate(225 128 128)"/><path d="M128 28 V5 M128 228 V251 M28 128 H5 M228 128 H251" stroke="#FFC857" stroke-width="8" stroke-linecap="round" transform="rotate(270 128 128)"/><path d="M128 28 V5 M128 228 V251 M28 128 H5 M228 128 H251" stroke="#FFC857" stroke-width="8" stroke-linecap="round" transform="rotate(315 128 128)"/></svg>

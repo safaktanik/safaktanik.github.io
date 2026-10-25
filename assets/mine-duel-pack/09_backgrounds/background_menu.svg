@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+    
+    <defs>
+      <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#F8FAFC"/><stop offset="100%" stop-color="#8FA0B5"/>
+      </linearGradient>
+      <linearGradient id="cyanGlow" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#69F4FF"/><stop offset="100%" stop-color="#20D9E8"/>
+      </linearGradient>
+      <linearGradient id="orangeGlow" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#FFD09A"/><stop offset="100%" stop-color="#FF8A32"/>
+      </linearGradient>
+    </defs>
+<rect width="1920" height="1080" fill="#101827"/>
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#152A43"/><stop offset="1" stop-color="#0A111E"/></linearGradient></defs>
+<rect width="1920" height="1080" fill="url(#bg)"/>
+<path d="M0 760 L350 490 L620 710 L900 400 L1220 720 L1550 440 L1920 760 V1080 H0 Z" fill="#182B42"/>
+<path d="M0 850 L420 650 L800 840 L1250 600 L1600 810 L1920 690 V1080 H0 Z" fill="#102033"/>
+<g stroke="#20D9E8" stroke-width="3" opacity=".13"><path d="M-400 700 L-200 1080"/><path d="M-240 700 L-40 1080"/><path d="M-80 700 L120 1080"/><path d="M80 700 L280 1080"/><path d="M240 700 L440 1080"/><path d="M400 700 L600 1080"/><path d="M560 700 L760 1080"/><path d="M720 700 L920 1080"/><path d="M880 700 L1080 1080"/><path d="M1040 700 L1240 1080"/><path d="M1200 700 L1400 1080"/><path d="M1360 700 L1560 1080"/><path d="M1520 700 L1720 1080"/><path d="M1680 700 L1880 1080"/><path d="M1840 700 L2040 1080"/></g>
+<circle cx="1540" cy="200" r="115" fill="#20D9E8" opacity=".08"/><circle cx="1540" cy="200" r="76" fill="none" stroke="#20D9E8" stroke-width="4" opacity=".18"/>
+</svg>

@@ -1,0 +1,636 @@
+{
+  "project": "Mine Duel",
+  "format": "SVG",
+  "notes": [
+    "This is a starter asset pack made from original, simple vector shapes.",
+    "SVG files can be used directly in web projects and resized without raster blur.",
+    "The character illustrations are lightweight stylized placeholders, not polished painted character art.",
+    "For web use, place the folders under your project's public/assets directory or import SVG files as assets."
+  ],
+  "assets": [
+    {
+      "file": "01_branding/app_icon.svg",
+      "category": "01_branding",
+      "format": "SVG",
+      "intended_use": "app icon"
+    },
+    {
+      "file": "01_branding/mine_duel_logo.svg",
+      "category": "01_branding",
+      "format": "SVG",
+      "intended_use": "mine duel logo"
+    },
+    {
+      "file": "02_characters/strategist_sad.svg",
+      "category": "02_characters",
+      "format": "SVG",
+      "intended_use": "strategist sad"
+    },
+    {
+      "file": "02_characters/strategist_smile.svg",
+      "category": "02_characters",
+      "format": "SVG",
+      "intended_use": "strategist smile"
+    },
+    {
+      "file": "02_characters/strategist_surprise.svg",
+      "category": "02_characters",
+      "format": "SVG",
+      "intended_use": "strategist surprise"
+    },
+    {
+      "file": "02_characters/strategist_think.svg",
+      "category": "02_characters",
+      "format": "SVG",
+      "intended_use": "strategist think"
+    },
+    {
+      "file": "02_characters/strategist_victory.svg",
+      "category": "02_characters",
+      "format": "SVG",
+      "intended_use": "strategist victory"
+    },
+    {
+      "file": "02_characters/tactician_sad.svg",
+      "category": "02_characters",
+      "format": "SVG",
+      "intended_use": "tactician sad"
+    },
+    {
+      "file": "02_characters/tactician_smile.svg",
+      "category": "02_characters",
+      "format": "SVG",
+      "intended_use": "tactician smile"
+    },
+    {
+      "file": "02_characters/tactician_surprise.svg",
+      "category": "02_characters",
+      "format": "SVG",
+      "intended_use": "tactician surprise"
+    },
+    {
+      "file": "02_characters/tactician_think.svg",
+      "category": "02_characters",
+      "format": "SVG",
+      "intended_use": "tactician think"
+    },
+    {
+      "file": "02_characters/tactician_victory.svg",
+      "category": "02_characters",
+      "format": "SVG",
+      "intended_use": "tactician victory"
+    },
+    {
+      "file": "03_mines/mine_active.svg",
+      "category": "03_mines",
+      "format": "SVG",
+      "intended_use": "mine active"
+    },
+    {
+      "file": "03_mines/mine_classic.svg",
+      "category": "03_mines",
+      "format": "SVG",
+      "intended_use": "mine classic"
+    },
+    {
+      "file": "03_mines/mine_disabled.svg",
+      "category": "03_mines",
+      "format": "SVG",
+      "intended_use": "mine disabled"
+    },
+    {
+      "file": "03_mines/mine_discovered.svg",
+      "category": "03_mines",
+      "format": "SVG",
+      "intended_use": "mine discovered"
+    },
+    {
+      "file": "03_mines/mine_elite.svg",
+      "category": "03_mines",
+      "format": "SVG",
+      "intended_use": "mine elite"
+    },
+    {
+      "file": "03_mines/mine_frozen.svg",
+      "category": "03_mines",
+      "format": "SVG",
+      "intended_use": "mine frozen"
+    },
+    {
+      "file": "03_mines/mine_golden.svg",
+      "category": "03_mines",
+      "format": "SVG",
+      "intended_use": "mine golden"
+    },
+    {
+      "file": "03_mines/mine_radar_detected.svg",
+      "category": "03_mines",
+      "format": "SVG",
+      "intended_use": "mine radar detected"
+    },
+    {
+      "file": "04_board_tiles/tile_closed.svg",
+      "category": "04_board_tiles",
+      "format": "SVG",
+      "intended_use": "tile closed"
+    },
+    {
+      "file": "04_board_tiles/tile_flagged.svg",
+      "category": "04_board_tiles",
+      "format": "SVG",
+      "intended_use": "tile flagged"
+    },
+    {
+      "file": "04_board_tiles/tile_hover.svg",
+      "category": "04_board_tiles",
+      "format": "SVG",
+      "intended_use": "tile hover"
+    },
+    {
+      "file": "04_board_tiles/tile_mine.svg",
+      "category": "04_board_tiles",
+      "format": "SVG",
+      "intended_use": "tile mine"
+    },
+    {
+      "file": "04_board_tiles/tile_number_1.svg",
+      "category": "04_board_tiles",
+      "format": "SVG",
+      "intended_use": "tile number 1"
+    },
+    {
+      "file": "04_board_tiles/tile_number_2.svg",
+      "category": "04_board_tiles",
+      "format": "SVG",
+      "intended_use": "tile number 2"
+    },
+    {
+      "file": "04_board_tiles/tile_number_3.svg",
+      "category": "04_board_tiles",
+      "format": "SVG",
+      "intended_use": "tile number 3"
+    },
+    {
+      "file": "04_board_tiles/tile_number_4.svg",
+      "category": "04_board_tiles",
+      "format": "SVG",
+      "intended_use": "tile number 4"
+    },
+    {
+      "file": "04_board_tiles/tile_number_5.svg",
+      "category": "04_board_tiles",
+      "format": "SVG",
+      "intended_use": "tile number 5"
+    },
+    {
+      "file": "04_board_tiles/tile_number_6.svg",
+      "category": "04_board_tiles",
+      "format": "SVG",
+      "intended_use": "tile number 6"
+    },
+    {
+      "file": "04_board_tiles/tile_number_7.svg",
+      "category": "04_board_tiles",
+      "format": "SVG",
+      "intended_use": "tile number 7"
+    },
+    {
+      "file": "04_board_tiles/tile_number_8.svg",
+      "category": "04_board_tiles",
+      "format": "SVG",
+      "intended_use": "tile number 8"
+    },
+    {
+      "file": "04_board_tiles/tile_open_empty.svg",
+      "category": "04_board_tiles",
+      "format": "SVG",
+      "intended_use": "tile open empty"
+    },
+    {
+      "file": "04_board_tiles/tile_protected.svg",
+      "category": "04_board_tiles",
+      "format": "SVG",
+      "intended_use": "tile protected"
+    },
+    {
+      "file": "04_board_tiles/tile_question.svg",
+      "category": "04_board_tiles",
+      "format": "SVG",
+      "intended_use": "tile question"
+    },
+    {
+      "file": "04_board_tiles/tile_radar.svg",
+      "category": "04_board_tiles",
+      "format": "SVG",
+      "intended_use": "tile radar"
+    },
+    {
+      "file": "04_board_tiles/tile_winning.svg",
+      "category": "04_board_tiles",
+      "format": "SVG",
+      "intended_use": "tile winning"
+    },
+    {
+      "file": "05_game_icons/icon_check.svg",
+      "category": "05_game_icons",
+      "format": "SVG",
+      "intended_use": "icon check"
+    },
+    {
+      "file": "05_game_icons/icon_close.svg",
+      "category": "05_game_icons",
+      "format": "SVG",
+      "intended_use": "icon close"
+    },
+    {
+      "file": "05_game_icons/icon_flag.svg",
+      "category": "05_game_icons",
+      "format": "SVG",
+      "intended_use": "icon flag"
+    },
+    {
+      "file": "05_game_icons/icon_friend.svg",
+      "category": "05_game_icons",
+      "format": "SVG",
+      "intended_use": "icon friend"
+    },
+    {
+      "file": "05_game_icons/icon_hint.svg",
+      "category": "05_game_icons",
+      "format": "SVG",
+      "intended_use": "icon hint"
+    },
+    {
+      "file": "05_game_icons/icon_home.svg",
+      "category": "05_game_icons",
+      "format": "SVG",
+      "intended_use": "icon home"
+    },
+    {
+      "file": "05_game_icons/icon_info.svg",
+      "category": "05_game_icons",
+      "format": "SVG",
+      "intended_use": "icon info"
+    },
+    {
+      "file": "05_game_icons/icon_pause.svg",
+      "category": "05_game_icons",
+      "format": "SVG",
+      "intended_use": "icon pause"
+    },
+    {
+      "file": "05_game_icons/icon_play.svg",
+      "category": "05_game_icons",
+      "format": "SVG",
+      "intended_use": "icon play"
+    },
+    {
+      "file": "05_game_icons/icon_restart.svg",
+      "category": "05_game_icons",
+      "format": "SVG",
+      "intended_use": "icon restart"
+    },
+    {
+      "file": "05_game_icons/icon_score.svg",
+      "category": "05_game_icons",
+      "format": "SVG",
+      "intended_use": "icon score"
+    },
+    {
+      "file": "05_game_icons/icon_settings.svg",
+      "category": "05_game_icons",
+      "format": "SVG",
+      "intended_use": "icon settings"
+    },
+    {
+      "file": "05_game_icons/icon_sound_off.svg",
+      "category": "05_game_icons",
+      "format": "SVG",
+      "intended_use": "icon sound off"
+    },
+    {
+      "file": "05_game_icons/icon_sound_on.svg",
+      "category": "05_game_icons",
+      "format": "SVG",
+      "intended_use": "icon sound on"
+    },
+    {
+      "file": "05_game_icons/icon_star.svg",
+      "category": "05_game_icons",
+      "format": "SVG",
+      "intended_use": "icon star"
+    },
+    {
+      "file": "05_game_icons/icon_timer.svg",
+      "category": "05_game_icons",
+      "format": "SVG",
+      "intended_use": "icon timer"
+    },
+    {
+      "file": "05_game_icons/icon_trophy.svg",
+      "category": "05_game_icons",
+      "format": "SVG",
+      "intended_use": "icon trophy"
+    },
+    {
+      "file": "05_game_icons/icon_wifi.svg",
+      "category": "05_game_icons",
+      "format": "SVG",
+      "intended_use": "icon wifi"
+    },
+    {
+      "file": "06_ability_icons/ability_area_scan.svg",
+      "category": "06_ability_icons",
+      "format": "SVG",
+      "intended_use": "ability area scan"
+    },
+    {
+      "file": "06_ability_icons/ability_double_score.svg",
+      "category": "06_ability_icons",
+      "format": "SVG",
+      "intended_use": "ability double score"
+    },
+    {
+      "file": "06_ability_icons/ability_extra_turn.svg",
+      "category": "06_ability_icons",
+      "format": "SVG",
+      "intended_use": "ability extra turn"
+    },
+    {
+      "file": "06_ability_icons/ability_hint.svg",
+      "category": "06_ability_icons",
+      "format": "SVG",
+      "intended_use": "ability hint"
+    },
+    {
+      "file": "06_ability_icons/ability_mine_detector.svg",
+      "category": "06_ability_icons",
+      "format": "SVG",
+      "intended_use": "ability mine detector"
+    },
+    {
+      "file": "06_ability_icons/ability_protection.svg",
+      "category": "06_ability_icons",
+      "format": "SVG",
+      "intended_use": "ability protection"
+    },
+    {
+      "file": "06_ability_icons/ability_radar.svg",
+      "category": "06_ability_icons",
+      "format": "SVG",
+      "intended_use": "ability radar"
+    },
+    {
+      "file": "06_ability_icons/ability_reveal.svg",
+      "category": "06_ability_icons",
+      "format": "SVG",
+      "intended_use": "ability reveal"
+    },
+    {
+      "file": "06_ability_icons/ability_shield.svg",
+      "category": "06_ability_icons",
+      "format": "SVG",
+      "intended_use": "ability shield"
+    },
+    {
+      "file": "06_ability_icons/ability_time_bonus.svg",
+      "category": "06_ability_icons",
+      "format": "SVG",
+      "intended_use": "ability time bonus"
+    },
+    {
+      "file": "07_emojis/emoji_celebrating.svg",
+      "category": "07_emojis",
+      "format": "SVG",
+      "intended_use": "emoji celebrating"
+    },
+    {
+      "file": "07_emojis/emoji_confident.svg",
+      "category": "07_emojis",
+      "format": "SVG",
+      "intended_use": "emoji confident"
+    },
+    {
+      "file": "07_emojis/emoji_confused.svg",
+      "category": "07_emojis",
+      "format": "SVG",
+      "intended_use": "emoji confused"
+    },
+    {
+      "file": "07_emojis/emoji_disappointed.svg",
+      "category": "07_emojis",
+      "format": "SVG",
+      "intended_use": "emoji disappointed"
+    },
+    {
+      "file": "07_emojis/emoji_frustrated.svg",
+      "category": "07_emojis",
+      "format": "SVG",
+      "intended_use": "emoji frustrated"
+    },
+    {
+      "file": "07_emojis/emoji_good_luck.svg",
+      "category": "07_emojis",
+      "format": "SVG",
+      "intended_use": "emoji good luck"
+    },
+    {
+      "file": "07_emojis/emoji_happy.svg",
+      "category": "07_emojis",
+      "format": "SVG",
+      "intended_use": "emoji happy"
+    },
+    {
+      "file": "07_emojis/emoji_laughing.svg",
+      "category": "07_emojis",
+      "format": "SVG",
+      "intended_use": "emoji laughing"
+    },
+    {
+      "file": "07_emojis/emoji_oops.svg",
+      "category": "07_emojis",
+      "format": "SVG",
+      "intended_use": "emoji oops"
+    },
+    {
+      "file": "07_emojis/emoji_rematch.svg",
+      "category": "07_emojis",
+      "format": "SVG",
+      "intended_use": "emoji rematch"
+    },
+    {
+      "file": "07_emojis/emoji_surprised.svg",
+      "category": "07_emojis",
+      "format": "SVG",
+      "intended_use": "emoji surprised"
+    },
+    {
+      "file": "07_emojis/emoji_suspicious.svg",
+      "category": "07_emojis",
+      "format": "SVG",
+      "intended_use": "emoji suspicious"
+    },
+    {
+      "file": "07_emojis/emoji_thinking.svg",
+      "category": "07_emojis",
+      "format": "SVG",
+      "intended_use": "emoji thinking"
+    },
+    {
+      "file": "07_emojis/emoji_victory.svg",
+      "category": "07_emojis",
+      "format": "SVG",
+      "intended_use": "emoji victory"
+    },
+    {
+      "file": "07_emojis/emoji_well_played.svg",
+      "category": "07_emojis",
+      "format": "SVG",
+      "intended_use": "emoji well played"
+    },
+    {
+      "file": "07_emojis/emoji_worried.svg",
+      "category": "07_emojis",
+      "format": "SVG",
+      "intended_use": "emoji worried"
+    },
+    {
+      "file": "08_ui/button_danger.svg",
+      "category": "08_ui",
+      "format": "SVG",
+      "intended_use": "button danger"
+    },
+    {
+      "file": "08_ui/button_primary.svg",
+      "category": "08_ui",
+      "format": "SVG",
+      "intended_use": "button primary"
+    },
+    {
+      "file": "08_ui/button_secondary.svg",
+      "category": "08_ui",
+      "format": "SVG",
+      "intended_use": "button secondary"
+    },
+    {
+      "file": "08_ui/modal_frame.svg",
+      "category": "08_ui",
+      "format": "SVG",
+      "intended_use": "modal frame"
+    },
+    {
+      "file": "08_ui/panel.svg",
+      "category": "08_ui",
+      "format": "SVG",
+      "intended_use": "panel"
+    },
+    {
+      "file": "08_ui/player_card_cyan.svg",
+      "category": "08_ui",
+      "format": "SVG",
+      "intended_use": "player card cyan"
+    },
+    {
+      "file": "08_ui/player_card_orange.svg",
+      "category": "08_ui",
+      "format": "SVG",
+      "intended_use": "player card orange"
+    },
+    {
+      "file": "08_ui/progress_bar.svg",
+      "category": "08_ui",
+      "format": "SVG",
+      "intended_use": "progress bar"
+    },
+    {
+      "file": "09_backgrounds/background_gameplay.svg",
+      "category": "09_backgrounds",
+      "format": "SVG",
+      "intended_use": "background gameplay"
+    },
+    {
+      "file": "09_backgrounds/background_menu.svg",
+      "category": "09_backgrounds",
+      "format": "SVG",
+      "intended_use": "background menu"
+    },
+    {
+      "file": "09_backgrounds/background_victory.svg",
+      "category": "09_backgrounds",
+      "format": "SVG",
+      "intended_use": "background victory"
+    },
+    {
+      "file": "10_achievements/badge_comeback.svg",
+      "category": "10_achievements",
+      "format": "SVG",
+      "intended_use": "badge comeback"
+    },
+    {
+      "file": "10_achievements/badge_first_victory.svg",
+      "category": "10_achievements",
+      "format": "SVG",
+      "intended_use": "badge first victory"
+    },
+    {
+      "file": "10_achievements/badge_mine_hunter.svg",
+      "category": "10_achievements",
+      "format": "SVG",
+      "intended_use": "badge mine hunter"
+    },
+    {
+      "file": "10_achievements/badge_perfect_logic.svg",
+      "category": "10_achievements",
+      "format": "SVG",
+      "intended_use": "badge perfect logic"
+    },
+    {
+      "file": "10_achievements/badge_quick_thinker.svg",
+      "category": "10_achievements",
+      "format": "SVG",
+      "intended_use": "badge quick thinker"
+    },
+    {
+      "file": "10_achievements/badge_radar_expert.svg",
+      "category": "10_achievements",
+      "format": "SVG",
+      "intended_use": "badge radar expert"
+    },
+    {
+      "file": "10_achievements/badge_strategic_master.svg",
+      "category": "10_achievements",
+      "format": "SVG",
+      "intended_use": "badge strategic master"
+    },
+    {
+      "file": "10_achievements/badge_winning_streak.svg",
+      "category": "10_achievements",
+      "format": "SVG",
+      "intended_use": "badge winning streak"
+    },
+    {
+      "file": "11_effects/effect_mine_found.svg",
+      "category": "11_effects",
+      "format": "SVG",
+      "intended_use": "effect mine found"
+    },
+    {
+      "file": "11_effects/effect_radar_sweep.svg",
+      "category": "11_effects",
+      "format": "SVG",
+      "intended_use": "effect radar sweep"
+    },
+    {
+      "file": "11_effects/effect_shield.svg",
+      "category": "11_effects",
+      "format": "SVG",
+      "intended_use": "effect shield"
+    },
+    {
+      "file": "11_effects/effect_victory_sparkle.svg",
+      "category": "11_effects",
+      "format": "SVG",
+      "intended_use": "effect victory sparkle"
+    }
+  ]
+}

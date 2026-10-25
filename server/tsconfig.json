@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "types": ["node"]
+  },
+  "include": ["./*.ts", "./arena/**/*.ts", "../src/arena/economy.ts", "../src/arena/mines.ts", "../src/arena/scoring.ts", "../src/arena/protocol.ts", "../src/arena/modes.ts", "../src/arena/rules.ts"]
+}
