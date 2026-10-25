@@ -190,6 +190,24 @@ describe('test sunucusu (paylaşılan veritabanı)', () => {
     b.stop();
   }, 90000);
 
+  it('çevrimdışı lobi: kural değişikliğinden önce açılmış (eski mayın sayılı) bot masası yenisiyle değiştirilir', async () => {
+    const mem = createMemoryDb();
+    const now = Date.now();
+    const old: TableDoc = {
+      id: 'eski', name: 'Eski masa', tier: 'silver', mode: 'blitz', boardSize: 12, mineCount: 31, entryFee: 500, maxPlayers: 3,
+      status: 'waiting', pw: null, ownerUid: 'bot-0-eski', createdAt: now, updatedAt: now, countdownEndsAt: null,
+      seats: [{ seat: 0, uid: 'bot-0-eski', bot: true, name: 'Bot Kıskaç', avatar: 6, level: 1 }], match: null,
+    };
+    await mem.forUser('x', { anyWrite: true }).doc('tables/eski').set(old as unknown as Record<string, unknown>);
+    const b = new HostedBackend(mem.forUser('yerel', { anyWrite: true }), 'yerel', { autoTick: false, local: true });
+    b.start();
+    await until(() => !mem.docs.has('tables/eski') && b.state.lobby.some((t) => t.mode === 'blitz' && t.tier === 'silver'));
+    const blitz = b.state.lobby.find((t) => t.mode === 'blitz' && t.tier === 'silver')!;
+    expect(blitz.mineCount).toBe(38); // 25 × 1,5 (Yıldırım çarpanı)
+    expect(b.state.lobby.filter((t) => t.mode === 'blitz' && t.tier === 'silver')).toHaveLength(1);
+    b.stop();
+  });
+
   it('çevrimdışı masalar: sunucusuz profil, masa, botlarla maç, para, mağaza, sıralamada botlar; veriler kalıcı', async () => {
     let saved: Record<string, Record<string, unknown>> | null = null;
     const store = { load: () => saved, save: (all: Record<string, Record<string, unknown>>) => void (saved = JSON.parse(JSON.stringify(all))) };

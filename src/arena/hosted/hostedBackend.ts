@@ -1149,7 +1149,19 @@ export class HostedBackend implements ArenaBackend {
   private seeding = false;
   private async seedLocal(open: TableDoc[]): Promise<void> {
     if (this.seeding) return;
-    const waiting = open.filter((t) => t.status === 'waiting' && !t.seats.some((s) => !s.bot));
+    const botOnly = open.filter((t) => t.status === 'waiting' && !t.seats.some((s) => !s.bot));
+    // Kural güncellemesinden (ör. mod mayın çarpanı) önce açılmış bot masaları eski sayılarla kalmasın: kaldır, yenisi açılır.
+    const stale = botOnly.filter((t) => t.mineCount !== minesForTable(TIERS[t.tier], t.boardSize, t.maxPlayers, optionsOf(t.options).density, t.mode));
+    if (stale.length) {
+      // silme anlık görüntüsü seedLocal'ı yeniden tetikler; o sırada ikinci kez masa açılmasın
+      this.seeding = true;
+      try {
+        for (const t of stale) await this.db.doc(`tables/${t.id}`).delete().catch(() => undefined);
+      } finally {
+        this.seeding = false;
+      }
+    }
+    const waiting = botOnly.filter((t) => !stale.includes(t));
     const specs: { tier: TierId; mode: ArenaMode; cap: 3 | 4; bots: number }[] = [
       { tier: 'bronze', mode: 'classic', cap: 3, bots: 1 },
       { tier: 'bronze', mode: 'treasure', cap: 4, bots: 2 },
