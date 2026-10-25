@@ -1,5 +1,5 @@
 /**
- * Mine Duel 2 — ikon seti: kalın koyu dış çizgi + canlı neon dolgu + üst parlama (oyun arayüzü stili).
+ * Mine Duel — ikon seti: kalın koyu dış çizgi + canlı neon dolgu + üst parlama (oyun arayüzü stili).
  * Hepsi elle çizilmiş SVG; dosya indirmez, her boyutta keskin.
  */
 import type { ReactNode } from 'react';

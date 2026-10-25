@@ -1,5 +1,5 @@
 /**
- * Mine Duel 2 — tasarım sistemi bileşenleri (UIManager katmanı):
+ * Mine Duel — tasarım sistemi bileşenleri (UIManager katmanı):
  * Panel (başlık çipli), Btn (parlak oyun düğmeleri), Ribbon (kurdele), RarityCard (nadirlik kartı),
  * CurrencyPill, TopBar, TabBar ve 2.5D Chibi karakter + kaide.
  * Görsel dil: lacivert zemin, kalın koyu çerçeve, neon vurgu (altın / elektrik mavisi / mor / neon yeşil).

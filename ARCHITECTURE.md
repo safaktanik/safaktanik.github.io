@@ -1,4 +1,4 @@
-# Mine Duel 2 — Faz 1 mimarisi
+# Mine Duel — Faz 1 mimarisi
 
 Teknoloji: React + TypeScript (web, mobil tarayıcı öncelikli), 2.5D CSS/SVG görseller.
 Sunucu seçenekleri: Node + WebSocket + SQLite (yetkili sunucu) ya da sunucusuz eşler arası oda (MQTT aktarıcı + PeerJS yedeği).

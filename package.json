@@ -1,7 +1,7 @@
 {
   "name": "mine-duel",
   "private": true,
-  "version": "2.6.0",
+  "version": "2.6.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -33,7 +33,7 @@
     "vite": "^5.4.11",
     "vitest": "^2.1.8"
   },
-  "description": "Mine Duel 2 — Okey usulü masalarda 2–4 kişilik ortak mayın tarlası düellosu (web, React + TypeScript)",
+  "description": "Mine Duel — Okey usulü masalarda 2–4 kişilik ortak mayın tarlası düellosu (web, React + TypeScript)",
   "engines": {
     "node": ">=22.5"
   }

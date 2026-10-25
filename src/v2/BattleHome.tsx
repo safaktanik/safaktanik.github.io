@@ -1,5 +1,5 @@
 /**
- * Mine Duel 2 — "Savaş" sekmesi (ana menü): karakter kaidede, mod seçimi, büyük OYNA düğmesi
+ * Mine Duel — "Savaş" sekmesi (ana menü): karakter kaidede, mod seçimi, büyük OYNA düğmesi
  * ve masa sistemine (101 Okey tarzı) kısayollar.
  */
 import { useState } from 'react';

@@ -1,5 +1,5 @@
 /**
- * Davet linki: oyunun açık olduğu sayfanın kendisi (ör. https://safaktanik.github.io/yeni/).
+ * Davet linki: oyunun açık olduğu sayfanın kendisi (ör. https://safaktanik.github.io/).
  * Arkadaş odasında kod linke eklenir (#oda=KOD): linke dokunan doğrudan odaya katılır.
  */
 export function shareUrl(code: string | null, room = false): string | null {

@@ -1,5 +1,5 @@
 /**
- * Mine Duel 2 — ana kabuk: üst çubuk (ayarlar, seviye, DUEL COIN) + sekme içeriği + alt sekme çubuğu.
+ * Mine Duel — ana kabuk: üst çubuk (ayarlar, seviye, DUEL COIN) + sekme içeriği + alt sekme çubuğu.
  * Masalar, mağaza, karakter ve sıralama mevcut ekranları kullanır; görünümleri v2 temasından gelir.
  */
 import { useState } from 'react';

@@ -6,7 +6,7 @@ import react from '@vitejs/plugin-react';
 const target = process.env.ARENA_SERVER ?? 'http://127.0.0.1:8787';
 
 export default defineConfig({
-  // Göreli yollar: site bir alt klasörde (ör. /yeni) de çalışsın.
+  // Göreli yollar: site kökte de alt klasörde de çalışsın.
   base: './',
   plugins: [react()],
   // Site tek dosya (scripts/build-site.mjs yalnızca index.html'i yayınlar): arayüz seti görselleri

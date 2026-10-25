@@ -4,7 +4,7 @@ import { Spinner } from './common';
 import { playSound } from '../../audio/sound';
 
 /** Sürüm etiketi: geri bildirimlerde hangi sürümün denendiği görünsün. */
-export const APP_VERSION = '2.6-alpha';
+export const APP_VERSION = '2.6.1-alpha';
 const FORM = 'geri-bildirim';
 
 /**

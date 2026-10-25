@@ -1,5 +1,5 @@
 /**
- * Mine Duel 2 — bekleme odası (101 Okey tarzı): oyuncular 2.5D masanın çevresinde kaidelerinde durur,
+ * Mine Duel — bekleme odası (101 Okey tarzı): oyuncular 2.5D masanın çevresinde kaidelerinde durur,
  * herkes "HAZIRIM" der, masa dolup herkes hazır olunca 3 sn geri sayımla maç başlar.
  * Boş koltuğa dokununca davet (arkadaş odası) ya da bot oturtma (masa sahibi, çevrimdışı/test).
  */

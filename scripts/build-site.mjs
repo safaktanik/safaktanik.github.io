@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Yayın paketi: `npm run build` çıktısını (dist/) tek dosyalık index.html'e çevirir
- * ve GitHub Pages klasörüne yazar (varsayılan: ../safaktanik.github.io/yeni).
+ * ve GitHub Pages klasörüne yazar (varsayılan: ../safaktanik.github.io, sitenin kökü).
  * Kullanım:  npm run build && node scripts/build-site.mjs [hedefKlasör] [siteAdresi]
  */
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
@@ -9,8 +9,8 @@ import { join, resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
 const dist = join(root, 'dist');
-const out = resolve(process.argv[2] ?? join(root, '..', 'safaktanik.github.io', 'yeni'));
-const site = (process.argv[3] ?? 'https://safaktanik.github.io/yeni').replace(/\/$/, '');
+const out = resolve(process.argv[2] ?? join(root, '..', 'safaktanik.github.io'));
+const site = (process.argv[3] ?? 'https://safaktanik.github.io').replace(/\/$/, '');
 if (!existsSync(join(dist, 'index.html'))) throw new Error('Önce "npm run build" çalıştır.');
 
 let html = readFileSync(join(dist, 'index.html'), 'utf8');
@@ -26,7 +26,7 @@ const meta = `
 <meta name="description" content="${desc}" />
 <link rel="canonical" href="${site}/" />
 <meta property="og:type" content="website" />
-<meta property="og:title" content="Mine Duel 2 · Masalar, botlar, güçler" />
+<meta property="og:title" content="Mine Duel · Masalar, botlar, güçler" />
 <meta property="og:description" content="${desc}" />
 <meta property="og:url" content="${site}/" />
 <meta property="og:image" content="${site}/og.png" />
@@ -36,9 +36,9 @@ const meta = `
 <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="Mine Duel 2" />
+<meta name="apple-mobile-web-app-title" content="Mine Duel" />
 `;
-html = html.replace('</head>', `${meta}</head>`).replace(/<title>[^<]*<\/title>/, '<title>Mine Duel 2 · Neon mayın tarlası düellosu</title>');
+html = html.replace('</head>', `${meta}</head>`).replace(/<title>[^<]*<\/title>/, '<title>Mine Duel · Mayın tarlası düellosu</title>');
 mkdirSync(out, { recursive: true });
 writeFileSync(join(out, 'index.html'), html);
 console.log(`yazıldı: ${join(out, 'index.html')} (${Math.round(html.length / 1024)} KB)`);
