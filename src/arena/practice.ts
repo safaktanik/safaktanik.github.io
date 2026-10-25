@@ -54,7 +54,7 @@ export class PracticeGame {
     this.names = [o.name || 'Sen', ...BOT_NAMES.slice(0, o.opponents)];
     this.avatars = [o.avatar, ...BOT_AVATARS.slice(0, o.opponents)];
     const size = boardFor(t, ids.length).size;
-    this.state = createArena(size, minesForTable(t, size, ids.length, o.density ?? 'normal'), ids, (n) => Math.floor(Math.random() * n), matchSettings(o.mode ?? 'classic', { lives: o.lives ?? 3, bonuses: o.bonuses ?? true }), o.mode ?? 'classic');
+    this.state = createArena(size, minesForTable(t, size, ids.length, o.density ?? 'normal', o.mode ?? 'classic'), ids, (n) => Math.floor(Math.random() * n), matchSettings(o.mode ?? 'classic', { lives: o.lives ?? 3, bonuses: o.bonuses ?? true }), o.mode ?? 'classic');
     this.state.current = Math.floor(Math.random() * ids.length);
     this.arm();
   }

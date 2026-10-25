@@ -1,5 +1,7 @@
 import { TIERS, boardFor } from './economy';
 import type { Tier } from './economy';
+import { MODE_MINE_FACTOR } from './modes';
+import type { ArenaMode } from './modes';
 
 /** Masa sahibinin kişiselleştirebildiği kurallar (masa açarken seçilir, maç boyunca sabittir). */
 export type Density = 'easy' | 'normal' | 'hard';
@@ -68,10 +70,14 @@ export function minesFor(tier: Tier | keyof typeof TIERS, board: number, density
   return Math.max(4, Math.min(Math.floor(board * board * 0.3), raw));
 }
 
-/** Masa için mayın sayısı: tahta bu oyuncu sayısının önerilen boyundaysa ayarlı (simülasyonla dengelenmiş) değer. */
-export function minesForTable(tier: Tier | keyof typeof TIERS, board: number, players: number, density: Density = 'normal'): number {
+/**
+ * Masa için mayın sayısı: tahta bu oyuncu sayısının önerilen boyundaysa ayarlı (simülasyonla dengelenmiş) değer.
+ * Mod çarpanı (MODE_MINE_FACTOR) yoğunluk seçimiyle birlikte uygulanır.
+ */
+export function minesForTable(tier: Tier | keyof typeof TIERS, board: number, players: number, density: Density = 'normal', mode?: ArenaMode): number {
   const t = typeof tier === 'string' ? TIERS[tier] : tier;
   const rec = boardFor(t, players);
-  if (board !== rec.size) return minesFor(t, board, density);
-  return Math.max(4, Math.min(Math.floor(board * board * 0.3), Math.round(rec.mines * DENSITY[density].factor)));
+  const factor = DENSITY[density].factor * (mode ? MODE_MINE_FACTOR[mode] : 1);
+  const base = board === rec.size ? rec.mines : (t.mines / (t.board * t.board)) * board * board;
+  return Math.max(4, Math.min(Math.floor(board * board * 0.3), Math.round(base * factor)));
 }

@@ -109,7 +109,7 @@ export function Practice({ onExit, intro }: { onExit(): void; intro?: string }) 
           <h3>Masa</h3>
           <Seg label="Masa" value={opts.tier} onChange={(v) => set({ tier: v as TierId })} options={TIER_ORDER.map((id) => ({ v: id, label: TIERS[id].label }))} />
           <p className="asmall amuted">
-            {boardFor(t, opts.opponents + 1).size}×{boardFor(t, opts.opponents + 1).size} alan, {minesForTable(t, boardFor(t, opts.opponents + 1).size, opts.opponents + 1, opts.density ?? 'normal')} mayın
+            {boardFor(t, opts.opponents + 1).size}×{boardFor(t, opts.opponents + 1).size} alan, {minesForTable(t, boardFor(t, opts.opponents + 1).size, opts.opponents + 1, opts.density ?? 'normal', opts.mode)} mayın
           </p>
         </div>
         <div className="afgroup">

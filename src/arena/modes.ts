@@ -79,6 +79,13 @@ export const MODES: Record<ArenaMode, ModeInfo> = {
   },
 };
 
+/**
+ * Moda göre mayın çarpanı. Son Kalan ve Yıldırım'da ×1,25: mevcut yoğunlukta iyi oynayan herkes tahmin
+ * yapmadan bitirebiliyor, maçların %83–91'i "0 mayın" eşitliğiyle bitiyordu. ×1,25'te eşitlik %45–71'e iner,
+ * iyi oynayanın kazanma oranı artar (src/arena/variants.sim.ts, 300'er maç). Diğer modların dengesi ayrı.
+ */
+export const MODE_MINE_FACTOR: Record<ArenaMode, number> = { classic: 1.25, blitz: 1.25, hunter: 1, territory: 1, treasure: 1, chain: 1 };
+
 /** Moda göre tur süresi (sn). */
 export function turnSecondsFor(mode: ArenaMode, base: number): number {
   return mode === 'blitz' ? 8 : base;

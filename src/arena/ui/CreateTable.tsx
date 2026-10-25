@@ -43,7 +43,7 @@ export function CreateTable({ onClose }: { onClose(): void }) {
   };
   const br = boardRange(def);
   const fr = feeRange(def);
-  const mines = minesForTable(def, board, cap, opts.density);
+  const mines = minesForTable(def, board, cap, opts.density, mode);
   const step = Math.max(10, Math.round(def.fee / 10));
   const afford = me.balance >= fee;
 
@@ -88,7 +88,7 @@ export function CreateTable({ onClose }: { onClose(): void }) {
           {TIER_ORDER.map((t) => (
             <button key={t} type="button" className={`tierpick__opt tier--${t}${tier === t ? ' is-on' : ''}`} onClick={() => pickTier(t)} aria-pressed={tier === t}>
               <strong>{TIERS[t].label}</strong>
-              <small>{boardFor(TIERS[t], t === tier ? cap : TIERS[t].capacity).size}×{boardFor(TIERS[t], t === tier ? cap : TIERS[t].capacity).size} · {boardFor(TIERS[t], t === tier ? cap : TIERS[t].capacity).mines} mayın</small>
+              <small>{boardFor(TIERS[t], t === tier ? cap : TIERS[t].capacity).size}×{boardFor(TIERS[t], t === tier ? cap : TIERS[t].capacity).size} · {minesForTable(TIERS[t], boardFor(TIERS[t], t === tier ? cap : TIERS[t].capacity).size, t === tier ? cap : TIERS[t].capacity, 'normal', mode)} mayın</small>
               <small>{TIER_NOTES[t]}</small>
               <Money value={TIERS[t].fee} size={13} />
             </button>

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ECONOMY, TIERS, boardFor } from '../../src/arena/economy';
+import { MODE_MINE_FACTOR } from '../../src/arena/modes';
 import { ApiError } from './util';
 import { makeKit, mineCell, safeCell } from './testkit';
 import type { Kit } from './testkit';
@@ -118,7 +119,8 @@ describe('masalar', () => {
     expect(t.players.map((p) => p.userId)).toEqual([a]);
     expect(t.boardSize).toBe(TIERS.bronze.board);
     expect(t.options).toEqual({ turnSeconds: 20, lives: 3, density: 'normal', sonars: 1, shields: 1, bonuses: true, smokes: 1, freezes: 1 });
-    expect(t.mineCount).toBe(TIERS.bronze.mines);
+    // Son Kalan'da mayın ×1,25 (MODE_MINE_FACTOR): 16 → 20
+    expect(t.mineCount).toBe(Math.round(TIERS.bronze.mines * MODE_MINE_FACTOR.classic));
     expect(k.arena.listTables().some((x) => x.id === t.id)).toBe(true);
     const j = await k.arena.joinTable(b, t.id);
     expect(j.players).toHaveLength(2);

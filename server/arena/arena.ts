@@ -297,7 +297,7 @@ export class Arena {
         o.mode,
         TIERS[o.tier].label,
         o.boardSize,
-        minesForTable(TIERS[o.tier], o.boardSize, o.capacity, opts.density),
+        minesForTable(TIERS[o.tier], o.boardSize, o.capacity, opts.density, o.mode),
         o.entryFee,
         o.capacity,
         o.passwordHash,

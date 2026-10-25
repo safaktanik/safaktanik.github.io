@@ -35,7 +35,7 @@ https://safaktanik.github.io/yeni/ (eski v1 sitenin kökünde). Kullanıcıyla *
 - Bölge renkleri `v2.css`'teki `.match .mc--own.sN` kurallarında (`.match .mc--open` !important'ını ezer).
 
 ## Açık işler / fikirler
-- **Denge (karar bekliyor):** Son Kalan/Yıldırım'da kusursuz mantıkla oynayan herkes tahmin yapmadan bitirebiliyor (14×14/36 ve 12×12/25'te denendi); maç "0 mayın" eşitliğiyle bitiyor ve kazananı açılan kare sayısı (büyük boş alan şansı) belirliyor. Seçenekler: daha yoğun mayın, tur sınırı, hamle başına puan ya da Zincir kuralını klasiğe taşımak. Zincir bu sorunu yaşamıyor.
+- **Denge:** Son Kalan/Yıldırım'da mayın ×1,25 (`MODE_MINE_FACTOR`, `modes.ts`; `minesForTable(…, mode)`). Karşılaştırma: `npx tsx src/arena/variants.sim.ts 300`. Mevcut yoğunlukta maçların %83–91'i eşitlikle bitiyordu; ×1,25'te %45–71, iyi oynayanın kazanma oranı %39–53 → %50–70, maçlar ~%25 uzun. Tur sınırı daha kötüydü, komşu kare kuralı eşitliği bitirip oyunu şansa çeviriyordu. Bronz'da eşitlik hâlâ %71 (×1,5'te %47): gerekirse Bronz'a ayrı çarpan.
 - Son Kalan'da eleme seyrek (3 can + kalkan): canı 2'ye indirmek denenebilir.
 - `server/arena/arena.test.ts` "003 göçü" testi Windows'ta yol hatasıyla düşüyor (`C:\C:\…`, URL→yol dönüşümü); Linux'ta sorun yok.
 - Henüz yok: elmas (gem), mağaza kostümleri, görevler, battle pass, ELO eşleşmesi, Google/Apple girişi, gerçek 3D.

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ECONOMY, TIERS, boardFor, boardRange, feeRange, levelFromXp, minesForBoard, payout, weekStartOf } from './economy';
 import { alivePlayers, cellView, chestCountFor, computeCounts, createArena, forfeit, modeView, neighbors, rankedSeats, reveal, scan, timeoutTurn, usePower, FREEZE_MS } from './mines';
 import type { ArenaState } from './mines';
+import { minesForTable } from './tableOptions';
 
 const S = { lives: 3, afkTurns: 3, island: false, shields: 0 };
 function seeded(seed: number) {
@@ -181,6 +182,19 @@ describe('mayın tarlası motoru', () => {
       expect(s.cells.filter((c) => c === 2).length).toBe(total);
       expect(alivePlayers(s).length).toBeGreaterThanOrEqual(1);
     }
+  });
+});
+
+describe('moda göre mayın yoğunluğu', () => {
+  it('Son Kalan ve Yıldırım ×1,25; diğer modlar tablodaki değer; yoğunluk seçimiyle çarpılır, %30 sınırı korunur', () => {
+    expect(minesForTable(TIERS.gold, 14, 4, 'normal', 'classic')).toBe(45);
+    expect(minesForTable(TIERS.gold, 14, 4, 'normal', 'blitz')).toBe(45);
+    expect(minesForTable(TIERS.gold, 14, 4, 'normal', 'chain')).toBe(36);
+    expect(minesForTable(TIERS.bronze, 10, 3, 'normal', 'territory')).toBe(16);
+    expect(minesForTable(TIERS.bronze, 10, 3, 'normal', 'classic')).toBe(20);
+    expect(minesForTable(TIERS.bronze, 10, 3, 'easy', 'classic')).toBe(16);
+    expect(minesForTable(TIERS.gold, 14, 4)).toBe(36); // mod verilmezse çarpan yok
+    expect(minesForTable(TIERS.diamond, 15, 4, 'hard', 'classic')).toBeLessThanOrEqual(Math.floor(15 * 15 * 0.3));
   });
 });
 
