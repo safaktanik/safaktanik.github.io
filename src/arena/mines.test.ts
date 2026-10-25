@@ -186,13 +186,15 @@ describe('mayın tarlası motoru', () => {
 });
 
 describe('moda göre mayın yoğunluğu', () => {
-  it('Son Kalan ve Yıldırım ×1,25; diğer modlar tablodaki değer; yoğunluk seçimiyle çarpılır, %30 sınırı korunur', () => {
-    expect(minesForTable(TIERS.gold, 14, 4, 'normal', 'classic')).toBe(45);
-    expect(minesForTable(TIERS.gold, 14, 4, 'normal', 'blitz')).toBe(45);
+  it('Son Kalan ve Yıldırım ×1,5; diğer modlar tablodaki değer; yoğunluk seçimiyle çarpılır, %30 sınırı korunur', () => {
+    expect(minesForTable(TIERS.gold, 14, 4, 'normal', 'classic')).toBe(54);
+    expect(minesForTable(TIERS.gold, 14, 4, 'normal', 'blitz')).toBe(54);
     expect(minesForTable(TIERS.gold, 14, 4, 'normal', 'chain')).toBe(36);
     expect(minesForTable(TIERS.bronze, 10, 3, 'normal', 'territory')).toBe(16);
-    expect(minesForTable(TIERS.bronze, 10, 3, 'normal', 'classic')).toBe(20);
-    expect(minesForTable(TIERS.bronze, 10, 3, 'easy', 'classic')).toBe(16);
+    expect(minesForTable(TIERS.bronze, 10, 3, 'normal', 'classic')).toBe(24);
+    expect(minesForTable(TIERS.bronze, 10, 3, 'easy', 'classic')).toBe(19);
+    // Elmas 45 × 1,5 = 68 > %30 sınırı (67)
+    expect(minesForTable(TIERS.diamond, 15, 4, 'normal', 'classic')).toBe(67);
     expect(minesForTable(TIERS.gold, 14, 4)).toBe(36); // mod verilmezse çarpan yok
     expect(minesForTable(TIERS.diamond, 15, 4, 'hard', 'classic')).toBeLessThanOrEqual(Math.floor(15 * 15 * 0.3));
   });

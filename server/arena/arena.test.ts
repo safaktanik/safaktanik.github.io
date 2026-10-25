@@ -119,7 +119,7 @@ describe('masalar', () => {
     expect(t.players.map((p) => p.userId)).toEqual([a]);
     expect(t.boardSize).toBe(TIERS.bronze.board);
     expect(t.options).toEqual({ turnSeconds: 20, lives: 3, density: 'normal', sonars: 1, shields: 1, bonuses: true, smokes: 1, freezes: 1 });
-    // Son Kalan'da mayın ×1,25 (MODE_MINE_FACTOR): 16 → 20
+    // Son Kalan'da mayın ×1,5 (MODE_MINE_FACTOR): 16 → 24
     expect(t.mineCount).toBe(Math.round(TIERS.bronze.mines * MODE_MINE_FACTOR.classic));
     expect(k.arena.listTables().some((x) => x.id === t.id)).toBe(true);
     const j = await k.arena.joinTable(b, t.id);

@@ -35,7 +35,7 @@ https://safaktanik.github.io/yeni/ (eski v1 sitenin kökünde). Kullanıcıyla *
 - Bölge renkleri `v2.css`'teki `.match .mc--own.sN` kurallarında (`.match .mc--open` !important'ını ezer).
 
 ## Açık işler / fikirler
-- **Denge:** Son Kalan/Yıldırım'da mayın ×1,25 (`MODE_MINE_FACTOR`, `modes.ts`; `minesForTable(…, mode)`). Karşılaştırma: `npx tsx src/arena/variants.sim.ts 300`. Mevcut yoğunlukta maçların %83–91'i eşitlikle bitiyordu; ×1,25'te %45–71, iyi oynayanın kazanma oranı %39–53 → %50–70, maçlar ~%25 uzun. Tur sınırı daha kötüydü, komşu kare kuralı eşitliği bitirip oyunu şansa çeviriyordu. Bronz'da eşitlik hâlâ %71 (×1,5'te %47): gerekirse Bronz'a ayrı çarpan.
+- **Denge:** Son Kalan/Yıldırım'da mayın ×1,5 (`MODE_MINE_FACTOR`, `modes.ts`; `minesForTable(…, mode)`). Karşılaştırma: `npx tsx src/arena/variants.sim.ts 300`. Eski yoğunlukta maçların %83–91'i eşitlikle bitiyordu; ×1,25'te %45–71 (canlıda denendi, Gümüş'te eşitlik sık), ×1,5'te %31–47, iyi oynayanın kazanma oranı %51–80, maçlar ~%50 uzun, Elmas %30 sınırına takılır (67 mayın). Tur sınırı daha kötüydü, komşu kare kuralı eşitliği bitirip oyunu şansa çeviriyordu.
 - Son Kalan'da eleme seyrek (3 can + kalkan): canı 2'ye indirmek denenebilir.
 - `server/arena/arena.test.ts` "003 göçü" testi Windows'ta yol hatasıyla düşüyor (`C:\C:\…`, URL→yol dönüşümü); Linux'ta sorun yok.
 - Henüz yok: elmas (gem), mağaza kostümleri, görevler, battle pass, ELO eşleşmesi, Google/Apple girişi, gerçek 3D.
