@@ -37,6 +37,7 @@ https://safaktanik.github.io/yeni/ (eski v1 sitenin kökünde). Kullanıcıyla *
 - **Günün Bulmacası** (`puzzle.ts`, `ui/Puzzle.tsx`): gün anahtarı Türkiye saati; tahta tarihten deterministik, yalnızca kesin çıkarımla (`solver.ts`) çözülebilenler seçilir. Sonuçlar `md2:puzzle` (ilk deneme sayılır).
 - **Görevler** (`quests.ts`, `ui/Quests.tsx`): günde 3 görev, ilerleme `md2:quests`, ödül `grantReward(key)` (PlayerDoc.claims, anahtar başına bir kez). Antrenman maçları sayılmaz. Olaylar MatchScreen'de (`questEvent`).
 - **Mağaza temaları** (`cosmetics.ts`): `purchase` (PlayerDoc.owned) + takılı tema `md2:theme`; CSS `.match.theme--x` (`v2.css`). Tema kuralları `.mc--allow/.mc--sel/.mc--flag`'i ezmemeli.
+- **Görsel tasarım (2.6):** Freepik oyun arayüz seti (`assets/ui-kit/`, kaynak/atıf `assets/ui-kit/KAYNAK.md`). Görseller `src/v2/kit.ts` (`?inline` data: adresi), stil katmanı `src/v2/kit.css` (v2.css'ten sonra yüklenir; setin mor-lacivert paleti, açık çerçeveli paneller/düğmeler). Jeton `CoinIcon`/`Coin`, elmas `XpIcon`, madalyalar `TierBadge`/`RankMark`. Ücretsiz lisans atıf ister: Ayarlar'da "Designed by Freepik" kalmalı. Setin fontu Changa One'da ş/ğ/İ yok, kullanılmadı.
 - İzinli kareler (Zincir/Zorla/fırtına) `.match .mc--hidden.mc--allow` kuralıyla parlar (eski `.mc--allow` v2 kare stiline eziliyordu).
 - Antrenman ekranı `PracticeGame.resume()` çağırır: React StrictMode (geliştirme) efekt temizliğindeki `dispose()` maçı dondurmasın.
 - Bölge renkleri `v2.css`'teki `.match .mc--own.sN` kurallarında (`.match .mc--open` !important'ını ezer).

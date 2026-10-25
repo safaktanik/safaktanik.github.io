@@ -12,7 +12,7 @@ export interface BoardTheme {
 }
 
 export const THEMES: BoardTheme[] = [
-  { id: 'classic', name: 'Klasik', price: 0, desc: 'Mavi taş kareler', swatch: ['#6f88bd', '#131d36'] },
+  { id: 'classic', name: 'Klasik', price: 0, desc: 'Lavanta taş kareler', swatch: ['#8793da', '#262946'] },
   { id: 'neon', name: 'Neon', price: 1500, desc: 'Gece mavisi, parlayan kenarlar', swatch: ['#2a1b5e', '#0a0f22'] },
   { id: 'ice', name: 'Buzul', price: 2500, desc: 'Buz mavisi kristal kareler', swatch: ['#a8e6ff', '#123047'] },
   { id: 'gold', name: 'Altın', price: 4000, desc: 'Parlak altın kareler', swatch: ['#ffcf4a', '#2b2010'] },

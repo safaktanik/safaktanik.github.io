@@ -3,6 +3,8 @@
  * Hepsi elle çizilmiş SVG; dosya indirmez, her boyutta keskin.
  */
 import type { ReactNode } from 'react';
+import { KIT } from './kit';
+import type { KitName } from './kit';
 
 const OUT = '#0a1020';
 type P = { size?: number; className?: string };
@@ -17,24 +19,14 @@ function Svg({ size = 32, className = '', children, label }: P & { children: Rea
 /** Üst parlama şeridi. */
 const Shine = ({ d }: { d: string }) => <path d={d} fill="#fff" opacity={0.45} />;
 
+/** Arayüz setinden çizim (img); boyut uzun kenara göre. */
+export function KitImg({ name, size = 32, className = '', label }: { name: KitName; size?: number; className?: string; label?: string }) {
+  return <img className={`kit ${className}`} src={KIT[name]} width={size} height={size} alt={label ?? ''} aria-hidden={label ? undefined : true} draggable={false} />;
+}
+
+/** DUEL COIN: setin taçlı jetonu. */
 export function CoinIcon(p: P) {
-  return (
-    <Svg {...p} label="DUEL COIN">
-      <defs>
-        <linearGradient id="g-coin" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#ffe46b" />
-          <stop offset="1" stopColor="#f19a00" />
-        </linearGradient>
-      </defs>
-      <ellipse cx="24" cy="27" rx="18" ry="17" fill="#b86a00" stroke={OUT} strokeWidth="3" />
-      <circle cx="24" cy="23" r="18" fill="url(#g-coin)" stroke={OUT} strokeWidth="3" />
-      <circle cx="24" cy="23" r="12.5" fill="none" stroke="#c97a00" strokeWidth="2.4" />
-      {/* damga: mayın */}
-      <circle cx="24" cy="23" r="5.6" fill="#c97a00" />
-      <path d="M24 14.5v3M24 28.5v3M15.5 23h3M29.5 23h3M18 17l2 2M28 27l2 2M18 29l2-2M28 19l2-2" stroke="#c97a00" strokeWidth="2.2" strokeLinecap="round" />
-      <Shine d="M12 17a13 13 0 0 1 10-8a1.6 1.6 0 0 1 .4 3a10 10 0 0 0-7.6 6.2a1.6 1.6 0 0 1-2.8-1.2z" />
-    </Svg>
-  );
+  return <KitImg name="coin" size={p.size} className={p.className} label="DUEL COIN" />;
 }
 
 export function GemIcon(p: P) {
@@ -287,13 +279,7 @@ export function PlusIcon(p: P) {
   );
 }
 
+/** Seviye / deneyim: setin yeşil elması. */
 export function XpIcon(p: P) {
-  return (
-    <Svg {...p} label="XP">
-      <path d="M24 3l18 10v22L24 45 6 35V13z" fill="#00d2ff" stroke={OUT} strokeWidth="3" strokeLinejoin="round" />
-      <text x="24" y="30" textAnchor="middle" fontFamily="'MD Display', 'Arial Black', sans-serif" fontSize="15" fill="#fff" stroke={OUT} strokeWidth="1.2" paintOrder="stroke">
-        XP
-      </text>
-    </Svg>
-  );
+  return <KitImg name="diamond" size={p.size} className={p.className} label="Seviye" />;
 }

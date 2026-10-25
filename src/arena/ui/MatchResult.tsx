@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { MatchView } from '../protocol';
 import { playSound } from '../../audio/sound';
-import { Avatar, Money, fmt, msToClock, rankLabel } from './common';
+import { Avatar, Money, RankMark, fmt, msToClock, rankLabel } from './common';
+import { medalFor } from '../../v2/kit';
 import { BadgeArt } from './BadgeArt';
 import { BADGES } from '../achievements';
 import type { BadgeId } from '../achievements';
@@ -89,6 +90,7 @@ export function MatchResult({ m, meId, now, practice, weeklyRank, onLobby, onAga
               <Ribbon tone={out === 'win' ? 'yellow' : out === 'lose' ? 'red' : 'blue'}>
                 {out === 'win' ? 'KAZANDIN!' : out === 'lose' ? 'KAYBETTİN' : out === 'mid' ? `${mine!.rank}. OLDUN` : 'MAÇ BİTTİ'}
               </Ribbon>
+              {mine && medalFor(mine.rank) ? <img className="kit mres2__medal" src={medalFor(mine.rank)!} alt={`${mine.rank}. sıra madalyası`} draggable={false} /> : null}
               {hero ? <Chibi id={hero.avatar} size={132} pose={out === 'lose' ? 'dizzy' : out === 'win' || out === 'watch' ? 'win' : 'idle'} pedestal={out !== 'lose'} /> : null}
               {out === 'watch' && winner ? <p className="mres2__who">Kazanan: <b>{winner.username}</b></p> : null}
               {mine && !practice ? (
@@ -220,7 +222,7 @@ export function MatchResult({ m, meId, now, practice, weeklyRank, onLobby, onAga
               const p = m.players[r.seat];
               return (
                 <tr key={r.userId} className={`${r.rank === 1 ? 'is-win' : ''}${r.userId === me?.id ? ' is-me' : ''}`}>
-                  <td>{r.rank}</td>
+                  <td><RankMark rank={r.rank} size={26} /></td>
                   <td>
                     <span className="mresult__who">
                       <Avatar id={p.avatar} size={26} />

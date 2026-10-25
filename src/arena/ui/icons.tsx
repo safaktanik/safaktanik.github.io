@@ -1,4 +1,5 @@
 import type { SVGProps } from 'react';
+import { KIT } from '../../v2/kit';
 
 type P = SVGProps<SVGSVGElement> & { size?: number };
 const base = (size = 20): SVGProps<SVGSVGElement> => ({
@@ -20,7 +21,8 @@ export const TrophyIcon = ({ size, ...r }: P) => (<svg {...base(size)} {...r}><p
 export const FilterIcon = ({ size, ...r }: P) => (<svg {...base(size)} {...r}><path d="M4 5h16l-6 7.5V19l-4 1.5v-8Z" /></svg>);
 export const PlusIcon = ({ size, ...r }: P) => (<svg {...base(size)} {...r}><path d="M12 5v14M5 12h14" /></svg>);
 export const BoltIcon = ({ size, ...r }: P) => (<svg {...base(size)} {...r}><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12Z" fill="currentColor" stroke="none" /></svg>);
-export const BackIcon = ({ size, ...r }: P) => (<svg {...base(size)} {...r}><path d="M15 5l-7 7 7 7" /></svg>);
+/** Geri: arayüz setinin nane yeşili oku. */
+export const BackIcon = ({ size = 20 }: P) => (<img className="kit kit-back" src={KIT.arrowLeft} width={Math.round(size * 0.85)} height={size} alt="" aria-hidden="true" draggable={false} />);
 export const LockIcon = ({ size, ...r }: P) => (<svg {...base(size)} {...r}><rect x="5" y="10.5" width="14" height="10" rx="2.5" /><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" /></svg>);
 export const GridIcon = ({ size, ...r }: P) => (<svg {...base(size)} {...r}><rect x="4" y="4" width="16" height="16" rx="2" /><path d="M4 9.3h16M4 14.7h16M9.3 4v16M14.7 4v16" /></svg>);
 export const MineIcon = ({ size, ...r }: P) => (<svg {...base(size)} {...r}><circle cx="12" cy="12" r="5.2" fill="currentColor" /><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.2 2.2M16.2 16.2l2.2 2.2M5.6 18.4l2.2-2.2M16.2 7.8l2.2-2.2" /></svg>);

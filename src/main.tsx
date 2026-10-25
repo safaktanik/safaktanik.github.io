@@ -7,6 +7,7 @@ import './theme.css';
 import './arena/ui/fx.css';
 import './v2/fonts.css';
 import './v2/v2.css';
+import './v2/kit.css';
 import { installStorageNamespace } from './v2/storage';
 import { installPackTheme } from './arena/ui/packTheme';
 import { installAudioUnlock } from './audio/sound';

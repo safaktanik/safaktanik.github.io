@@ -231,3 +231,7 @@ Bu proje npm kayıt sunucusuna erişimsiz bir ortamda geliştirildi; `npm instal
 - Test sunucusunda emojiler claude.ai'nin `room` yeteneğiyle anlık iletilir; bu yetenek kapalıysa emojiler yalnızca gönderenin ekranında görünür.
 - Bayraklar ve sonar sonuçları yalnızca o tarayıcıda tutulur; sayfa yenilenirse kaybolur (sonar hakkı geri gelmez).
 - Arayüz yalnızca Türkçe.
+
+## Görsel kaynaklar
+
+Arayüz görselleri (madalyalar, jeton, elmas, taşlar, oklar): [Designed by Freepik](https://www.freepik.com) — "Hand drawn video game set elements". Ayrıntı: `assets/ui-kit/KAYNAK.md`.

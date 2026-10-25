@@ -4,6 +4,7 @@ import { onQuestChange, todaysQuests } from '../quests';
 import { loadPuzzleHistory, puzzleDay, puzzleStreak } from '../puzzle';
 import { playSound } from '../../audio/sound';
 import { Money, fmt, useArena } from './common';
+import { KIT } from '../../v2/kit';
 
 /** Görevler sekmesi: günün 3 görevi (ilerleme + ödül) ve Günün Bulmacası kısayolu. */
 export function Quests({ onPuzzle }: { onPuzzle?(): void }) {
@@ -50,7 +51,8 @@ export function Quests({ onPuzzle }: { onPuzzle?(): void }) {
           return (
             <article key={q.id} className={`qcard${q.complete ? ' is-done' : ''}${got ? ' is-claimed' : ''}`}>
               <span className="qcard__icon" aria-hidden="true">
-                {q.icon}
+                <img className="kit" src={q.complete ? KIT.gemGreen : KIT.gemPurple} alt="" draggable={false} />
+                <em>{q.icon}</em>
               </span>
               <div className="qcard__body">
                 <strong>{q.text}</strong>

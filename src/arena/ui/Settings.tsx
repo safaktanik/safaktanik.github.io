@@ -57,6 +57,9 @@ export function Settings({ onBack, onExit }: { onBack(): void; onExit(): void })
           Açılış ekranına dön
         </button>
         <p className="asmall amuted">Sürüm {APP_VERSION}</p>
+        <p className="asmall amuted">
+          Arayüz görselleri: <a href="https://www.freepik.com" target="_blank" rel="noopener noreferrer">Designed by Freepik</a>
+        </p>
         {arenaClient().kind === 'server' ? (
         <button
           type="button"

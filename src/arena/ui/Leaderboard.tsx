@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { arenaClient, errorText } from '../client';
-import { Avatar, LevelBadge, Money, Spinner, fmt, msToClock, useTick } from './common';
+import { Avatar, LevelBadge, Money, RankMark, Spinner, fmt, msToClock, useTick } from './common';
 import { BackIcon, ClockIcon, CrownIcon } from './icons';
 
 interface Row {
@@ -27,7 +27,7 @@ interface Board {
 function RowView({ r, me }: { r: Row; me: boolean }) {
   return (
     <li className={`lbrow${me ? ' is-me' : ''}${r.rank <= 3 ? ` top${r.rank}` : ''}`}>
-      <span className="lbrow__rank">{r.rank}</span>
+      <span className="lbrow__rank"><RankMark rank={r.rank} size={30} /></span>
       <Avatar id={r.avatar} size={36} />
       <span className="lbrow__name">
         <strong>{r.username}</strong>
@@ -97,11 +97,11 @@ export function Leaderboard({ onBack }: { onBack(): void }) {
                   <Avatar id={podium[i].avatar} size={i === 0 ? 74 : 58} />
                   <strong>{podium[i].username}</strong>
                   <span>{fmt(podium[i].points)} p</span>
-                  <i className="podium__step">{i + 1}</i>
+                  <i className="podium__step"><RankMark rank={i + 1} size={i === 0 ? 46 : 38} /></i>
                 </div>
               ) : (
                 <div key={i} className={`podium__p podium__p--${i + 1} podium__p--empty`}>
-                  <i className="podium__step">{i + 1}</i>
+                  <i className="podium__step"><RankMark rank={i + 1} size={i === 0 ? 46 : 38} /></i>
                 </div>
               ),
             )}

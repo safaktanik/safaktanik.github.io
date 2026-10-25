@@ -5,6 +5,7 @@ import type { ArenaSnapshot } from '../client';
 import { TIERS } from '../economy';
 import type { TierId } from '../economy';
 import { CHARACTER_COUNT, Character, charOf } from './characters';
+import { KIT, TIER_ART, medalFor } from '../../v2/kit';
 import type { Mood } from './characters';
 
 export function useArena(): ArenaSnapshot {
@@ -28,20 +29,9 @@ export function useTick(ms = 250): number {
 const nf = new Intl.NumberFormat('tr-TR');
 export const fmt = (n: number) => nf.format(n);
 
+/** DUEL COIN simgesi: arayüz setinin taçlı jetonu. */
 export function Coin({ size = 18 }: { size?: number }) {
-  return (
-    <svg className="coin" width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="12" r="11" fill="url(#coin-g)" stroke="hsl(40 80% 30%)" strokeWidth="1" />
-      <circle cx="12" cy="12" r="7.6" fill="none" stroke="hsl(45 100% 82% / .7)" strokeWidth="1.2" />
-      <path d="M12 7.2 L13.6 10.6 L17.2 11 L14.4 13.3 L15.3 16.8 L12 14.9 L8.7 16.8 L9.6 13.3 L6.8 11 L10.4 10.6 Z" fill="hsl(40 85% 36%)" />
-      <defs>
-        <linearGradient id="coin-g" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="hsl(48 100% 68%)" />
-          <stop offset="1" stopColor="hsl(36 92% 48%)" />
-        </linearGradient>
-      </defs>
-    </svg>
-  );
+  return <img className="coin kit" src={KIT.coin} width={size} height={size} alt="" aria-hidden="true" draggable={false} />;
 }
 
 export function Money({ value, size = 16, className = '' }: { value: number; size?: number; className?: string }) {
@@ -77,8 +67,20 @@ export function Hearts({ lives, max = 3, size = 16 }: { lives: number; max?: num
   );
 }
 
+/** Masa türü: madalya (Bronz/Gümüş/Altın) ya da elmas + ad. */
 export function TierBadge({ tier, small = false }: { tier: TierId; small?: boolean }) {
-  return <span className={`tierbadge tier--${tier}${small ? ' tierbadge--sm' : ''}`}>{TIERS[tier].label}</span>;
+  return (
+    <span className={`tierbadge tier--${tier}${small ? ' tierbadge--sm' : ''}`}>
+      <img className="kit tierbadge__art" src={TIER_ART[tier]} alt="" aria-hidden="true" draggable={false} />
+      {TIERS[tier].label}
+    </span>
+  );
+}
+
+/** 1–3. sıra için kanatlı madalya; diğerlerinde sıra numarası. */
+export function RankMark({ rank, size = 28 }: { rank: number; size?: number }) {
+  const m = medalFor(rank);
+  return m ? <img className="kit rankmark" src={m} width={size} height={size} alt={`${rank}.`} draggable={false} /> : <span className="rankmark rankmark--n">{rank}</span>;
 }
 
 export function LevelBadge({ level }: { level: number }) {

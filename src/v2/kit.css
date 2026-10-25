@@ -1,0 +1,269 @@
+/* ==========================================================================
+   MINE DUEL — arayüz seti görsel katmanı (2.6)
+   Freepik "hand drawn video game set" dilinde: mor gece zemini, mavi-gri kabartmalı paneller
+   (açık renk çerçeve, siyah dış çizgi yok), koyu gömme sayı kutuları, parlak düğmeler
+   (turuncu · mor · yeşil · nane), kanatlı madalyalar, taçlı jeton, elmas.
+   v2.css'in üzerine yüklenir; aynı seçicileri sonradan (gerekirse !important ile) ezer.
+   ========================================================================== */
+:root {
+  --k-bg-top: #5a33a6;
+  --k-bg-mid: #36237c;
+  --k-bg-bot: #1a163d;
+  --k-panel: #4a5480;
+  --k-panel-2: #3b4369;
+  --k-rim: #6d79b0;
+  --k-rim-hi: #8e9ad0;
+  --k-ink: #22253f;
+  --k-drop: #1d1f3a;
+  --k-orange: #ff9a2e;
+  --k-orange-d: #f06a12;
+  --k-yellow: #ffe14d;
+  --k-purple: #b65cff;
+  --k-purple-d: #7a2fe0;
+  --k-green: #5af07c;
+  --k-green-d: #1fbf55;
+  --k-mint: #effff8;
+  --k-mint-d: #b4eedd;
+
+  /* v2 belirteçleri setin paletine */
+  --v2-out: #22264a;
+  --v2-n0: #1c1d38;
+  --v2-n1: #2a1f5c;
+  --v2-n2: #2f3459;
+  --v2-n3: #3b4369;
+  --v2-n4: #4a5480;
+  --v2-n5: #6d79b0;
+  --v2-gold: #ffb23f;
+  --v2-gold-d: #f06a12;
+  --v2-blue: #5ac8ff;
+  --v2-blue-d: #2a7fe0;
+  --v2-purple: #b65cff;
+  --v2-green: #5af07c;
+  --v2-green-d: #1fbf55;
+  --v2-muted: #b8bee6;
+}
+
+/* zemin: setin mor gece degradesi + yumuşak ışık */
+html, body {
+  background-color: var(--k-bg-mid) !important;
+  background-image:
+    radial-gradient(ellipse 90% 60% at 50% -5%, hsl(268 60% 52% / 0.85), transparent 65%),
+    radial-gradient(ellipse 70% 50% at 50% 110%, hsl(250 60% 14% / 0.9), transparent 70%),
+    linear-gradient(180deg, var(--k-bg-top), var(--k-bg-mid) 45%, var(--k-bg-bot)) !important;
+  background-attachment: fixed;
+}
+.ar-root.ascreen::before { opacity: 0.12 !important; }
+.ar-root, .asheet, .shell2 { --edge: hsl(230 40% 70% / 0.25); --edge-hi: hsl(275 90% 75% / 0.5); }
+.ar-root h1, .ar-root h2, .ar-root h3, .asheet h2, .asheet h3 { text-shadow: 0 2px 0 var(--k-drop), 0 0 1px var(--k-drop); }
+.kit { display: inline-block; object-fit: contain; flex: none; user-select: none; -webkit-user-drag: none; }
+
+/* ------------------------------------------------------------------ paneller */
+.p2, .apanel, .asheet__panel, .tcard, .mresult__panel {
+  background: linear-gradient(180deg, var(--k-panel), var(--k-panel-2)) !important;
+  border: 4px solid var(--k-rim) !important;
+  border-radius: 20px !important;
+  box-shadow: inset 0 2px 0 hsl(0 0% 100% / 0.16), inset 0 -3px 0 hsl(240 40% 12% / 0.3), 0 6px 0 var(--k-drop), 0 14px 26px hsl(250 60% 6% / 0.45) !important;
+}
+.p2__title, .asheet__head h2 {
+  background: var(--k-ink) !important;
+  border: 4px solid var(--k-rim) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 4px 0 var(--k-orange), inset 0 2px 0 hsl(0 0% 100% / 0.08) !important;
+}
+.p2__x { border-color: var(--k-rim-hi) !important; background: radial-gradient(circle at 40% 35%, #ff8fa5, #e3365a) !important; box-shadow: 0 3px 0 #8c1a33 !important; }
+
+/* başlık levhası: koyu kutu + açık çerçeve + turuncu yan dilimler ve alt şerit (setteki "Character Select") */
+.lobby2__title, .ar-root .ahead h1, .quests > h1 {
+  position: relative;
+  display: table;
+  margin: 6px auto 12px !important;
+  padding: 6px 26px 8px;
+  border-radius: 14px;
+  background: var(--k-ink);
+  border: 4px solid var(--k-rim);
+  box-shadow: 0 5px 0 var(--k-orange), inset 0 2px 0 hsl(0 0% 100% / 0.07);
+  font-size: 1.45rem !important;
+  text-align: center;
+}
+.lobby2__title::before, .lobby2__title::after, .ar-root .ahead h1::before, .ar-root .ahead h1::after, .quests > h1::before, .quests > h1::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 22px;
+  margin-top: -11px;
+  border-radius: 4px;
+  background: repeating-linear-gradient(180deg, var(--k-orange) 0 9px, transparent 9px 13px);
+}
+.lobby2__title::before, .ar-root .ahead h1::before, .quests > h1::before { left: -16px; }
+.lobby2__title::after, .ar-root .ahead h1::after, .quests > h1::after { right: -16px; }
+.ar-root .ahead { text-align: center; }
+.ar-root .ahead p { max-width: 48ch; margin-inline: auto; }
+
+/* ------------------------------------------------------------------ düğmeler: açık renk çerçeve + koyu taban gölgesi */
+.b2, .abtn {
+  --br: var(--k-rim-hi);
+  border: 3px solid var(--br) !important;
+  box-shadow: inset 0 3px 0 hsl(0 0% 100% / 0.4), inset 0 -4px 0 hsl(0 0% 0% / 0.14), 0 5px 0 var(--bs) !important;
+  text-shadow: 0 2px 0 hsl(250 50% 12% / 0.45);
+}
+.b2:active:not(:disabled), .abtn:active:not(:disabled) { box-shadow: inset 0 3px 0 hsl(0 0% 100% / 0.4), 0 1px 0 var(--bs) !important; }
+/* turuncu (setteki "Lorem"/"Loading"): koyu yazı, sarı çerçeve */
+.b2--yellow, .abtn--gold { --bt: #ffb24a; --bb: var(--k-orange-d); --bs: #a8420a; --br: var(--k-yellow); --bc: #3a1702; text-shadow: 0 1px 0 hsl(40 100% 85% / 0.5) !important; }
+.b2--blue, .abtn--primary { --bt: #7fd6ff; --bb: #2a86e8; --bs: #164f9e; --br: #c4ecff; }
+.b2--green { --bt: #8af7a0; --bb: var(--k-green-d); --bs: #127a39; --br: #c9ffd5; --bc: #0b3519; }
+.b2--red, .abtn--danger { --bt: #ff8aa0; --bb: #e3365a; --bs: #8c1a33; --br: #ffc2cf; }
+.b2--purple { --bt: #d08cff; --bb: var(--k-purple-d); --bs: #4a1a99; --br: #e6c2ff; }
+/* ikincil düğmeler: setteki nane "Start / Options / Settings" */
+.b2--dark, .abtn--ghost { --bt: var(--k-mint); --bb: var(--k-mint-d); --bs: #7d8bb8; --br: #9aa7d4; --bc: #262a4a; text-shadow: none !important; }
+.b2:disabled, .abtn:disabled { filter: grayscale(0.55) brightness(0.8); }
+
+.ib2 { border: 3px solid var(--k-rim-hi) !important; box-shadow: inset 0 3px 0 hsl(0 0% 100% / 0.4), 0 4px 0 var(--bs) !important; }
+.ib2--blue { --bt: var(--k-panel); --bb: var(--k-panel-2); --bs: var(--k-drop); }
+.ib2__badge, .tab2__alert { border-color: #ffd6de !important; background: radial-gradient(circle at 40% 35%, #ff8aa0, #e3365a) !important; }
+
+/* ------------------------------------------------------------------ üst çubuk: setteki jeton/elmas sayaçları */
+.tb2 { gap: 12px; }
+.tb2__lvl, .cp2 {
+  height: 38px !important;
+  border-radius: 12px !important;
+  background: linear-gradient(180deg, var(--k-panel), var(--k-panel-2)) !important;
+  border: 3px solid var(--k-rim) !important;
+  box-shadow: 0 3px 0 var(--k-drop);
+  overflow: visible !important;
+}
+.tb2__lvl { padding: 0 8px 0 0 !important; }
+.tb2__lvl .kit { width: 40px; height: 40px; margin: -8px 2px -8px -10px; filter: drop-shadow(0 2px 0 hsl(250 50% 10% / 0.5)); }
+.tb2__lvl b { min-width: 26px; padding: 0 6px; border-radius: 7px; background: var(--k-ink); text-align: center; }
+.tb2__lvl i { left: 72px !important; height: 10px !important; bottom: 11px !important; border-radius: 6px !important; background: var(--k-ink) !important; border: 2px solid var(--k-rim); box-sizing: content-box; }
+.tb2__lvl i::after { background: repeating-linear-gradient(135deg, #c27bff 0 6px, #9a3cf2 6px 12px) !important; border-radius: 4px; }
+.cp2 { padding: 0 4px 0 0 !important; gap: 4px; }
+.cp2__ic { margin: -8px 2px -8px -12px !important; filter: drop-shadow(0 2px 0 hsl(250 50% 10% / 0.5)) !important; }
+.cp2__ic .kit { width: 40px; height: 40px; }
+.cp2 b { padding: 1px 10px; border-radius: 7px; background: var(--k-ink); }
+.cp2__plus { width: 28px; height: 28px; margin-right: -2px; }
+
+/* ------------------------------------------------------------------ alt sekme çubuğu */
+.tab2 { background: linear-gradient(180deg, hsl(250 50% 12% / 0), hsl(250 50% 10% / 0.92) 30%) !important; }
+.tab2__b {
+  border: 3px solid var(--k-rim) !important;
+  background: linear-gradient(180deg, var(--k-panel), var(--k-panel-2)) !important;
+  box-shadow: inset 0 2px 0 hsl(0 0% 100% / 0.16), 0 4px 0 var(--k-drop) !important;
+}
+.tab2__b.is-on { background: linear-gradient(180deg, #c27bff, var(--k-purple-d)) !important; border-color: #e6c2ff !important; }
+.tab2__b--main { background: linear-gradient(180deg, #ffb24a, var(--k-orange-d)) !important; border-color: var(--k-yellow) !important; box-shadow: inset 0 3px 0 hsl(0 0% 100% / 0.45), 0 5px 0 #a8420a !important; }
+.tab2__b--main.is-on { background: linear-gradient(180deg, #ffc56a, #ff7a1f) !important; }
+
+/* ------------------------------------------------------------------ ana menü */
+.bh2__mode { border: 3px solid var(--k-rim) !important; background: linear-gradient(180deg, var(--k-panel), var(--k-panel-2)) !important; box-shadow: 0 3px 0 var(--k-drop) !important; }
+.bh2__mode.is-on { background: linear-gradient(180deg, #c27bff, var(--k-purple-d)) !important; border-color: #e6c2ff !important; box-shadow: 0 3px 0 #4a1a99, 0 0 16px hsl(275 100% 65% / 0.55) !important; }
+.tile2 { border: 3px solid var(--tr, var(--k-rim-hi)) !important; box-shadow: inset 0 3px 0 hsl(0 0% 100% / 0.3), 0 5px 0 var(--ts, var(--k-drop)) !important; }
+.tile2--green { --tt: #8af7a0; --tb: var(--k-green-d); --tr: #c9ffd5; --ts: #127a39; }
+.tile2--blue { --tt: #7fd6ff; --tb: #2a86e8; --tr: #c4ecff; --ts: #164f9e; }
+.tile2--purple { --tt: #d08cff; --tb: var(--k-purple-d); --tr: #e6c2ff; --ts: #4a1a99; }
+.tile2--dark { --tt: var(--k-panel); --tb: var(--k-panel-2); --tr: var(--k-rim); --ts: var(--k-drop); }
+.tile2--gold { --tt: #ffb24a; --tb: var(--k-orange-d); --tr: var(--k-yellow); --ts: #a8420a; }
+.tile2--gold b, .tile2--gold small { color: #3a1702; text-shadow: 0 1px 0 hsl(40 100% 85% / 0.5) !important; }
+
+/* ------------------------------------------------------------------ form, sekme, çip */
+.afield input, .afield select, .ar-root input[type='text'], .ar-root input[type='password'] {
+  background: var(--k-ink) !important;
+  border: 3px solid var(--k-rim) !important;
+  border-radius: 12px !important;
+  color: #fff !important;
+}
+.afield input:focus { outline: 3px solid var(--k-purple) !important; }
+.ltab, .chip, .aseg button, .seg button {
+  border: 3px solid var(--k-rim) !important;
+  background: linear-gradient(180deg, var(--k-panel), var(--k-panel-2)) !important;
+  color: #fff !important;
+}
+.ltab.is-on, .chip--on, .aseg button.is-on, .aseg button[aria-pressed='true'], .seg button.is-on {
+  background: linear-gradient(180deg, #c27bff, var(--k-purple-d)) !important;
+  border-color: #e6c2ff !important;
+}
+
+/* masa türü rozeti: madalya / elmas + ad */
+.tierbadge { display: inline-flex !important; align-items: center; gap: 4px; padding: 2px 9px 2px 3px !important; border-radius: 10px !important; background: var(--k-ink) !important; border: 2px solid var(--k-rim) !important; color: #fff !important; font-family: var(--v2-font); }
+.tierbadge__art { width: 22px; height: 22px; margin: -6px 0 -6px -4px; filter: drop-shadow(0 1px 0 hsl(250 50% 10% / 0.6)); }
+.tierbadge--sm .tierbadge__art { width: 18px; height: 18px; }
+
+/* masa kartı başlığı: ad rozetin yanında taşmasın, üç noktayla kısalsın */
+.tcard__head { min-width: 0; }
+.tcard__head h3 { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tcard__head .tstatus { flex: none; }
+
+/* sıra madalyaları */
+.rankmark { vertical-align: middle; filter: drop-shadow(0 2px 0 hsl(250 50% 10% / 0.5)); }
+.rankmark--n { display: inline-grid; place-items: center; min-width: 26px; height: 26px; border-radius: 8px; background: var(--k-ink); border: 2px solid var(--k-rim); font-family: var(--v2-font); }
+.lbrow { border: 3px solid var(--k-rim) !important; background: linear-gradient(180deg, var(--k-panel), var(--k-panel-2)) !important; border-radius: 14px !important; }
+.lbrow.is-me { border-color: var(--k-yellow) !important; }
+.lbrow__rank { display: grid; place-items: center; min-width: 34px; }
+
+/* ------------------------------------------------------------------ ilerleme çubukları: setteki çizgili mor */
+.qcard__bar, .mstreak__bar { background: var(--k-ink) !important; border: 2px solid var(--k-rim) !important; border-radius: 8px !important; }
+.qcard__bar i { background: repeating-linear-gradient(135deg, #c27bff 0 6px, #9a3cf2 6px 12px) !important; }
+.qcard.is-done .qcard__bar i { background: repeating-linear-gradient(135deg, #8af7a0 0 6px, #2fd062 6px 12px) !important; }
+
+/* görev kartları: taş üstünde simge */
+.qcard, .theme, .rc2 { border: 4px solid var(--k-rim) !important; background: linear-gradient(180deg, var(--k-panel), var(--k-panel-2)) !important; box-shadow: inset 0 2px 0 hsl(0 0% 100% / 0.14), 0 5px 0 var(--k-drop) !important; }
+.qcard.is-done { border-color: #c9ffd5 !important; background: linear-gradient(180deg, #3f7a63, #2c5a4c) !important; }
+.theme.is-on { border-color: var(--k-yellow) !important; }
+.qcard__icon { position: relative; display: grid; place-items: center; width: 44px; height: 54px; }
+.qcard__icon .kit { position: absolute; inset: 0; width: 100%; height: 100%; }
+.qcard__icon em { position: relative; font-style: normal; font-size: 20px; filter: drop-shadow(0 1px 1px hsl(250 50% 10% / 0.7)); }
+
+/* ------------------------------------------------------------------ maç ekranı */
+.match .mh2__pill, .match .mh2__mines, .match .mh2__mode { background: var(--k-ink) !important; border: 3px solid var(--k-rim) !important; }
+.match .mh2__exit { border: 3px solid #ffc2cf !important; background: radial-gradient(circle at 40% 35%, #ff8aa0, #e3365a) !important; box-shadow: 0 3px 0 #8c1a33 !important; }
+.match .pchip { border: 3px solid var(--k-rim) !important; border-top: 5px solid var(--seatc) !important; background: linear-gradient(180deg, var(--k-panel), var(--k-panel-2)) !important; box-shadow: 0 3px 0 var(--k-drop) !important; }
+.match .pchip.is-active { background: linear-gradient(180deg, #8a55d8, var(--k-panel-2)) !important; box-shadow: 0 3px 0 var(--k-drop), 0 0 14px hsl(275 100% 65% / 0.6) !important; }
+.match .pchip.is-me { border-color: var(--k-yellow) !important; border-top-color: var(--seatc) !important; }
+.match .mstatus { background: var(--k-ink) !important; border: 3px solid var(--k-rim) !important; }
+.match .mstatus--go { background: linear-gradient(180deg, #4a3a9a, #2e2766) !important; color: #efe3ff !important; border-color: #b78cff !important; }
+.match .mbanner { border: 3px solid hsl(0 0% 100% / 0.7) !important; box-shadow: 0 4px 0 hsl(250 50% 10% / 0.55) !important; }
+
+/* tahta: mavi-gri çerçeveli tabla, lavanta kabartmalı kapalı kareler, koyu gömme açık kareler */
+.match .mboard { background: radial-gradient(ellipse at 50% 30%, #3b3f78, #22224d) !important; border: 4px solid var(--k-rim) !important; box-shadow: inset 0 0 26px hsl(250 60% 8% / 0.6), 0 6px 0 var(--k-drop) !important; }
+.match .mgrid { background: var(--k-ink) !important; box-shadow: 0 0 0 3px var(--k-rim) !important; }
+.match .mc--hidden { background: linear-gradient(160deg, #b9c2f2 0%, #8793da 45%, #5f69b6 100%) !important; box-shadow: inset 0 2px 0 hsl(0 0% 100% / 0.55), inset 0 -3px 0 hsl(240 45% 22% / 0.5), 0 2px 0 #343a77 !important; }
+.match .mc--open { background: #262946 !important; }
+
+/* sonuç ekranı: setin mor tonlarında kahraman alanı */
+.mres2--win { background: radial-gradient(ellipse at 50% 28%, #8a55e0, #3a2384 72%) !important; }
+.mres2--lose { background: radial-gradient(ellipse at 50% 30%, #e3486a, #6b1a3d 72%) !important; }
+.mres2--mid, .mres2--watch { background: radial-gradient(ellipse at 50% 30%, #5c66a0, #2c2f5a 75%) !important; }
+/* madalya: kurdelenin altında, karakterin üstüne binmeden */
+.mres2__medal { width: 78px; height: auto; margin: -4px 0 -6px; z-index: 2; filter: drop-shadow(0 5px 0 hsl(250 50% 10% / 0.55)); animation: medalin 0.6s cubic-bezier(0.2, 1.6, 0.4, 1); }
+/* ödül jetonları: üst üste yelpaze (eski SVG kuralı .ic2'ye bağlıydı) */
+.mres2__coins .kit { grid-area: 1 / 1; }
+.mres2__coins .kit:nth-child(1) { transform: translate(-16px, 8px) rotate(-12deg); }
+.mres2__coins .kit:nth-child(3) { transform: translate(16px, 6px) rotate(10deg); }
+@keyframes medalin { from { transform: scale(0.2) rotate(-25deg); opacity: 0; } }
+.mresult__table th { color: var(--v2-muted); }
+.mresult__table tr.is-me td { background: hsl(275 70% 60% / 0.18); }
+.rb2__body { border-color: hsl(0 0% 100% / 0.75) !important; }
+.rb2__tail { border-color: hsl(0 0% 100% / 0.6) !important; }
+
+/* geri düğmesi: nane ok */
+.aback { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px 4px 6px; border-radius: 12px; background: linear-gradient(180deg, var(--k-panel), var(--k-panel-2)); border: 3px solid var(--k-rim); box-shadow: 0 3px 0 var(--k-drop); color: #fff; font-family: var(--v2-font); }
+.kit-back { filter: drop-shadow(0 1px 0 hsl(250 50% 10% / 0.5)); }
+
+/* bulmaca ve mağaza önizlemesi: maç tahtasıyla aynı kare dili */
+.theme__preview { background: var(--k-ink) !important; border: 2px solid var(--k-rim); }
+.puzzle__bar > span { padding: 2px 10px; border-radius: 10px; background: var(--k-ink); border: 2px solid var(--k-rim); }
+
+/* sayfa kenar çubuğu */
+.shell2__main::-webkit-scrollbar { width: 8px; }
+.shell2__main::-webkit-scrollbar-thumb { background: var(--k-rim); border-radius: 8px; }
+
+/* sıralama podyumu: rakam yerine madalya */
+.podium__step { font-size: 0 !important; display: grid !important; place-items: center; }
+.podium__p { border: 3px solid var(--k-rim) !important; background: linear-gradient(180deg, var(--k-panel), var(--k-panel-2)) !important; }
+.podium__p--1 { border-color: var(--k-yellow) !important; }
+
+/* açılış ekranı: eski turkuaz ışık ve deniz görseli yerine mor gece + yumuşak ışık */
+.intro::before { background: radial-gradient(circle at 50% 38%, hsl(275 80% 62% / 0.45), transparent 48%) !important; opacity: 1 !important; }
+.intro .logomark circle, .intro .logomark { filter: drop-shadow(0 8px 0 hsl(250 50% 10% / 0.45)); }
+.intro2 .intro__title, .intro__title { text-shadow: 0 4px 0 var(--k-drop), 0 0 1px var(--k-drop) !important; }
+.intro__links a, .intro2__links a, .intro__how { color: #d9c2ff !important; }

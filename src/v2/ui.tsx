@@ -11,6 +11,7 @@ import type { Mood } from '../arena/ui/characters';
 import { CHARACTERS } from '../arena/characterData';
 import { fmt } from '../arena/ui/common';
 import { BattleIcon, ChestIcon, CoinIcon, GearIcon, HeroIcon, LockIcon, ScrollIcon, TrophyIcon, XpIcon } from './icons';
+import { KIT } from './kit';
 
 /* ------------------------------------------------------------------ panel */
 
@@ -84,6 +85,7 @@ export function CurrencyPill({ icon, value, onClick, label }: { icon: ReactNode;
     <button type="button" className="cp2" onClick={onClick} aria-label={`${label}: ${value}`} disabled={!onClick}>
       <span className="cp2__ic">{icon}</span>
       <b data-testid={label === 'DUEL COIN' ? 'balance' : undefined}>{typeof value === 'number' ? fmt(value) : value}</b>
+      {onClick ? <img className="kit cp2__plus" src={KIT.plus} alt="" aria-hidden="true" draggable={false} /> : null}
     </button>
   );
 }
