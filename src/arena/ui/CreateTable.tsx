@@ -122,7 +122,7 @@ export function CreateTable({ onClose }: { onClose(): void }) {
         <Seg label="Tur süresi" value={opts.turnSeconds} onChange={(v) => setO({ turnSeconds: v as number })} options={OPTION_CHOICES.turnSeconds.map((t) => ({ v: t, label: `${t} sn` }))} />
       </div>
       <div className="afgroup">
-        <h3>Can {blitz ? <small className="amuted">(Yıldırım: en fazla 2)</small> : null}</h3>
+        <h3>Can {blitz || mode === 'shrink' ? <small className="amuted">({blitz ? 'Yıldırım' : 'Daralan Tahta'}: en fazla 2)</small> : null}</h3>
         <Seg label="Can" value={opts.lives} onChange={(v) => setO({ lives: v as number })} options={OPTION_CHOICES.lives.map((l) => ({ v: l, label: '♥'.repeat(l) }))} />
       </div>
       <div className="afgroup optgrid">
@@ -141,7 +141,7 @@ export function CreateTable({ onClose }: { onClose(): void }) {
           <Seg label="Pas" value={opts.passes} onChange={(v) => setO({ passes: v as number })} options={OPTION_CHOICES.passes.map((n) => ({ v: n, label: n ? `${n}` : 'Yok' }))} />
         </div>
         <div>
-          <h3>👉 Zorla {mode === 'chain' ? <small className="amuted">(Zincir'de yok)</small> : null}</h3>
+          <h3>👉 Zorla {mode === 'chain' || mode === 'shrink' ? <small className="amuted">({mode === 'chain' ? 'Zincir' : 'Daralan Tahta'}'da yok)</small> : null}</h3>
           <Seg label="Zorla" value={opts.forces} onChange={(v) => setO({ forces: v as number })} options={OPTION_CHOICES.forces.map((n) => ({ v: n, label: n ? `${n}` : 'Yok' }))} />
         </div>
       </div>

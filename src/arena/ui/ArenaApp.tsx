@@ -13,20 +13,21 @@ import { Intro } from './Intro';
 import { P2PPlay, codeFromHash } from './P2PPlay';
 import { MatchScreen } from './MatchScreen';
 import { Practice } from './Practice';
+import { Puzzle } from './Puzzle';
 import { ProfileSetup } from './ProfileSetup';
 import { QuickPlaySheet, Searching } from './QuickPlay';
 import { TableRoom } from '../../v2/TableRoom';
 import { Shell } from '../../v2/Shell';
 import { arenaClient } from '../client';
 
-export type View = 'battle' | 'lobby' | 'leaderboard' | 'profile' | 'shop' | 'settings';
+export type View = 'battle' | 'lobby' | 'leaderboard' | 'profile' | 'shop' | 'settings' | 'quests';
 
 /** Uygulamanın kökü: ana ekran, antrenman ve (arka uç varsa) masalar. */
 export function Root() {
   const [detected, setDetected] = useState<Detected | null>(null);
   const [joinCode] = useState(codeFromHash);
   // Akış sade: açılış (OYNA) → ana menü (Savaş sekmesi). Arkadaş odası, antrenman, masalar hep ana menüden açılır.
-  const [screen, setScreen] = useState<'intro' | 'tables' | 'practice' | 'p2p'>(() => {
+  const [screen, setScreen] = useState<'intro' | 'tables' | 'practice' | 'p2p' | 'puzzle'>(() => {
     const q = new URLSearchParams(window.location.search);
     // Davet linkiyle (#oda=KOD) gelindiyse doğrudan arkadaş odasına.
     if (codeFromHash()) return 'p2p';
@@ -66,8 +67,9 @@ export function Root() {
       />
     );
   if (screen === 'practice') return <Practice onExit={home} />;
+  if (screen === 'puzzle') return <Puzzle onExit={home} />;
   if (screen === 'tables' && detected && detected.kind !== 'none')
-    return <Tables onExit={() => setScreen('intro')} onPractice={() => setScreen('practice')} onFriends={() => setScreen('p2p')} />;
+    return <Tables onExit={() => setScreen('intro')} onPractice={() => setScreen('practice')} onFriends={() => setScreen('p2p')} onPuzzle={() => setScreen('puzzle')} />;
   if (screen === 'tables' && !detected)
     return (
       <div className="ar-root ascreen center">
@@ -80,7 +82,7 @@ export function Root() {
 }
 
 /** Masa sistemi: ekran, sunucudan gelen duruma göre seçilir (yeniden bağlanınca doğru yere döner). */
-export function Tables({ onExit, onPractice, onFriends }: { onExit(): void; onPractice(): void; onFriends?(): void }) {
+export function Tables({ onExit, onPractice, onFriends, onPuzzle }: { onExit(): void; onPractice(): void; onFriends?(): void; onPuzzle?(): void }) {
   const s = useArena();
   const c = arenaClient();
   const [view, setView] = useState<View>('battle');
@@ -150,6 +152,7 @@ export function Tables({ onExit, onPractice, onFriends }: { onExit(): void; onPr
         onExit={onExit}
         onPractice={onPractice}
         onFriends={onFriends}
+        onPuzzle={onPuzzle}
         onCreate={() => setSheet('create')}
         onQuickSheet={() => {
           setQuickPreset({});

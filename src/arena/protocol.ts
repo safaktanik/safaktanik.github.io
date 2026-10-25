@@ -149,13 +149,16 @@ export interface MatchView {
   forcedBy?: number | null;
   /** Bu turda sıradaki oyuncu Zorla kurdu (hamlesinden sonra devreye girer). */
   forceArmed?: boolean;
+  /** Daralan Tahta: süren fırtına (kapanacak halka, kalan hamle) ya da sıradaki fırtınaya kalan hamle. */
+  storm?: { ring: number; left: number } | null;
+  stormIn?: number | null;
   /** Son kullanılan güç (animasyon); n her kullanımda artar. */
   lastPower?: { seat: number; kind: PowerKind; n: number; turnNo: number } | null;
   /** Botun (düşünürken) seçtiği kare: açmadan önce herkes görür. */
   aim?: { seat: number; index: number; turnNo: number } | null;
   size: number;
   mineCount: number;
-  /** -1 gizli, 0–8 güvenli (komşu mayın sayısı), 9 patlamış mayın, 10 açılmamış mayın (yalnızca maç bitince). */
+  /** -1 gizli, 0–8 güvenli (komşu mayın sayısı), 9 patlamış mayın, 10 açılmamış mayın (yalnızca maç bitince), 11 imha edilmiş, 12/13 kapanmış güvenli / mayın (Daralan Tahta). */
   cells: number[];
   players: MatchPlayerView[];
   viewerSeat: number | null;

@@ -185,6 +185,71 @@ describe('mayın tarlası motoru', () => {
   });
 });
 
+describe('Daralan Tahta', () => {
+  const D = { lives: 2, afkTurns: 99, island: false, shields: 0, sonars: 0, bonuses: false, passes: 1 };
+  /** Sırası gelen oyuncu için açılabilir, mayın olmayan (yoksa herhangi) bir kare. */
+  const playable = (s: ReturnType<typeof createArena>) => {
+    const pool = s.allowed && s.allowed.length ? s.allowed : [...s.cells.keys()].filter((i) => s.cells[i] === 0);
+    return pool.find((i) => !s.mines.includes(i)) ?? pool[0];
+  };
+
+  it('3 tur sakin, sonra fırtına: herkes yalnızca dış halkadan açabilir; fırtına bitince halka kapanır', async () => {
+    const { SHRINK } = await import('./modes');
+    const { ringOf } = await import('./mines');
+    const s = createArena(10, 15, ['a', 'b', 'c'], seeded(11), D, 'shrink');
+    expect(s.shrink).toEqual({ calm: SHRINK.firstCalmRounds * 3, next: 0, storm: null, done: false });
+    expect(modeView(s, false).stormIn).toBe(9);
+    for (let k = 0; k < SHRINK.firstCalmRounds * 3 - 1; k++) reveal(s, s.current, playable(s));
+    expect(s.shrink!.storm).toBeNull();
+    reveal(s, s.current, playable(s));
+    // fırtına başladı: izinli kareler yalnızca dış halkanın gizli kareleri
+    expect(s.shrink!.storm).toEqual({ ring: 0, left: SHRINK.stormRounds * 3 });
+    expect(s.allowed!.length).toBeGreaterThan(0);
+    expect(s.allowed!.every((i) => ringOf(10, i) === 0 && s.cells[i] === 0)).toBe(true);
+    const inner = [...s.cells.keys()].find((i) => ringOf(10, i) > 0 && s.cells[i] === 0)!;
+    expect(reveal(s, s.current, inner)).toEqual({ error: 'not-allowed' });
+    expect(modeView(s, false).storm).toEqual({ ring: 0, left: SHRINK.stormRounds * 3 });
+    // fırtına boyunca oyna (Pas da bir fırtına hamlesi sayılır)
+    usePower(s, s.current, 'pass');
+    while (s.phase === 'playing' && s.shrink!.storm) reveal(s, s.current, playable(s));
+    if (s.phase === 'playing') {
+      // dış halka kapandı: gizli kare kalmadı, mayınları 13 olarak herkese görünür
+      expect([...s.cells.keys()].filter((i) => ringOf(10, i) === 0).every((i) => s.cells[i] !== 0)).toBe(true);
+      const view = cellView(s, false);
+      const lockedMine = s.mines.find((m) => s.cells[m] === 4);
+      if (lockedMine !== undefined) expect(view[lockedMine]).toBe(13);
+      expect(s.shrink!.next).toBe(1);
+      expect(s.shrink!.calm).toBe(SHRINK.calmRounds * s.players.filter((p) => !p.eliminated).length);
+      expect(s.allowed).toBeNull();
+    }
+  });
+
+  it('kapanan güvenli kareler kalan sayıdan düşer; 1000 rastgele maç tutarlı biter', () => {
+    for (let g = 0; g < 1000; g++) {
+      const rng = seeded(500 + g);
+      const s = createArena(10, 20, ['a', 'b', 'c', 'd'], rng, { ...D, passes: 0 }, 'shrink');
+      let guard = 0;
+      while (s.phase === 'playing' && guard++ < 600) {
+        const pool = s.allowed && s.allowed.length ? s.allowed : [...s.cells.keys()].filter((i) => s.cells[i] === 0);
+        expect(pool.length).toBeGreaterThan(0);
+        const r = reveal(s, s.current, pool[rng(pool.length)]);
+        expect('error' in r).toBe(false);
+      }
+      expect(s.phase).toBe('finished');
+      const hiddenSafe = s.cells.filter((c, i) => c === 0 && !s.mines.includes(i)).length;
+      expect(s.safeLeft).toBe(hiddenSafe);
+    }
+  });
+
+  it('Zorla bu modda yok; can en fazla 2', async () => {
+    const { matchSettings } = await import('./rules');
+    expect(matchSettings('shrink').forces).toBe(0);
+    expect(matchSettings('shrink', { lives: 5 }).lives).toBe(2);
+    const s = createArena(10, 15, ['a', 'b'], seeded(3), { ...D, forces: 1 }, 'shrink');
+    expect(usePower(s, 0, 'force')).toEqual({ error: 'not-in-mode' });
+  });
+});
+
 describe('moda göre mayın yoğunluğu', () => {
   it('Son Kalan ve Yıldırım ×1,5; diğer modlar tablodaki değer; yoğunluk seçimiyle çarpılır, %30 sınırı korunur', () => {
     expect(minesForTable(TIERS.gold, 14, 4, 'normal', 'classic')).toBe(54);

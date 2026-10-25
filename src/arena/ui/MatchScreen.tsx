@@ -10,6 +10,9 @@ import { BoardMine, DefusedMine, EyeIcon, SeaMine } from './art';
 import { FxCanvas, fx, fxAtCell } from './Fx';
 import { badgesFor, recordBadges } from '../achievements';
 import type { BonusKind, PowerKind, ScanResult } from '../mines';
+import { recordQuest } from '../quests';
+import type { QuestEvent } from '../quests';
+import { themeClass } from '../cosmetics';
 import { FlagIcon2 } from '../../v2/icons';
 import { PackIcon } from './PackIcon';
 import { PACK } from './packArt';
@@ -148,6 +151,10 @@ const BoardGrid = memo(function BoardGrid({ size, cells, owners, chests, hiddenC
         } else if (v === 11) {
           cls += ` mc--defused${owners && owners[i] >= 0 ? ` s${owners[i]}` : ''}`;
           content = <DefusedMine size={Math.round(cellPx * 0.86)} />;
+        } else if (v === 12 || v === 13) {
+          // Daralan Tahta: kapanmış halka (13: içindeki mayın artık herkese görünür)
+          cls += ` mc--locked${v === 13 ? ' mc--lockedmine' : ''}`;
+          content = v === 13 ? <BoardMine index={i} lit={false} size={Math.round(cellPx * 0.7)} /> : null;
         } else {
           cls += ` mc--open n${v}`;
           content = v > 0 ? v : null;
@@ -473,6 +480,12 @@ export function MatchScreen({ m, meId, now, move, scan, power, exit, react, subs
   // Pas / Zorla kullanımı (madalya ve maç karnesi için)
   const usedPower = useRef(false);
   const powersUsed = useRef(0);
+  // Günlük görevler: antrenman maçları sayılmaz; tamamlanan görev kısa bir duyuruyla bildirilir
+  const questEvent = (e: QuestEvent, n = 1) => {
+    if (m.id.startsWith('practice-')) return;
+    const done = recordQuest(e, n);
+    if (done.length) window.setTimeout(() => setBanner({ text: `✅ Görev tamam: ${done[0].text} · Görevler sekmesinden ödülünü al`, tone: 'bonus', key: Date.now() }), 900);
+  };
   const [guess, setGuess] = useState<{ turnNo: number; seat: number; g: 'safe' | 'mine' } | null>(null);
   const guessRef = useRef<typeof guess>(guess);
   guessRef.current = guess;
@@ -519,6 +532,7 @@ export function MatchScreen({ m, meId, now, move, scan, power, exit, react, subs
         await power(kind);
         usedPower.current = true;
         powersUsed.current++;
+        questEvent(kind);
         navigator.vibrate?.(kind === 'force' ? [20, 40, 20] : 15);
       } catch (e) {
         setErr(errorText(e));
@@ -658,13 +672,22 @@ export function MatchScreen({ m, meId, now, move, scan, power, exit, react, subs
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [m.phase, m.id, m.results]);
 
-  // Maç sonu: kazanan için konfeti.
+  // Maç sonu: kazanan için konfeti; günlük görevler işlenir (yalnızca bu maçta oynayan için, antrenman hariç).
   const finishedRef = useRef(m.phase === 'finished');
   useEffect(() => {
     if (m.phase === 'finished' && !finishedRef.current) {
       finishedRef.current = true;
       fx('win', 0, 0);
+      const row = m.results?.find((r) => r.seat === mySeat);
+      if (row) {
+        questEvent('match');
+        if (row.rank === 1) questEvent('win');
+        if (row.safeOpened > 0) questEvent('safe', row.safeOpened);
+        if (row.mineHits === 0 && !row.eliminationReason) questEvent('clean');
+        if (m.mode === 'shrink') questEvent('shrink');
+      }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [m.phase]);
 
   // Elendiğim an: izle / çık kartı.
@@ -856,6 +879,7 @@ export function MatchScreen({ m, meId, now, move, scan, power, exit, react, subs
         setPing({ index: i, key: Date.now() });
         const mines = r.mines ?? [];
         setScans((xs) => [...xs, { ...r, mines, center: i }]);
+        questEvent('sonar');
         fxAtCell('sonar', i, 1.2);
         setBanner({
           text: mines.length === 0 ? '📡 Sonar: bu alan tertemiz! Yeşil kareler güvenli.' : `📡 Sonar ${mines.length} mayının yerini buldu! Kırmızılar mayın, yeşiller güvenli.`,
@@ -921,7 +945,7 @@ export function MatchScreen({ m, meId, now, move, scan, power, exit, react, subs
           const cc = c + dc;
           if (rr < 0 || cc < 0 || rr >= n || cc >= n) continue;
           const j = rr * n + cc;
-          if (flags.has(j) || sonarMines.has(j) || m.cells[j] === 9 || m.cells[j] === 11) k++;
+          if (flags.has(j) || sonarMines.has(j) || m.cells[j] === 9 || m.cells[j] === 11 || m.cells[j] === 13) k++;
         }
       if (k === v) out.add(i);
     });
@@ -936,7 +960,7 @@ export function MatchScreen({ m, meId, now, move, scan, power, exit, react, subs
       if (!myTurn || busy || m.cells[i] !== -1) return;
       if (action === 'open' && flags.has(i)) return setErr('Bu karede bayrağın var. Önce bayrağı kaldır.');
       if (action === 'open' && sonarMines.has(i)) return setErr('📡 Sonar burada mayın buldu! Başka bir kare seç.');
-      if (allowedSet && !allowedSet.has(i)) return setErr(m.mode === 'chain' ? 'Zincir kuralı: parlayan karelerden birini açmalısın.' : 'Zorlandın: parlayan karelerden birini açmalısın.');
+      if (allowedSet && !allowedSet.has(i)) return setErr(m.mode === 'chain' ? 'Zincir kuralı: parlayan karelerden birini açmalısın.' : m.storm ? 'Fırtına: dış halkadaki parlayan karelerden birini açmalısın.' : 'Zorlandın: parlayan karelerden birini açmalısın.');
       void reveal(i, action);
     },
     [myTurn, busy, m.cells, flags, sonarMines, allowedSet, reveal],
@@ -1060,11 +1084,30 @@ export function MatchScreen({ m, meId, now, move, scan, power, exit, react, subs
       if (sel !== null) return { text: `Seçili: ${cellName(m.size, sel)}. Açmak için tekrar dokun`, tone: 'go' };
       if (forcedOnMe) return { text: `👉 ${m.players[m.forcedBy!]?.username ?? 'Rakibin'} seni zorladı: parlayan karelerden birini aç (Pas'la kurtulabilirsin)`, tone: 'force' };
       if (m.forceArmed) return { text: '👉 Zorla hazır: şimdi kareni aç, sıradaki onun yanından açacak', tone: 'force' };
-      return { text: m.mode === 'chain' && m.allowed?.length ? 'Sıra sende: zincirdeki parlayan karelerden birini seç' : 'Sıra sende: bir kare seç', tone: 'go' };
+      if (m.storm) return { text: `🌪️ Fırtına! Dış halkadan (parlayan) bir kare aç · ${m.storm.left} hamle sonra halka kapanır`, tone: 'storm' };
+      return { text: m.mode === 'chain' && m.allowed?.length ? 'Sıra sende: zincirdeki parlayan karelerden birini seç' : `Sıra sende: bir kare seç${m.stormIn ? ` · 🌪️ ${m.stormIn} hamle sonra fırtına` : ''}`, tone: 'go' };
     }
     if (mySeat === null) return { text: `İzleyici · sıra: ${cur.username}`, tone: 'spect' };
-    return { text: `Sıra: ${cur.username}${tool === 'flag' ? ' · bayrak koyabilirsin' : ''}`, tone: 'wait' };
-  }, [m.phase, meP, myTurn, sel, cur, m.size, mySeat, m.mode, m.allowed, tool, forcedOnMe, m.forcedBy, m.forceArmed, m.players]);
+    if (m.storm) return { text: `🌪️ Fırtına · sıra: ${cur.username} · ${m.storm.left} hamle sonra halka kapanır`, tone: 'storm' };
+    return { text: `Sıra: ${cur.username}${tool === 'flag' ? ' · bayrak koyabilirsin' : m.stormIn ? ` · 🌪️ ${m.stormIn} hamle sonra fırtına` : ''}`, tone: 'wait' };
+  }, [m.phase, meP, myTurn, sel, cur, m.size, mySeat, m.mode, m.allowed, tool, forcedOnMe, m.forcedBy, m.forceArmed, m.players, m.storm, m.stormIn]);
+  // Fırtına başlayınca ve halka kapanınca herkese duyuru
+  const stormRing = m.storm?.ring ?? null;
+  const prevStorm = useRef<number | null>(stormRing);
+  useEffect(() => {
+    const prev = prevStorm.current;
+    prevStorm.current = stormRing;
+    if (m.phase !== 'playing' || prev === stormRing) return;
+    if (stormRing !== null) {
+      playSound('warn');
+      navigator.vibrate?.([40, 30, 40]);
+      setBanner({ text: '🌪️ Fırtına geldi! Herkes dış halkadan açmak zorunda', tone: 'storm', key: Date.now() });
+    } else if (prev !== null) {
+      playSound('boom');
+      setShake('soft');
+      setBanner({ text: '🧱 Halka kapandı: tahta daraldı, içindeki mayınlar göründü', tone: 'storm', key: Date.now() });
+    }
+  }, [stormRing, m.phase]);
 
   const sonarLeft = meP?.sonar ?? 0;
 
@@ -1088,7 +1131,7 @@ export function MatchScreen({ m, meId, now, move, scan, power, exit, react, subs
     const open: RadialAction = {
       id: 'open',
       icon: '⛏️',
-      label: flagged ? 'Bayraklı' : sMine ? 'Mayın!' : blocked ? (m.mode === 'chain' ? 'Zincir dışı' : 'Zorla dışı') : 'Aç',
+      label: flagged ? 'Bayraklı' : sMine ? 'Mayın!' : blocked ? (m.mode === 'chain' ? 'Zincir dışı' : m.storm ? 'Halka dışı' : 'Zorla dışı') : 'Aç',
       tone: 'open',
       disabled: flagged || sMine || blocked || busy,
       onClick: () => tryOpen(i, 'open'),
@@ -1141,7 +1184,7 @@ export function MatchScreen({ m, meId, now, move, scan, power, exit, react, subs
   }, [menu, flags, allowedSet, sonarMines, myTurn, busy, m.mode, scan, sonarLeft, toggleFlag, tryOpen, doScan, power, meP, m.forceArmed, usePowerUp]);
 
   // Kalan mayın göstergesi: toplam − patlayan − imha edilen − benim bayraklarım.
-  const knownMines = useMemo(() => m.cells.reduce((n, v) => n + (v === 9 || v === 11 ? 1 : 0), 0), [m.cells]);
+  const knownMines = useMemo(() => m.cells.reduce((n, v) => n + (v === 9 || v === 11 || v === 13 ? 1 : 0), 0), [m.cells]);
   const minesLeft = m.mineCount - knownMines - new Set([...flags, ...sonarMines]).size;
   const selectedReady = myTurn && sel !== null && (tool === 'open' || tool === 'defuse') && !busy;
   const playing = m.phase === 'playing';
@@ -1162,7 +1205,7 @@ export function MatchScreen({ m, meId, now, move, scan, power, exit, react, subs
   const activeMe = playing && meP && !meP.eliminated;
 
   return (
-    <div className={`ar-root ascreen match tier--${m.tier}${shake ? ` is-shaking is-shaking--${shake}` : ''}${myTurn ? ' is-myturn' : ''}${myTurn && secsLeft <= 5 ? ' is-hurry' : ''}${lastLife ? ' is-lastlife' : ''}${forcedOnMe ? ' is-forced' : ''}`}>
+    <div className={`ar-root ascreen match tier--${m.tier}${shake ? ` is-shaking is-shaking--${shake}` : ''}${myTurn ? ' is-myturn' : ''}${myTurn && secsLeft <= 5 ? ' is-hurry' : ''}${lastLife ? ' is-lastlife' : ''}${forcedOnMe ? ' is-forced' : ''}${themeClass()}`}>
       {flash ? <div key={flash.key} className={`mflash mflash--${flash.tone}`} aria-hidden="true" /> : null}
       {/* Üst bar: tek satır, telefonda taşmaz. Solda çıkış, ortada mod (+ bonus sayacı), sağda kalan mayın ve ödül. */}
       <header className="mh2" title={m.tableName}>

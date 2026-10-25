@@ -1,6 +1,6 @@
 /** Mayın tarlası masa modları. Kurallar motorda (mines.ts); burası adlar ve açıklamalar. */
-export type ArenaMode = 'classic' | 'territory' | 'treasure' | 'chain' | 'hunter' | 'blitz';
-export const MODE_ORDER: ArenaMode[] = ['classic', 'blitz', 'hunter', 'territory', 'treasure', 'chain'];
+export type ArenaMode = 'classic' | 'territory' | 'treasure' | 'chain' | 'hunter' | 'blitz' | 'shrink';
+export const MODE_ORDER: ArenaMode[] = ['classic', 'shrink', 'blitz', 'hunter', 'territory', 'treasure', 'chain'];
 
 export interface ModeInfo {
   id: ArenaMode;
@@ -67,6 +67,17 @@ export const MODES: Record<ArenaMode, ModeInfo> = {
       'Bütün mayınlar imha edilince ya da patlayınca maç biter; en çok mayın imha eden kazanır.',
     ],
   },
+  shrink: {
+    id: 'shrink',
+    name: 'Daralan Tahta',
+    short: '2 can. Fırtınada herkes dış halkadan açmak zorunda, sonra halka kapanır. Son kalan kazanır.',
+    rules: [
+      'Son Kalan kurallarıyla oynanır ama herkesin 2 canı var; ayakta kalan son oyuncu kazanır, tahta biterse en az mayına basan.',
+      '3 turdan sonra 🌪️ fırtına başlar: iki tur boyunca herkes en dıştaki açık halkadan bir kare açmak zorundadır (parlayan kareler). Bir tur sakinlikten sonra sıradaki halkada yeni fırtına.',
+      'Fırtına bitince o halka kapanır: içindeki mayınlar görünür olur, açılmamış güvenli kareler kaybolur. Tahta içe doğru daralır.',
+      'Fırtınada Pas ile sıranı geçebilirsin; Sonar dış halkada çok işe yarar. Zorla bu modda yoktur.',
+    ],
+  },
   blitz: {
     id: 'blitz',
     name: 'Yıldırım',
@@ -85,7 +96,18 @@ export const MODES: Record<ArenaMode, ModeInfo> = {
  * iyi oynayanın kazanma oranı %51–80'e çıkar; maçlar ~%50 uzar (src/arena/variants.sim.ts, 300'er maç).
  * ×1,25 canlıda denendi, Gümüş'te eşitlik hâlâ sık çıktı. Diğer modların dengesi ayrı.
  */
-export const MODE_MINE_FACTOR: Record<ArenaMode, number> = { classic: 1.5, blitz: 1.5, hunter: 1, territory: 1, treasure: 1, chain: 1 };
+export const MODE_MINE_FACTOR: Record<ArenaMode, number> = { classic: 1.5, blitz: 1.5, shrink: 1.5, hunter: 1, territory: 1, treasure: 1, chain: 1 };
+
+/**
+ * Daralan Tahta: ilk fırtınaya kadar ve fırtınalar arasında geçen tur sayısı, fırtınanın kaç tur sürdüğü
+ * (tur = her ayakta oyuncunun bir hamlesi). Simülasyon bu nesneyi geçici olarak değiştirebilir.
+ * Ayar (variants.sim.ts, 300'er maç; mayın ×1,5, 2 can): eşitlik %36–49, maç başına 0,5–1,2 eleme,
+ * maçların %11–13'ü "son kalan"la biter, iyi oynayan şansın belirgin üstünde kazanır (%45–61).
+ * Fırtına 1 tur / sakin 2 tur iken eşitlik %54–67 ve neredeyse hiç eleme yoktu.
+ */
+export const SHRINK = { firstCalmRounds: 3, calmRounds: 1, stormRounds: 2 };
+/** Daralan Tahta'da en çok can (Yıldırım gibi mod kuralı). */
+export const SHRINK_LIVES = 2;
 
 /** Moda göre tur süresi (sn). */
 export function turnSecondsFor(mode: ArenaMode, base: number): number {

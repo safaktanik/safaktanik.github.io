@@ -29,7 +29,8 @@ export function botThinkMs(cells: readonly number[], size: number, mineCount: nu
  */
 export function analyze(cells: readonly number[], size: number, mineCount: number) {
   const mines = new Set<number>();
-  cells.forEach((v, i) => (v === 9 || v === 11) && mines.add(i));
+  // 9 patlamış, 11 imha edilmiş, 13 kapanmış (Daralan Tahta) mayın: hepsi bilinen mayın
+  cells.forEach((v, i) => (v === 9 || v === 11 || v === 13) && mines.add(i));
   const safe = new Set<number>();
   let changed = true;
   let guard = 0;

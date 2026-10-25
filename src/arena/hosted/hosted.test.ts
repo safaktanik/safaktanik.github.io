@@ -190,6 +190,30 @@ describe('test sunucusu (paylaşılan veritabanı)', () => {
     b.stop();
   }, 90000);
 
+  it('görev ödülü anahtar başına bir kez; mağaza alımı coin harcar, aynı ürün iki kez alınmaz, bakiye yetmezse reddedilir', async () => {
+    const mem = createMemoryDb();
+    const b = new HostedBackend(mem.forUser('yerel', { anyWrite: true }), 'yerel', { autoTick: false, local: true });
+    b.start();
+    await until(() => !!b.state.needsProfile);
+    await b.createProfile('Kaptan', 3);
+    await until(() => !!b.state.me);
+    const bal = () => (mem.docs.get('players/yerel') as unknown as PlayerDoc).balance;
+    const start = bal();
+    expect(await b.grantReward('q:2026-10-25:win1', 400)).toEqual({ amount: 400 });
+    expect(bal()).toBe(start + 400);
+    await expect(b.grantReward('q:2026-10-25:win1', 400)).rejects.toMatchObject({ code: 'already-claimed' });
+    await expect(b.grantReward('q:x', 999_999)).rejects.toMatchObject({ code: 'bad-request' });
+    expect(b.claimedKeys()).toContain('q:2026-10-25:win1');
+    expect(await b.purchase('neon', 1500)).toEqual({ owned: ['neon'] });
+    expect(bal()).toBe(start + 400 - 1500);
+    expect(b.ownedItems()).toEqual(['neon']);
+    await expect(b.purchase('neon', 1500)).rejects.toMatchObject({ code: 'already-owned' });
+    await expect(b.purchase('lava', 1_000_000)).rejects.toMatchObject({ code: 'insufficient-funds' });
+    const p = mem.docs.get('players/yerel') as unknown as PlayerDoc;
+    expect(p.tx.reduce((s, x) => s + x.amount, 0)).toBe(p.balance);
+    b.stop();
+  });
+
   it('çevrimdışı güçler: oyuncu Pas ve Zorla kullanır, botlar güçleriyle birlikte maçı bitirir', async () => {
     const mem = createMemoryDb();
     const b = new HostedBackend(mem.forUser('yerel', { anyWrite: true }), 'yerel', { botDelayMs: 5, countdownMs: 20, autoTick: false, local: true });

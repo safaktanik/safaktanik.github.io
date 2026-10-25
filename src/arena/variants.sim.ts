@@ -11,6 +11,7 @@ import type { BotLevel } from './bot';
 import { matchSettings } from './rules';
 import { TIERS, boardFor } from './economy';
 import type { TierId } from './economy';
+import { SHRINK } from './modes';
 
 type Player = 'expert' | BotLevel;
 interface Variant {
@@ -21,6 +22,8 @@ interface Variant {
   /** Oyuncu başına en çok hamle (0 = sınırsız). */
   movesPerPlayer: number;
   lives?: number;
+  /** Daralan Tahta ayarı (SHRINK'in üzerine, yalnızca bu varyant için). */
+  shrink?: Partial<typeof SHRINK>;
 }
 
 const VARIANTS: Variant[] = [
@@ -32,6 +35,13 @@ const VARIANTS: Variant[] = [
   { id: 'blitz', label: 'Yıldırım (2 can)', mode: 'blitz', density: 1, movesPerPlayer: 0 },
   { id: 'blitzD', label: 'Yıldırım + yoğun ×1,25', mode: 'blitz', density: 1.25, movesPerPlayer: 0 },
   { id: 'blitzC', label: 'Yıldırım + komşu kare', mode: 'chain', density: 1, movesPerPlayer: 0, lives: 2 },
+  { id: 'shrink', label: 'Daralan Tahta', mode: 'shrink', density: 1, movesPerPlayer: 0 },
+  { id: 'shrinkD', label: 'Daralan Tahta ×1,25', mode: 'shrink', density: 1.25, movesPerPlayer: 0 },
+  { id: 'sA', label: 'DT ×1,5', mode: 'shrink', density: 1.5, movesPerPlayer: 0 },
+  { id: 'sB', label: 'DT ×1,5 · 2 can', mode: 'shrink', density: 1.5, movesPerPlayer: 0, lives: 2 },
+  { id: 'sC', label: 'DT ×1,25 · 2 can · fırt.2', mode: 'shrink', density: 1.25, movesPerPlayer: 0, lives: 2, shrink: { stormRounds: 2, calmRounds: 1 } },
+  { id: 'sD', label: 'DT ×1,5 · fırt.2 · sakin 1', mode: 'shrink', density: 1.5, movesPerPlayer: 0, shrink: { stormRounds: 2, calmRounds: 1 } },
+  { id: 'sE', label: 'DT ×1,5 · 2 can · fırt.2', mode: 'shrink', density: 1.5, movesPerPlayer: 0, lives: 2, shrink: { stormRounds: 2, calmRounds: 1 } },
 ];
 
 const TABLES: { tier: TierId; cap: 2 | 3 | 4 }[] = [
@@ -47,7 +57,9 @@ export function rngOf(seed: number) {
 }
 
 export function viewOf(s: ArenaState, counts: Uint8Array): number[] {
-  return s.cells.map((c, i) => (c === 0 ? -1 : c === 1 ? counts[i] : c === 2 ? 9 : 11));
+  // 4 = kapanmış kare (Daralan Tahta): mayınsa 13, değilse 12
+  const mines = s.cells.includes(4) ? new Set(s.mines) : null;
+  return s.cells.map((c, i) => (c === 0 ? -1 : c === 1 ? counts[i] : c === 2 ? 9 : c === 3 ? 11 : mines!.has(i) ? 13 : 12));
 }
 
 export function countsOf(s: ArenaState): Uint8Array {
@@ -92,6 +104,16 @@ interface Stats {
 }
 
 function run(v: Variant, tier: TierId, cap: number, games: number, lineup: Player[], seed: number): Stats {
+  const saved = { ...SHRINK };
+  Object.assign(SHRINK, v.shrink ?? {});
+  try {
+    return runInner(v, tier, cap, games, lineup, seed);
+  } finally {
+    Object.assign(SHRINK, saved);
+  }
+}
+
+function runInner(v: Variant, tier: TierId, cap: number, games: number, lineup: Player[], seed: number): Stats {
   const b = boardFor(TIERS[tier], cap);
   const mines = Math.min(Math.floor(b.size * b.size * 0.3), Math.round(b.mines * v.density));
   const st: Stats = { games, tieDecided: 0, zeroMineFinish: 0, guesses: 0, hits: 0, elims: 0, lastStanding: 0, moves: 0, skillWins: 0 };
@@ -145,7 +167,9 @@ if (process.argv[1]?.includes('variants.sim')) {
     const b = boardFor(TIERS[t.tier], t.cap);
     console.log(`== ${TIERS[t.tier].label} · ${t.cap} kişi · ${b.size}×${b.size} (mevcut ${b.mines} mayın)`);
     console.log('varyant                    | eşitlikle | 0 mayın | tahmin/maç | mayın/maç | eleme/maç | son kalan | hamle/oyuncu || uzman kazanır (şans)');
-    for (const v of VARIANTS) {
+    // 3. argüman: yalnızca bu varyantlar (virgülle, ör. base,d150,shrink)
+    const only = process.argv[3]?.split(',');
+    for (const v of VARIANTS.filter((x) => !only || only.includes(x.id))) {
       const A = run(v, t.tier, t.cap, N, Array(t.cap).fill('expert'), 1);
       const B = run(v, t.tier, t.cap, N, ['expert', ...Array(t.cap - 1).fill('medium')], 2);
       console.log(

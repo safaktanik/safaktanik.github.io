@@ -476,6 +476,40 @@ export class HostedBackend implements ArenaBackend {
     return { amount: ECONOMY.rescue.amount };
   }
 
+  /** Görev ödülü: `key` başına bir kez (ör. "q:2026-10-25:win"). */
+  async grantReward(key: string, amount: number): Promise<{ amount: number }> {
+    if (!Number.isInteger(amount) || amount <= 0 || amount > 5000) throw new ArenaHttpError('bad-request', 400);
+    await this.updatePlayer((p) => {
+      if (p.claims?.includes(key)) throw new ArenaHttpError('already-claimed', 400);
+      this.tx(p, 'quest-reward', amount);
+      return { ...p, claims: [key, ...(p.claims ?? [])].slice(0, 200) };
+    });
+    return { amount };
+  }
+
+  /** Mağaza alımı: bakiye yetmezse reddedilir; aynı ürün iki kez alınmaz. */
+  async purchase(item: string, price: number): Promise<{ owned: string[] }> {
+    if (!Number.isInteger(price) || price < 0) throw new ArenaHttpError('bad-request', 400);
+    let owned: string[] = [];
+    await this.updatePlayer((p) => {
+      if (p.owned?.includes(item)) throw new ArenaHttpError('already-owned', 400);
+      this.tx(p, 'shop-purchase', -price);
+      owned = [...(p.owned ?? []), item];
+      return { ...p, owned };
+    });
+    return { owned };
+  }
+
+  /** Bu profilin aldığı kozmetikler. */
+  ownedItems(): string[] {
+    return this.player?.owned ?? [];
+  }
+
+  /** Alınmış görev ödüllerinin anahtarları. */
+  claimedKeys(): string[] {
+    return this.player?.claims ?? [];
+  }
+
   async refreshMe(): Promise<unknown> {
     return this.snap.me;
   }
@@ -1187,6 +1221,7 @@ export class HostedBackend implements ArenaBackend {
       { tier: 'silver', mode: 'chain', cap: 4, bots: 1 },
       { tier: 'bronze', mode: 'hunter', cap: 3, bots: 2 },
       { tier: 'silver', mode: 'blitz', cap: 3, bots: 1 },
+      { tier: 'silver', mode: 'shrink', cap: 4, bots: 2 },
       { tier: 'gold', mode: 'classic', cap: 4, bots: 3 },
       { tier: 'diamond', mode: 'treasure', cap: 4, bots: 2 },
     ];

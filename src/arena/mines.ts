@@ -5,9 +5,11 @@
  * Sunucu, test sunucusu ve antrenman aynı motoru kullanır.
  */
 import type { ArenaMode } from './modes';
+import { SHRINK } from './modes';
 
 export type { ArenaMode };
-export type CellState = 0 | 1 | 2 | 3; // 0 gizli, 1 güvenli açık, 2 patlamış mayın, 3 imha edilmiş mayın
+/** 0 gizli, 1 güvenli açık, 2 patlamış mayın, 3 imha edilmiş mayın, 4 kapanmış (Daralan Tahta: halka kapandı). */
+export type CellState = 0 | 1 | 2 | 3 | 4;
 export type EndReason = 'last-standing' | 'cleared' | 'treasure' | 'defused';
 export type MoveAction = 'open' | 'defuse';
 export type ElimReason = 'lives' | 'afk' | 'left';
@@ -82,6 +84,11 @@ export interface ArenaState {
   forcedBy: number | null;
   /** Son kullanılan güç (herkese animasyon için); n her kullanımda artar. */
   lastPower: { seat: number; kind: PowerKind; n: number; turnNo: number } | null;
+  /**
+   * Daralan Tahta: `calm` hamle sonra fırtına; fırtınada `storm.left` hamle boyunca herkes `storm.ring`
+   * halkasından açar, sonra halka kapanır. `next`: sıradaki halka (0 = en dış). Diğer modlarda null.
+   */
+  shrink?: { calm: number; next: number; storm: { ring: number; left: number } | null; done: boolean } | null;
 }
 
 export interface Settings {
@@ -296,7 +303,74 @@ export function createArena(size: number, mineCount: number, userIds: string[], 
     forceArmed: null,
     forcedBy: null,
     lastPower: null,
+    shrink: mode === 'shrink' ? { calm: SHRINK.firstCalmRounds * userIds.length, next: 0, storm: null, done: false } : null,
   };
+}
+
+/** Halka numarası: kenara uzaklık (0 = en dış halka). */
+export function ringOf(size: number, i: number): number {
+  const r = Math.floor(i / size);
+  const c = i % size;
+  return Math.min(r, c, size - 1 - r, size - 1 - c);
+}
+
+function ringHidden(s: ArenaState, ring: number): number[] {
+  const out: number[] = [];
+  for (let i = 0; i < s.cells.length; i++) if (s.cells[i] === 0 && ringOf(s.size, i) === ring) out.push(i);
+  return out;
+}
+
+/** Halkayı kapatır: gizli kareler kapanır (mayınlar görünür olur), kaybolan güvenli kareler kalan sayıdan düşer. */
+function lockRing(s: ArenaState, ring: number): void {
+  const mineSet = new Set(s.mines);
+  for (const i of ringHidden(s, ring)) {
+    s.cells[i] = 4;
+    if (!mineSet.has(i)) s.safeLeft--;
+  }
+}
+
+/** Fırtınayı bitirir: halka kapanır, sakin dönem yeniden başlar. */
+function endStorm(s: ArenaState): void {
+  const sh = s.shrink!;
+  lockRing(s, sh.storm!.ring);
+  sh.next = sh.storm!.ring + 1;
+  sh.storm = null;
+  sh.calm = SHRINK.calmRounds * alivePlayers(s).length;
+}
+
+/** Daralan Tahta saati: her tur geçişinde (hamle, süre aşımı, Pas) bir adım ilerler. */
+function advanceShrink(s: ArenaState): void {
+  const sh = s.shrink;
+  if (s.mode !== 'shrink' || !sh || sh.done) return;
+  if (sh.storm) {
+    sh.storm.left--;
+    if (sh.storm.left <= 0) endStorm(s);
+    return;
+  }
+  sh.calm--;
+  if (sh.calm > 0) return;
+  // içinde gizli kare kalan ilk halkada fırtına başlar; boş halkalar sessizce kapanmış sayılır
+  const maxRing = Math.floor((s.size - 1) / 2);
+  while (sh.next <= maxRing && !ringHidden(s, sh.next).length) sh.next++;
+  if (sh.next > maxRing) {
+    sh.done = true;
+    return;
+  }
+  sh.storm = { ring: sh.next, left: SHRINK.stormRounds * alivePlayers(s).length };
+}
+
+/** Sıra yeni oyuncuya geçtikten sonra: fırtınadaysa yalnızca halkadaki gizli kareler açılabilir. */
+function applyStorm(s: ArenaState): void {
+  const sh = s.shrink;
+  if (s.mode !== 'shrink' || !sh?.storm || s.phase !== 'playing') return;
+  const ring = ringHidden(s, sh.storm.ring);
+  if (ring.length) {
+    s.allowed = ring;
+    return;
+  }
+  // halka fırtına bitmeden tükendi: hemen kapanır
+  endStorm(s);
+  checkEnd(s);
 }
 
 export function alivePlayers(s: ArenaState): ArenaPlayer[] {
@@ -386,14 +460,18 @@ function collectBonuses(s: ArenaState, p: ArenaPlayer, newly: number[]): BonusKi
 
 /** Ekstra tur: bitiş yoksa sıra aynı oyuncuda kalır (yeni tur numarasıyla; süre yeniden başlar). */
 function stay(s: ArenaState): void {
+  advanceShrink(s);
   if (checkEnd(s)) return;
   s.turnNo++;
+  applyStorm(s);
 }
 
 function pass(s: ArenaState, fromSeat: number): void {
+  advanceShrink(s);
   if (checkEnd(s)) return;
   s.current = nextAliveAfter(s, fromSeat);
   s.turnNo++;
+  applyStorm(s);
 }
 
 /** Zincir: verilen karelerin komşusu olan gizli kareler. */
@@ -581,7 +659,7 @@ export function usePower(s: ArenaState, seat: number, kind: PowerKind): { error:
   if (seat !== s.current) return { error: 'not-your-turn' };
   if ((p[kind] ?? 0) <= 0) return { error: 'no-power' };
   if (kind === 'force') {
-    if (s.mode === 'chain') return { error: 'not-in-mode' };
+    if (s.mode === 'chain' || s.mode === 'shrink') return { error: 'not-in-mode' };
     if (s.forceArmed === s.turnNo) return { error: 'already-armed' };
   }
   p[kind]--;
@@ -647,11 +725,14 @@ export function forfeit(s: ArenaState, seat: number): MoveOutcome | null {
   return { seat, index: -1, kind: 'left', opened: 0, livesLeft: p.lives, eliminated: true, finished: (s.phase as string) === 'finished' };
 }
 
-/** Hücre görünümü: -1 gizli, 0–8 güvenli açık (komşu mayın sayısı), 9 patlamış mayın, 10 (yalnızca bitişte) açılmamış mayın, 11 imha edilmiş mayın. */
+/**
+ * Hücre görünümü: -1 gizli, 0–8 güvenli açık (komşu mayın sayısı), 9 patlamış mayın, 10 (yalnızca bitişte)
+ * açılmamış mayın, 11 imha edilmiş mayın, 12 kapanmış güvenli kare, 13 kapanmış mayın (Daralan Tahta; herkes görür).
+ */
 export function cellView(s: ArenaState, revealMines: boolean): number[] {
   const counts = computeCounts(s.size, s.mines);
-  const mineSet = revealMines ? new Set(s.mines) : null;
-  return s.cells.map((c, i) => (c === 1 ? counts[i] : c === 2 ? 9 : c === 3 ? 11 : mineSet?.has(i) ? 10 : -1));
+  const all = new Set(s.mines);
+  return s.cells.map((c, i) => (c === 1 ? counts[i] : c === 2 ? 9 : c === 3 ? 11 : c === 4 ? (all.has(i) ? 13 : 12) : revealMines && all.has(i) ? 10 : -1));
 }
 
 /** Oyunculara gösterilebilecek mod verisi (gizli bilgi sızdırmaz). */
@@ -669,6 +750,9 @@ export function modeView(s: ArenaState, finished: boolean) {
     /** Zorla: kısıtı dayatan koltuk (Zincir modunda null) ve bu turda kurulu bir Zorla var mı. */
     forcedBy: s.phase === 'playing' && s.mode !== 'chain' && s.allowed ? s.forcedBy : null,
     forceArmed: s.phase === 'playing' && s.forceArmed === s.turnNo,
+    /** Daralan Tahta: fırtına (halka, kalan hamle) ya da sıradaki fırtınaya kalan hamle. */
+    storm: s.phase === 'playing' && s.shrink?.storm ? { ...s.shrink.storm } : null,
+    stormIn: s.phase === 'playing' && s.shrink && !s.shrink.storm && !s.shrink.done ? s.shrink.calm : null,
     lastPower: s.lastPower ? { ...s.lastPower } : null,
   };
 }
@@ -685,6 +769,7 @@ export function normalizeState(s: ArenaState): ArenaState {
   s.bonusFound ??= [];
   s.forceArmed ??= null;
   s.forcedBy ??= null;
+  s.shrink ??= null;
   // 2.3 ve öncesi kayıtlar: Duman/Dondur alanları ve güç kayıtları yeni güçlerle anlamsız
   if (s.lastPower && s.lastPower.kind !== 'pass' && s.lastPower.kind !== 'force') s.lastPower = null;
   s.lastPower ??= null;

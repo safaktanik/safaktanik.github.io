@@ -21,7 +21,7 @@ interface Constraint {
 export function deduce(cells: readonly number[], size: number, extraMines: Iterable<number> = []): Deduction {
   const mine = new Set<number>(extraMines);
   const safe = new Set<number>();
-  for (let i = 0; i < cells.length; i++) if (cells[i] === 9 || cells[i] === 10 || cells[i] === 11) mine.add(i);
+  for (let i = 0; i < cells.length; i++) if (cells[i] === 9 || cells[i] === 10 || cells[i] === 11 || cells[i] === 13) mine.add(i);
   const numbered: number[] = [];
   for (let i = 0; i < cells.length; i++) if (cells[i] >= 1 && cells[i] <= 8) numbered.push(i);
 

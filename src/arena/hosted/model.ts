@@ -107,6 +107,10 @@ export interface PlayerDoc {
   recent: RecentDoc[];
   tx: TxDoc[];
   createdAt: number;
+  /** Görev ödülü / mağaza alımı gibi tek seferlik işlemlerin anahtarları (aynı işlem iki kez uygulanmaz). */
+  claims?: string[];
+  /** Mağazadan alınan kozmetikler. */
+  owned?: string[];
 }
 
 /** Mayın/sandık konumlarını belgede düz liste olarak tutmamak için basit karıştırma (gizlilik değil, kazara görmeyi önler). */

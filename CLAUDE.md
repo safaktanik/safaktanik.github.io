@@ -33,6 +33,11 @@ https://safaktanik.github.io/yeni/ (eski v1 sitenin kökünde). Kullanıcıyla *
 
 - Ödül: havuza ≥3 ücret girdiyse ikinci ücretini geri alır (`payout()`); çevrimdışında botların ücretini ev öder (`payingSeats`).
 - Güçler (2.4): Sonar + Pas + Zorla (+ Avcı'da İmha). `usePower` (`mines.ts`); Zorla `forceArmed` → hamlede `applyRestriction` ile `allowed`/`forcedBy`; Pas/süre aşımı `dropForce`. Botlar `chooseBotPower` (`bot.ts`). Ölçüm: `npx tsx src/arena/powers.sim.ts 600`. Duman/Dondur/İpucu kaldırıldı (eski kayıtlar `normalizeState`/`parseOptions` ile uyumlu).
+- **Daralan Tahta** (`shrink`, 2.5): `mines.ts` `shrink` durumu; `advanceShrink` her tur geçişinde (pass/stay) saati ilerletir, fırtınada `applyStorm` `allowed` = en dış açık halkanın gizli kareleri; fırtına bitince `lockRing` (hücre 4 → görünümde 12 güvenli / 13 mayın). Ayar `SHRINK` + `SHRINK_LIVES` (`modes.ts`): ×1,5 mayın, 2 can, fırtına 2 tur, sakin 1 tur (variants.sim.ts ile seçildi). Zorla bu modda yok.
+- **Günün Bulmacası** (`puzzle.ts`, `ui/Puzzle.tsx`): gün anahtarı Türkiye saati; tahta tarihten deterministik, yalnızca kesin çıkarımla (`solver.ts`) çözülebilenler seçilir. Sonuçlar `md2:puzzle` (ilk deneme sayılır).
+- **Görevler** (`quests.ts`, `ui/Quests.tsx`): günde 3 görev, ilerleme `md2:quests`, ödül `grantReward(key)` (PlayerDoc.claims, anahtar başına bir kez). Antrenman maçları sayılmaz. Olaylar MatchScreen'de (`questEvent`).
+- **Mağaza temaları** (`cosmetics.ts`): `purchase` (PlayerDoc.owned) + takılı tema `md2:theme`; CSS `.match.theme--x` (`v2.css`). Tema kuralları `.mc--allow/.mc--sel/.mc--flag`'i ezmemeli.
+- İzinli kareler (Zincir/Zorla/fırtına) `.match .mc--hidden.mc--allow` kuralıyla parlar (eski `.mc--allow` v2 kare stiline eziliyordu).
 - Antrenman ekranı `PracticeGame.resume()` çağırır: React StrictMode (geliştirme) efekt temizliğindeki `dispose()` maçı dondurmasın.
 - Bölge renkleri `v2.css`'teki `.match .mc--own.sN` kurallarında (`.match .mc--open` !important'ını ezer).
 
@@ -40,6 +45,6 @@ https://safaktanik.github.io/yeni/ (eski v1 sitenin kökünde). Kullanıcıyla *
 - **Denge:** Son Kalan/Yıldırım'da mayın ×1,5 (`MODE_MINE_FACTOR`, `modes.ts`; `minesForTable(…, mode)`). Karşılaştırma: `npx tsx src/arena/variants.sim.ts 300`. Eski yoğunlukta maçların %83–91'i eşitlikle bitiyordu; ×1,25'te %45–71 (canlıda denendi, Gümüş'te eşitlik sık), ×1,5'te %31–47, iyi oynayanın kazanma oranı %51–80, maçlar ~%50 uzun, Elmas %30 sınırına takılır (67 mayın). Tur sınırı daha kötüydü, komşu kare kuralı eşitliği bitirip oyunu şansa çeviriyordu.
 - Son Kalan'da eleme seyrek (3 can + kalkan): canı 2'ye indirmek denenebilir.
 - `server/arena/arena.test.ts` "003 göçü" testi Windows'ta yol hatasıyla düşüyor (`C:\C:\…`, URL→yol dönüşümü); Linux'ta sorun yok.
-- Henüz yok: elmas (gem), mağaza kostümleri, görevler, battle pass, ELO eşleşmesi, Google/Apple girişi, gerçek 3D.
+- Henüz yok: elmas (gem), karakter kostümleri, battle pass, ELO eşleşmesi, Google/Apple girişi, gerçek 3D.
 - Node sunucusunda "hazır" kontrolü ve "izle" yok.
 - Gerçek iPhone/Safari'de test edilmedi.

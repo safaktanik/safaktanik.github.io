@@ -286,6 +286,50 @@ button.rc2:active:not(:disabled) { transform: translateY(2px) scale(0.98); }
 .tile2--blue { --tt: #33c6ff; --tb: #0a6be0; }
 .tile2--purple { --tt: #c25cff; --tb: #7d1fd1; }
 .tile2--dark { --tt: #4a5878; --tb: #2b3753; }
+.tile2--gold { --tt: #ffc93a; --tb: #d17a00; grid-column: 1 / -1; }
+.tile2__emoji { font-size: 34px; line-height: 40px; filter: drop-shadow(0 3px 0 hsl(222 70% 5% / 0.5)); }
+
+/* ------------------------------------------------------------------ Görevler */
+.quests { display: grid; gap: 12px; }
+.qlist { display: grid; gap: 10px; }
+.qcard { display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 16px; border: 3px solid var(--v2-out); background: linear-gradient(180deg, #2c3a5a, #1e2944); box-shadow: 0 4px 0 var(--v2-out); }
+.qcard.is-done { background: linear-gradient(180deg, #2f6b4a, #1d4a33); }
+.qcard.is-claimed { opacity: 0.7; }
+.qcard__icon { font-size: 30px; text-align: center; }
+.qcard__body { display: grid; gap: 4px; min-width: 0; }
+.qcard__body strong { font-family: var(--v2-font); font-weight: 400; font-size: 1rem; }
+.qcard__body small { font-size: 0.72rem; color: var(--v2-muted); font-weight: 700; }
+.qcard__bar { height: 9px; border-radius: 6px; background: #0d1527; border: 2px solid var(--v2-out); overflow: hidden; }
+.qcard__bar i { display: block; height: 100%; background: linear-gradient(90deg, #ffd23a, #ff9f0a); }
+.qcard.is-done .qcard__bar i { background: linear-gradient(90deg, #3dff88, #12c25a); }
+.qcard__ok { font-family: var(--v2-font); color: #9dffbf; font-size: 0.85rem; }
+.qcard__claim { min-width: 84px; }
+.qpuzzle { width: 100%; }
+.qpuzzle__icon { font-size: 34px; line-height: 40px; }
+
+/* ------------------------------------------------------------------ Mağaza: tahta temaları */
+.themes { display: grid; gap: 6px; margin-bottom: 8px; }
+.themes__title { margin: 6px 0 0; font-family: var(--v2-font); font-weight: 400; font-size: 1.15rem; }
+.themes__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.theme { display: grid; justify-items: center; gap: 4px; padding: 10px; border-radius: 16px; border: 3px solid var(--v2-out); background: linear-gradient(180deg, #2c3a5a, #1e2944); box-shadow: 0 4px 0 var(--v2-out); text-align: center; }
+.theme.is-on { border-color: #ffd23a; box-shadow: 0 4px 0 var(--v2-out), 0 0 14px hsl(48 100% 60% / 0.5); }
+.theme strong { font-family: var(--v2-font); font-weight: 400; font-size: 1rem; }
+.theme small { font-size: 0.72rem; line-height: 1.2; min-height: 2.4em; }
+.theme__preview { display: grid; grid-template-columns: repeat(2, 30px); grid-auto-rows: 30px; gap: 3px; padding: 6px; border-radius: 10px; background: #0a1224; font-size: 16px; }
+.theme__preview .mc { display: grid; place-items: center; border-radius: 22%; font-family: var(--v2-font); }
+.theme__on { font-family: var(--v2-font); color: #ffe27a; font-size: 0.9rem; padding: 6px 0; }
+
+/* ------------------------------------------------------------------ Günün Bulmacası */
+.puzzle { display: grid; gap: 10px; align-content: start; justify-items: stretch; }
+.puzzle__head h1 { font-family: var(--v2-font); font-weight: 400; }
+.puzzle__bar { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; font-family: var(--v2-font); font-size: 1.05rem; }
+.puzzle__flag { min-height: 36px; padding: 4px 12px; }
+.puzzle__wrap { display: grid; justify-items: center; }
+.puzzle__board { display: grid; place-items: center; padding: 8px; max-width: 100%; overflow: auto; }
+.puzzle__note { margin: 0; text-align: center; font-family: var(--v2-font); color: #ffe0c2; }
+.puzzle__done { display: grid; gap: 8px; text-align: center; }
+.puzzle__done h2 { margin: 0; font-family: var(--v2-font); font-weight: 400; }
+.puzzle__acts { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
 
 /* ------------------------------------------------------------------ chibi + kaide */
 .chibi2 { position: relative; display: grid; justify-items: center; }
@@ -486,6 +530,31 @@ html[data-room] .tr2 { top: var(--room-h); }
   .pw2 > span:not(.pw2__ic) { font-size: 0.6rem; }
   .match .mbar2 .rtray--docked { flex-basis: 44px; }
 }
+
+/* İzinli kareler (Zincir, Zorla, fırtına): `.match .mc--hidden` kuralı eski .mc--allow stilini eziyordu, kareler parlamıyordu */
+.match .mc--hidden.mc--allow { background: linear-gradient(160deg, #6fe8ff 0%, #27b3f2 45%, #0b6fc2 100%) !important; box-shadow: inset 0 2px 0 hsl(0 0% 100% / 0.6), inset 0 0 0 2px #c9f6ff, 0 0 12px hsl(195 100% 60% / 0.75) !important; animation: allowpulse2 1.2s ease-in-out infinite; }
+.match.is-forced .mc--hidden.mc--allow { background: linear-gradient(160deg, #ffd08a 0%, #ff9a2e 45%, #d1570a 100%) !important; box-shadow: inset 0 2px 0 hsl(0 0% 100% / 0.6), inset 0 0 0 2px #ffe3c2, 0 0 12px hsl(30 100% 55% / 0.75) !important; }
+.match .mc--hidden.mc--blocked { filter: brightness(0.62) saturate(0.6); }
+@keyframes allowpulse2 { 50% { filter: brightness(1.18); } }
+
+/* Mağaza tahta temaları (yalnızca görünüm): kapalı kare, açık kare, sayı gölgesi */
+.match.theme--neon .mc--hidden:not(.mc--allow):not(.mc--sel):not(.mc--flag) { background: linear-gradient(160deg, #3b2a86 0%, #2a1b5e 55%, #1b1240 100%) !important; box-shadow: inset 0 0 0 1.5px #b56bff, inset 0 2px 0 hsl(280 100% 85% / 0.35), 0 0 8px hsl(280 100% 65% / 0.35) !important; }
+.match.theme--neon .mc--open:not(.mc--own) { background: #0a0f22 !important; box-shadow: inset 0 0 0 1px hsl(190 100% 50% / 0.18) !important; }
+.match.theme--ice .mc--hidden:not(.mc--allow):not(.mc--sel):not(.mc--flag) { background: linear-gradient(160deg, #e6f9ff 0%, #a8e6ff 45%, #6cc4ef 100%) !important; box-shadow: inset 0 2px 0 hsl(0 0% 100% / 0.8), inset 0 -3px 0 hsl(200 60% 40% / 0.45), 0 2px 0 #2b6c94 !important; }
+.match.theme--ice .mc--open:not(.mc--own) { background: #123047 !important; }
+.match.theme--gold .mc--hidden:not(.mc--allow):not(.mc--sel):not(.mc--flag) { background: linear-gradient(160deg, #fff1b0 0%, #ffcf4a 45%, #d18a00 100%) !important; box-shadow: inset 0 2px 0 hsl(50 100% 92% / 0.8), inset 0 -3px 0 hsl(32 90% 30% / 0.55), 0 2px 0 #6b4300 !important; }
+.match.theme--gold .mc--open:not(.mc--own) { background: #2b2010 !important; }
+.match.theme--lava .mc--hidden:not(.mc--allow):not(.mc--sel):not(.mc--flag) { background: radial-gradient(circle at 35% 30%, #ffb347 0%, #ff6a2a 40%, #a31e0a 100%) !important; box-shadow: inset 0 2px 0 hsl(40 100% 80% / 0.6), inset 0 -3px 0 hsl(5 80% 20% / 0.6), 0 2px 0 #4a0d04 !important; }
+.match.theme--lava .mc--open:not(.mc--own) { background: #2a0d08 !important; }
+
+/* Daralan Tahta: kapanmış halka ve fırtına */
+.ar-root { --mode-shrink: hsl(275 85% 72%); }
+.mode--shrink { --modec: var(--mode-shrink); }
+.match .mc--locked { background: repeating-linear-gradient(135deg, #0b1020 0 6px, #141a2e 6px 12px) !important; box-shadow: inset 0 0 0 1px hsl(222 40% 22%) !important; opacity: 0.9; cursor: default; }
+.match .mc--lockedmine { opacity: 1; }
+.match .mc--lockedmine svg { opacity: 0.75; filter: grayscale(0.5); }
+.mbanner--storm { background: linear-gradient(90deg, #4b1fd1, #9a3cff) !important; border-color: #d8b8ff !important; color: #fff !important; }
+.match .mstatus--storm { background: linear-gradient(180deg, hsl(268 70% 34%), hsl(262 65% 22%)) !important; color: #ecdcff !important; }
 
 /* güçler: Pas ve Zorla */
 .mbanner--pass { background: linear-gradient(90deg, #0a7cff, #00d2ff) !important; border-color: #bff4ff !important; color: #fff !important; }

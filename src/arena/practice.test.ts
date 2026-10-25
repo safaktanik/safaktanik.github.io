@@ -17,7 +17,7 @@ describe('antrenman masası', () => {
     expect(g.state.turnNo).toBeGreaterThan(turn);
   });
 
-  for (const mode of ['classic', 'blitz', 'chain', 'hunter'] as const) {
+  for (const mode of ['classic', 'blitz', 'chain', 'hunter', 'shrink'] as const) {
     it(`${mode}: botlar güçleriyle (Pas / Zorla) oynar, oyuncu süre aşımıyla geçse de maç biter`, () => {
       vi.useFakeTimers();
       const g = new PracticeGame({ tier: 'bronze', mode, opponents: 2, level: 'medium', name: 'Ben', avatar: 0, turnSeconds: 20 });

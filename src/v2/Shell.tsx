@@ -12,16 +12,18 @@ import type { LobbyNav } from '../arena/ui/Lobby';
 import { Profile } from '../arena/ui/Profile';
 import { Settings } from '../arena/ui/Settings';
 import { Shop } from '../arena/ui/Shop';
+import { Quests } from '../arena/ui/Quests';
+import { todaysQuests } from '../arena/quests';
 import { playSound } from '../audio/sound';
 import type { View } from '../arena/ui/ArenaApp';
 import { BattleHome } from './BattleHome';
 import { TabBar, TopBar } from './ui';
 import type { Tab } from './ui';
 
-const TAB_OF: Record<View, Tab> = { battle: 'battle', lobby: 'battle', shop: 'shop', profile: 'hero', leaderboard: 'rank', settings: 'battle' };
-const VIEW_OF: Record<Tab, View> = { battle: 'battle', shop: 'shop', hero: 'profile', rank: 'leaderboard', quests: 'battle' };
+const TAB_OF: Record<View, Tab> = { battle: 'battle', lobby: 'battle', shop: 'shop', profile: 'hero', leaderboard: 'rank', settings: 'battle', quests: 'quests' };
+const VIEW_OF: Record<Tab, View> = { battle: 'battle', shop: 'shop', hero: 'profile', rank: 'leaderboard', quests: 'quests' };
 
-export function Shell({ view, setView, onExit, onPractice, onFriends, onCreate, onQuickSheet }: { view: View; setView(v: View): void; onExit(): void; onPractice(): void; onFriends?(): void; onCreate(): void; onQuickSheet(): void }) {
+export function Shell({ view, setView, onExit, onPractice, onFriends, onPuzzle, onCreate, onQuickSheet }: { view: View; setView(v: View): void; onExit(): void; onPractice(): void; onFriends?(): void; onPuzzle?(): void; onCreate(): void; onQuickSheet(): void }) {
   const s = useArena();
   const me = s.me!;
   const c = arenaClient();
@@ -67,9 +69,14 @@ export function Shell({ view, setView, onExit, onPractice, onFriends, onCreate, 
     case 'settings':
       page = <Settings onBack={() => setView('battle')} onExit={onExit} />;
       break;
+    case 'quests':
+      page = <Quests onPuzzle={onPuzzle} />;
+      break;
     default:
-      page = <BattleHome me={me} onQuick={(m) => void quick(m)} onTables={() => setView('lobby')} onCreate={onCreate} onPractice={onPractice} onFriends={onFriends} onHero={() => setView('profile')} />;
+      page = <BattleHome me={me} onQuick={(m) => void quick(m)} onTables={() => setView('lobby')} onCreate={onCreate} onPractice={onPractice} onFriends={onFriends} onPuzzle={onPuzzle} onHero={() => setView('profile')} />;
   }
+  // tamamlanıp ödülü alınmamış görev varsa sekmede ünlem
+  const questAlert = !!c.grantReward && todaysQuests().some((q) => q.complete && !(c.claimedKeys?.() ?? []).includes(q.key));
   return (
     <div className={`shell2 shell2--${view}`}>
       <TopBar coins={me.balance} level={me.level} xpFrac={xpFrac} onSettings={() => setView('settings')} onCoins={() => setView('shop')} />
@@ -81,7 +88,7 @@ export function Shell({ view, setView, onExit, onPractice, onFriends, onCreate, 
         ) : null}
         {page}
       </main>
-      <TabBar tab={TAB_OF[view]} onTab={(t) => setView(VIEW_OF[t])} alerts={{ shop: me.dailyAvailable || me.rescueAvailable }} />
+      <TabBar tab={TAB_OF[view]} onTab={(t) => setView(VIEW_OF[t])} alerts={{ shop: me.dailyAvailable || me.rescueAvailable, quests: questAlert }} />
     </div>
   );
 }

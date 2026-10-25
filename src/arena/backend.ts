@@ -85,6 +85,12 @@ export interface ArenaBackend {
   updateProfile(p: { username?: string; avatar?: number }): Promise<void>;
   claimDaily(): Promise<{ amount: number }>;
   claimRescue(): Promise<{ amount: number }>;
+  /** Görev ödülü (anahtar başına bir kez). Yalnızca bu cihazdaki / arkadaş odası arka ucunda. */
+  grantReward?(key: string, amount: number): Promise<{ amount: number }>;
+  /** Mağaza alımı ve sahip olunan kozmetikler. */
+  purchase?(item: string, price: number): Promise<{ owned: string[] }>;
+  ownedItems?(): string[];
+  claimedKeys?(): string[];
 
   /** Test sunucusunda: boş koltuğa bot oturt / kaldır (yalnızca masa sahibi). */
   addBot?(tableId: string): Promise<void>;

@@ -10,7 +10,7 @@ export const BADGES: Record<BadgeId, { name: string; desc: string }> = {
   quick_thinker: { name: 'Hızlı Düşünür', desc: 'Yıldırım modunda kazan.' },
   mine_hunter: { name: 'Mayın Avcısı', desc: 'Bir maçta en az 3 mayın imha et.' },
   radar_expert: { name: 'Radar Uzmanı', desc: 'Sonar kullan ve maçı mayına basmadan bitir.' },
-  strategic_master: { name: 'Strateji Ustası', desc: 'Bölge Savaşı, Hazine Avı ya da Zincir kazan.' },
+  strategic_master: { name: 'Strateji Ustası', desc: 'Bölge Savaşı, Hazine Avı, Zincir ya da Daralan Tahta kazan.' },
   winning_streak: { name: 'Seri Ustası', desc: 'Bir maçta üst üste 5 güvenli hamle yap.' },
   lightning: { name: 'Şimşek El', desc: 'Bir maçta 3 kez, sıran gelir gelmez (3 sn içinde) güvenli kare aç.' },
   flag_master: { name: 'Bayrak Ustası', desc: 'En az 4 bayrak koy, hepsi mayının üstünde çıksın.' },
@@ -48,7 +48,7 @@ export function badgesFor(m: MatchView, seat: number | null, x: MatchExtras): Ba
   if (won && m.mode === 'blitz') out.push('quick_thinker');
   if ((row.defused ?? 0) >= 3) out.push('mine_hunter');
   if (x.usedSonar && row.mineHits === 0 && !p.eliminated) out.push('radar_expert');
-  if (won && (m.mode === 'territory' || m.mode === 'treasure' || m.mode === 'chain')) out.push('strategic_master');
+  if (won && (m.mode === 'territory' || m.mode === 'treasure' || m.mode === 'chain' || m.mode === 'shrink')) out.push('strategic_master');
   if (x.maxStreak >= 5) out.push('winning_streak');
   if ((x.lightning ?? 0) >= 3) out.push('lightning');
   if ((x.flagsTotal ?? 0) >= 4 && x.flagsRight === x.flagsTotal) out.push('flag_master');

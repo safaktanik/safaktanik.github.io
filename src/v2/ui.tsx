@@ -109,11 +109,11 @@ export function TopBar({ coins, level, xpFrac, onSettings, onCoins, extra }: { c
 
 export type Tab = 'shop' | 'hero' | 'battle' | 'rank' | 'quests';
 const TABS: { id: Tab; label: string; icon: (s: number) => ReactNode; locked?: boolean }[] = [
-  { id: 'shop', label: 'Ödüller', icon: (s) => <ChestIcon size={s} /> },
+  { id: 'shop', label: 'Mağaza', icon: (s) => <ChestIcon size={s} /> },
   { id: 'hero', label: 'Karakter', icon: (s) => <HeroIcon size={s} /> },
   { id: 'battle', label: 'Savaş', icon: (s) => <BattleIcon size={s} /> },
   { id: 'rank', label: 'Sıralama', icon: (s) => <TrophyIcon size={s} /> },
-  { id: 'quests', label: 'Görevler', icon: (s) => <ScrollIcon size={s} />, locked: true },
+  { id: 'quests', label: 'Görevler', icon: (s) => <ScrollIcon size={s} /> },
 ];
 
 export function TabBar({ tab, onTab, alerts = {} }: { tab: Tab; onTab(t: Tab): void; alerts?: Partial<Record<Tab, boolean>> }) {

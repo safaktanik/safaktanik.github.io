@@ -7,13 +7,14 @@ import type { Me } from '../arena/protocol';
 import type { ArenaMode } from '../arena/modes';
 import { MODES, MODE_ORDER } from '../arena/modes';
 import { arenaClient } from '../arena/client';
+import { loadPuzzleHistory, puzzleDay } from '../arena/puzzle';
 import { playSound } from '../audio/sound';
 import { Btn, Chibi } from './ui';
 import { BotIcon, FriendsIcon, PlayIcon, PlusIcon, TablesIcon } from './icons';
 
-const MODE_EMOJI: Record<ArenaMode, string> = { classic: '💣', blitz: '⚡', hunter: '🎯', territory: '🗺️', treasure: '💰', chain: '⛓️' };
+const MODE_EMOJI: Record<ArenaMode, string> = { classic: '💣', shrink: '🌪️', blitz: '⚡', hunter: '🎯', territory: '🗺️', treasure: '💰', chain: '⛓️' };
 
-export function BattleHome({ me, onQuick, onTables, onCreate, onPractice, onFriends, onHero }: { me: Me; onQuick(mode: ArenaMode): void; onTables(): void; onCreate(): void; onPractice(): void; onFriends?(): void; onHero(): void }) {
+export function BattleHome({ me, onQuick, onTables, onCreate, onPractice, onFriends, onPuzzle, onHero }: { me: Me; onQuick(mode: ArenaMode): void; onTables(): void; onCreate(): void; onPractice(): void; onFriends?(): void; onPuzzle?(): void; onHero(): void }) {
   const [mode, setMode] = useState<ArenaMode>(() => {
     try {
       const v = window.localStorage.getItem('mine-duel:v2-mode') as ArenaMode | null;
@@ -32,7 +33,8 @@ export function BattleHome({ me, onQuick, onTables, onCreate, onPractice, onFrie
     }
   };
   const c = arenaClient();
-  const where = c.p2p ? 'Arkadaş odası' : c.local ? 'Çevrimdışı · botlarla' : c.label;
+  const solvedToday = loadPuzzleHistory().some((r) => r.day === puzzleDay() && r.won);
+  const where =c.p2p ? 'Arkadaş odası' : c.local ? 'Çevrimdışı · botlarla' : c.label;
   return (
     <div className="bh2">
       <div className="bh2__stage">
@@ -85,6 +87,15 @@ export function BattleHome({ me, onQuick, onTables, onCreate, onPractice, onFrie
           <b>Antrenman</b>
           <small>Botlara karşı</small>
         </button>
+        {onPuzzle ? (
+          <button type="button" className="tile2 tile2--gold" onClick={onPuzzle} aria-label="Günün Bulmacası">
+            <span className="tile2__emoji" aria-hidden="true">
+              🧩
+            </span>
+            <b>Günün Bulmacası</b>
+            <small>{solvedToday ? 'Bugün çözüldü ✓' : 'Herkese aynı tahta'}</small>
+          </button>
+        ) : null}
       </div>
     </div>
   );

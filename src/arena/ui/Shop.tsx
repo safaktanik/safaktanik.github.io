@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { arenaClient, errorText } from '../client';
 import { ECONOMY } from '../economy';
+import { THEMES, equipTheme, equippedTheme, themeClass } from '../cosmetics';
 import { playSound } from '../../audio/sound';
 import { Coin, Money, Spinner, fmt, useArena } from './common';
 import { BackIcon, GiftIcon, LifebuoyIcon } from './icons';
@@ -12,6 +13,30 @@ export function Shop({ onBack }: { onBack(): void }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [owned, setOwned] = useState<string[]>(() => c.ownedItems?.() ?? []);
+  const [equipped, setEquipped] = useState(equippedTheme);
+  const wear = (id: string) => {
+    equipTheme(id);
+    setEquipped(id);
+    playSound('click');
+  };
+  const buy = async (id: string, price: number) => {
+    if (!c.purchase) return;
+    setBusy(id);
+    setErr(null);
+    setMsg(null);
+    try {
+      const r = await c.purchase(id, price);
+      setOwned(r.owned);
+      wear(id);
+      playSound('coins');
+      setMsg(`${THEMES.find((t) => t.id === id)?.name} teması senin! Takıldı.`);
+    } catch (e) {
+      setErr(errorText(e));
+    } finally {
+      setBusy(null);
+    }
+  };
   const claim = async (path: string, key: string) => {
     setBusy(key);
     setErr(null);
@@ -32,7 +57,7 @@ export function Shop({ onBack }: { onBack(): void }) {
         <button type="button" className="aback" onClick={onBack}>
           <BackIcon size={18} /> Lobi
         </button>
-        <h1>Ödüller</h1>
+        <h1>Mağaza</h1>
       </header>
       <div className="shop__bal apanel">
         <Coin size={40} />
@@ -41,6 +66,43 @@ export function Shop({ onBack }: { onBack(): void }) {
           <b>{fmt(me.balance)} {ECONOMY.currencyShort}</b>
         </div>
       </div>
+
+      <section className="themes" aria-label="Tahta temaları">
+        <h2 className="themes__title">🎨 Tahta temaları</h2>
+        <p className="asmall amuted">Yalnızca görünüm; oyuna etkisi yok. Maçlarda ve Günün Bulmacası'nda görünür.</p>
+        <div className="themes__grid">
+          {THEMES.map((t) => {
+            const have = t.price === 0 || owned.includes(t.id);
+            const on = equipped === t.id;
+            return (
+              <article key={t.id} className={`theme${on ? ' is-on' : ''}`}>
+                <div className={`theme__preview match${themeClass(t.id)}`} aria-hidden="true">
+                  <span className="mc mc--hidden" />
+                  <span className="mc mc--open n1">1</span>
+                  <span className="mc mc--hidden" />
+                  <span className="mc mc--open n2">2</span>
+                </div>
+                <strong>{t.name}</strong>
+                <small className="amuted">{t.desc}</small>
+                {on ? (
+                  <span className="theme__on">✓ Takılı</span>
+                ) : have ? (
+                  <button type="button" className="abtn abtn--primary" onClick={() => wear(t.id)}>
+                    Tak
+                  </button>
+                ) : (
+                  <button type="button" className="abtn abtn--gold" disabled={busy !== null || !c.purchase || me.balance < t.price} onClick={() => void buy(t.id, t.price)}>
+                    {busy === t.id ? <Spinner /> : null} <Money value={t.price} size={13} />
+                  </button>
+                )}
+              </article>
+            );
+          })}
+        </div>
+        {!c.purchase ? <p className="asmall amuted">Bu sunucuda mağaza henüz yok.</p> : null}
+      </section>
+
+      <h2 className="themes__title">🎁 Ödüller</h2>
 
       <article className={`offer${me.dailyAvailable ? ' is-ready' : ''}`}>
         <GiftIcon size={34} />

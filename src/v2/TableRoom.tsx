@@ -8,6 +8,7 @@ import { arenaClient, errorText } from '../arena/client';
 import { ECONOMY, TIERS } from '../arena/economy';
 import { MODES } from '../arena/modes';
 import { optionsOf } from '../arena/tableOptions';
+import { matchSettings, turnSeconds } from '../arena/rules';
 import type { Reaction, ReactionEvent } from '../arena/protocol';
 import { playSound } from '../audio/sound';
 import { useArena, useTick, fmt } from '../arena/ui/common';
@@ -184,12 +185,12 @@ export function TableRoom() {
       ) : null}
       <Panel className="tr2__rules">
         <div className="tr2__chips">
-          <span>⏱ {t.mode === 'blitz' ? Math.min(8, o.turnSeconds) : o.turnSeconds} sn</span>
-          <span>❤️ {t.mode === 'blitz' ? Math.min(2, o.lives) : o.lives}</span>
+          <span>⏱ {turnSeconds(t.mode, o)} sn</span>
+          <span>❤️ {matchSettings(t.mode, o).lives}</span>
           <span>🛡️ {o.shields}</span>
           <span>📡 {t.mode === 'blitz' ? 0 : o.sonars}</span>
           <span title="Pas">⏭️ {o.passes}</span>
-          {t.mode !== 'chain' ? <span title="Zorla">👉 {o.forces}</span> : null}
+          {matchSettings(t.mode, o).forces ? <span title="Zorla">👉 {o.forces}</span> : null}
           {o.bonuses ? <span>🎁 Bonus</span> : null}
           <span>
             <CoinIcon size={16} /> {fmt(t.entryFee)}

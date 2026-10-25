@@ -9,6 +9,7 @@ export function ModeIcon({ mode, size = 18 }: { mode: ArenaMode; size?: number }
   if (mode === 'chain') return <ChainIcon size={size} />;
   if (mode === 'hunter') return <CrosshairIcon size={size} />;
   if (mode === 'blitz') return <BoltIcon size={size} />;
+  if (mode === 'shrink') return <span aria-hidden="true" style={{ fontSize: size * 0.9, lineHeight: 1 }}>🌪️</span>;
   return <SkullIcon size={size} />;
 }
 
@@ -42,7 +43,7 @@ export function RulesSheet({ onClose, focus }: { onClose(): void; focus?: ArenaM
   return (
     <Sheet title="Modlar ve kurallar" onClose={onClose}>
       <p className="amuted">
-        Her masada 3–4 oyuncu aynı tahtayı paylaşır ve sırayla birer kare açar. Herkesin 3 canı ve 1 kalkanı vardır (Yıldırım'da 2 can); tur süresi 20 saniyedir (Yıldırım'da 8), art arda 3 kez süresini dolduran elenir.
+        Her masada 3–4 oyuncu aynı tahtayı paylaşır ve sırayla birer kare açar. Herkesin 3 canı ve 1 kalkanı vardır (Yıldırım ve Daralan Tahta'da 2 can); tur süresi 20 saniyedir (Yıldırım'da 8), art arda 3 kez süresini dolduran elenir.
         Açılan karedeki sayı, çevresindeki 8 karede kaç mayın olduğunu gösterir.
       </p>
       {order.map((m) => (
