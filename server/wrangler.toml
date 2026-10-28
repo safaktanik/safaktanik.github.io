@@ -1,0 +1,17 @@
+name = "mine-duel-arena"
+main = "src/index.mjs"
+compatibility_date = "2025-09-01"
+
+[[durable_objects.bindings]]
+name = "ARENA"
+class_name = "Arena"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Arena"]
+
+[vars]
+ALLOWED_ORIGINS = "https://safaktanik.github.io,http://localhost:8765"
+# Google ile giriş için OAuth istemci kimliği (herkese açık bir değerdir, gizli değil).
+GOOGLE_CLIENT_ID = ""
+FILL_MS = "8000"

@@ -1,0 +1,4 @@
+node_modules/
+src/engine.gen.mjs
+.wrangler/
+.dev.vars
