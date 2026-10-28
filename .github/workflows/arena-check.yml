@@ -1,0 +1,25 @@
+# Canlı arena sunucusunu dışarıdan dener (profil oluşturmaz). Elle ya da sunucu kodu değişince çalışır.
+name: Arena canlı test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["server/**", ".github/workflows/arena-check.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Kurulumun bitmesini bekle
+        if: github.event_name == 'push'
+        run: sleep 120
+      - name: Canlı sunucuyu dene
+        run: node server/test/smoke.mjs https://safaktanik-github-io.safaktanik.workers.dev
