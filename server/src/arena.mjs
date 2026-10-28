@@ -4,6 +4,7 @@ import { DurableObject } from "cloudflare:workers";
 import { install, events } from "./stubs.mjs";
 import { METHODS, check } from "./rules.mjs";
 import { randomId, sha256, hashPassword, sameString, normEmail, validPassword, verifyGoogle } from "./auth.mjs";
+import { blankGems, gemView, gemEvent, gemSpend, gemFrame, gemImport, cleanFriends } from "./extras.mjs";
 
 const IDLE_MS = 5 * 60e3;
 
@@ -22,10 +23,14 @@ export class Arena extends DurableObject {
     sql.exec("CREATE TABLE IF NOT EXISTS accounts(uid TEXT PRIMARY KEY, email TEXT UNIQUE, salt TEXT, hash TEXT, google TEXT UNIQUE, guest INTEGER NOT NULL, created INTEGER NOT NULL)");
     sql.exec("CREATE TABLE IF NOT EXISTS tokens(th TEXT PRIMARY KEY, uid TEXT NOT NULL, created INTEGER NOT NULL, seen INTEGER NOT NULL)");
     // Çevrimdışı oyuncuya giden arkadaşlık mesajları bağlandığında iletilir.
+    // Hesaba bağlı ek veriler (elmas cüzdanı, arkadaş listesi).
+    sql.exec("CREATE TABLE IF NOT EXISTS extras(uid TEXT PRIMARY KEY, json TEXT NOT NULL)");
     sql.exec("CREATE TABLE IF NOT EXISTS inbox(id INTEGER PRIMARY KEY AUTOINCREMENT, uid TEXT NOT NULL, msg TEXT NOT NULL, at INTEGER NOT NULL)");
     install();
     globalThis.__tgFillMs = Number(this.env.FILL_MS ?? 8000);
     this.E = await import("./engine.gen.mjs");
+    this.extrasCache = new Map();
+    globalThis.__tgOwns = (uid, item) => this.extras(uid).gems.owned.includes(item);
     const initial = {};
     for (const r of sql.exec("SELECT path, json FROM docs")) initial[r.path] = JSON.parse(r.json);
     this.saved = new Map(Object.entries(initial).map(([k, v]) => [k, JSON.stringify(v)]));
@@ -119,6 +124,9 @@ export class Arena extends DurableObject {
     ws.send(JSON.stringify({ t: "hello", uid, now: Date.now() }));
     this.push(uid, ws);
     this.flushInbox(uid, ws);
+    const x = this.extras(uid);
+    ws.send(JSON.stringify({ t: "gems", s: gemView(x.gems), fresh: !x.gems.imported && !x.gems.claims.length && !x.gems.balance }));
+    if (x.friends) ws.send(JSON.stringify({ t: "friends", s: x.friends }));
     ws.addEventListener("message", ev => this.onMessage(uid, ws, ev.data));
     const bye = () => {
       if (!u.socks.delete(ws)) return;
@@ -142,6 +150,22 @@ export class Arena extends DurableObject {
     const rows = [...sql.exec("SELECT id, msg, at FROM inbox WHERE uid = ? ORDER BY id", uid)];
     for (const r of rows) if (r.at > cut) try { ws.send(r.msg); } catch {}
     if (rows.length) sql.exec("DELETE FROM inbox WHERE uid = ?", uid);
+  }
+
+  extras(uid) {
+    let x = this.extrasCache.get(uid);
+    if (!x) {
+      const row = [...this.ctx.storage.sql.exec("SELECT json FROM extras WHERE uid = ?", uid)][0];
+      x = row ? JSON.parse(row.json) : {};
+      x.gems = { ...blankGems(), ...(x.gems ?? {}) };
+      this.extrasCache.set(uid, x);
+      if (this.extrasCache.size > 2000) this.extrasCache.delete(this.extrasCache.keys().next().value);
+    }
+    return x;
+  }
+
+  saveExtras(uid) {
+    this.ctx.storage.sql.exec("INSERT INTO extras(uid, json) VALUES(?, ?) ON CONFLICT(uid) DO UPDATE SET json = excluded.json", uid, JSON.stringify(this.extras(uid)));
   }
 
   online(uid) { const u = this.users.get(uid); return !!u && u.socks.size > 0; }
@@ -196,6 +220,23 @@ export class Arena extends DurableObject {
         const sql = this.ctx.storage.sql;
         if ([...sql.exec("SELECT COUNT(*) AS n FROM inbox WHERE uid = ?", q.to)][0].n < 50) sql.exec("INSERT INTO inbox(uid, msg, at) VALUES(?, ?, ?)", q.to, f, now);
       }
+      return true;
+    }
+    if (m === "gemEvent" || m === "gemSpend" || m === "gemFrame" || m === "gemImport") {
+      const x = this.extras(uid), g = x.gems;
+      let granted = [];
+      if (m === "gemEvent") granted = gemEvent(this.E, g, a[0], a[1], { me: u.z.state.me, claims: u.z.claimedKeys(), now });
+      else if (m === "gemSpend") { if (typeof a[0] !== "string") throw bad("bad-request"); gemSpend(this.E, g, a[0]); }
+      else if (m === "gemFrame") gemFrame(g, a[0] ?? null);
+      else gemImport(this.E, g, a[0]);
+      this.saveExtras(uid);
+      this.send(uid, { t: "gems", s: gemView(g), granted });
+      return gemView(g);
+    }
+    if (m === "friendsSave") {
+      const x = this.extras(uid);
+      x.friends = cleanFriends(a[0]);
+      this.saveExtras(uid);
       return true;
     }
     if (m === "invite") {
@@ -253,7 +294,7 @@ export class Arena extends DurableObject {
     if (u.calls.length >= 15) return reply({ ok: false, e: { code: "rate-limited", status: 429 } });
     u.calls.push(now);
     try {
-      if (msg.m === "presence" || msg.m === "friendTo" || msg.m === "invite") {
+      if (["presence", "friendTo", "invite", "gemEvent", "gemSpend", "gemFrame", "gemImport", "friendsSave"].includes(msg.m)) {
         reply({ ok: true, v: this.arenaCall(uid, msg.m, Array.isArray(msg.a) ? msg.a : []) });
         return;
       }
