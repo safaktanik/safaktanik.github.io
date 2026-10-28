@@ -7,7 +7,7 @@ export const METHODS = new Set([
   "joinByCode", "addBot", "removeBot", "leaderboard", "recentMatches", "transactions", "refreshMe", "friendSend"
 ]);
 
-const REQUESTS = new Set(["table.create", "table.join", "table.leave", "table.ready", "table.watch", "quick.start", "quick.cancel", "lobby.sub"]);
+const REQUESTS = new Set(["table.create", "table.join", "table.leave", "table.ready", "table.watch", "quick.start", "quick.cancel", "lobby.sub", "move", "scan", "power"]);
 
 const err = code => Object.assign(new Error(code), { code, status: 400 });
 
@@ -22,6 +22,8 @@ export function check(E, method, args, now = Date.now()) {
     const [key, amount] = args;
     if (typeof key !== "string" || !Number.isInteger(amount) || amount <= 0) throw err("bad-request");
     const days = [E._i(now), E._i(now - 864e5)];
+    // İlk düello rehberinin ödülü: hesap başına bir kez (motor aynı anahtarı ikinci kez kabul etmez).
+    if (key === "tanik-first-duel") { if (amount !== 250) throw err("bad-reward"); return; }
     let m = /^puzzle:(\d{4}-\d{2}-\d{2})$/.exec(key);
     if (m) {
       // Günün Bulmacası: bugün ya da dün (saat farkı payı), en fazla 600.
