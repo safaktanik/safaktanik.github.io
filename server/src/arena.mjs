@@ -232,12 +232,15 @@ export class Arena extends DurableObject {
     return a ? { uid: a.uid, email: a.email ?? null, google: !!a.google, guest: !!a.guest } : null;
   }
 
+  // Panelden yapıştırılan değerin sonundaki boşluk ya da satır sonu Google'da "istemci bulunamadı" hatası verir.
+  googleId() { return String(this.env.GOOGLE_CLIENT_ID ?? "").trim(); }
+
   newUid() { return "u_" + randomId(9); }
 
   async api(req, url) {
     const p = url.pathname, sql = this.ctx.storage.sql;
     if (req.method === "GET" && p === "/api/config")
-      return this.json(req, { ok: true, google: this.env.GOOGLE_CLIENT_ID || null, online: this.users.size });
+      return this.json(req, { ok: true, google: this.googleId() || null, online: this.users.size });
     if (!p.startsWith("/api/auth/")) return this.json(req, { error: "not-found" }, 404);
     if (!this.originOk(req)) return this.json(req, { error: "forbidden-origin" }, 403);
     if (this.limited(req)) return this.json(req, { error: "rate-limited" }, 429);
@@ -280,7 +283,7 @@ export class Arena extends DurableObject {
         return done(row.uid);
       }
       if (p === "/api/auth/google") {
-        const g = await verifyGoogle(body.credential, this.env.GOOGLE_CLIENT_ID);
+        const g = await verifyGoogle(body.credential, this.googleId());
         const found = [...sql.exec("SELECT uid FROM accounts WHERE google = ?", g.sub)][0];
         const me = bearer ? await this.uidOf(bearer) : null;
         if (found) {
