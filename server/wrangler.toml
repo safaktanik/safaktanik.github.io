@@ -13,5 +13,5 @@ new_sqlite_classes = ["Arena"]
 [vars]
 ALLOWED_ORIGINS = "https://safaktanik.github.io,http://localhost:8765"
 # Google ile giriş için OAuth istemci kimliği (herkese açık bir değerdir, gizli değil).
-GOOGLE_CLIENT_ID = ""
+GOOGLE_CLIENT_ID = "176619676500-60k0nh1divff6utvqf8ehkibslt4kbqa.apps.googleusercontent.com"
 FILL_MS = "8000"
