@@ -10,6 +10,7 @@ const health = await fetch(BASE + "/health");
 ok(health.ok, "sunucu ayakta");
 const cfg = await (await fetch(BASE + "/api/config", { headers: H })).json();
 ok(cfg.ok === true, "ayar ucu çalışıyor (Google: " + (cfg.google ? "açık" : "kapalı") + ")");
+if (cfg.google) console.log("  Google istemci kimliği:", JSON.stringify(cfg.google), cfg.google.length + " karakter");
 const pre = await fetch(BASE + "/api/auth/guest", { method: "OPTIONS", headers: { origin: ORIGIN, "access-control-request-method": "POST" } });
 ok(pre.status === 204 && pre.headers.get("access-control-allow-origin") === ORIGIN, "oyun sitesine CORS izni var");
 const bad = await fetch(BASE + "/api/auth/guest", { method: "POST", headers: { ...H, origin: "https://kotu-site.example" }, body: "{}" });
