@@ -29,6 +29,8 @@ ok(st.lobby.length >= 5, "lobide bot masaları var (" + st.lobby.length + ")");
 ok(gems && typeof gems.balance === "number", "hesaba bağlı elmas kaydı geliyor (sunucu güncel)");
 const inv = await call("invite", "u_yokboyle123");
 ok(!inv.ok && inv.e.code === "not-in-table", "oyun içi davet kuralı çalışıyor");
+const lg = await call("league");
+ok(!lg.ok && lg.e.code === "no-profile", "çevrimiçi lig ucu var (profilsiz hesaba lig açılmıyor)");
 const r = await call("grantReward", "hile:1", 5000);
 ok(!r.ok && r.e.code === "bad-reward", "uydurma ödül reddedildi");
 ws.close();
