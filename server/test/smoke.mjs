@@ -19,13 +19,16 @@ const g = await (await fetch(BASE + "/api/auth/guest", { method: "POST", headers
 ok(g.token && g.account && g.account.guest, "misafir hesap açıldı");
 
 const ws = new WebSocket(BASE.replace(/^http/, "ws") + "/arena?token=" + encodeURIComponent(g.token), { headers: { origin: ORIGIN } });
-let st = null; const pend = new Map(); let id = 0;
-ws.onmessage = e => { const m = JSON.parse(e.data); if (m.t === "s") st = m.s; if (m.t === "r") pend.get(m.id)?.(m); };
+let st = null, gems = null; const pend = new Map(); let id = 0;
+ws.onmessage = e => { const m = JSON.parse(e.data); if (m.t === "s") st = m.s; if (m.t === "gems") gems = m.s; if (m.t === "r") pend.get(m.id)?.(m); };
 await new Promise((res, rej) => { ws.onopen = res; ws.onerror = () => rej(new Error("websocket")); setTimeout(() => rej(new Error("websocket zaman aşımı")), 15000); });
 const call = (m, ...a) => new Promise(r => { const i = ++id; pend.set(i, r); ws.send(JSON.stringify({ t: "call", id: i, m, a })); });
 const t0 = Date.now(); while (!(st && st.lobby && st.lobby.length) && Date.now() - t0 < 15000) await new Promise(r => setTimeout(r, 100));
 ok(st && st.needsProfile === true, "canlı bağlantı kuruldu, yeni hesap profil istiyor");
 ok(st.lobby.length >= 5, "lobide bot masaları var (" + st.lobby.length + ")");
+ok(gems && typeof gems.balance === "number", "hesaba bağlı elmas kaydı geliyor (sunucu güncel)");
+const inv = await call("invite", "u_yokboyle123");
+ok(!inv.ok && inv.e.code === "not-in-table", "oyun içi davet kuralı çalışıyor");
 const r = await call("grantReward", "hile:1", 5000);
 ok(!r.ok && r.e.code === "bad-reward", "uydurma ödül reddedildi");
 ws.close();
