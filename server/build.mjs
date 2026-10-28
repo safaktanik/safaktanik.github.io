@@ -20,7 +20,7 @@ function patch(from, to) {
 // Arayüzün başlatıldığı son kısım sunucuda çalışmaz.
 const tail = m.indexOf('Cw();ww();e5();document.addEventListener("visibilitychange"');
 if (tail < 0) throw new Error("başlatma kısmı bulunamadı");
-m = m.slice(0, tail) + "\nexport {zo,gC,U,K,ne,Ni,Mp,_i,Bd,tl};\n";
+m = m.slice(0, tail) + "\nexport {zo,gC,U,K,ne,Ni,Mp,_i,Bd,tl,Sl,ts};\n";
 
 // Sunucu yalnızca kuralları çalıştırır; gömülü görseller gerekmez.
 m = m.replace(/data:(image|audio|font)\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]{200,}/g, "data:,");
@@ -33,6 +33,10 @@ patch(
 );
 // Lobideki bot masalarını yalnızca sunucunun kendi örneği kurar (oyuncu örnekleri kurmaz).
 patch("this.local&&this.seedLocal(n)", "this.local&&!this.noSeed&&this.seedLocal(n)");
+
+// Elmasla açılan kahramanlar: sunucu, oyuncunun sunucudaki elmas kaydına bakar.
+patch("if(!D1(a,1))", "if(!D1(a,1)&&!(globalThis.__tgOwns&&globalThis.__tgOwns(this.uid,\"hero:\"+a)))");
+patch("!D1(t.avatar,Us(a.xp))", "!D1(t.avatar,Us(a.xp))&&!(globalThis.__tgOwns&&globalThis.__tgOwns(this.uid,\"hero:\"+t.avatar))");
 
 writeFileSync(join(here, "src", "engine.gen.mjs"), m);
 console.log(`motor hazır: ${(m.length / 1024).toFixed(0)} KB`);
