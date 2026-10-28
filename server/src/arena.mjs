@@ -21,6 +21,8 @@ export class Arena extends DurableObject {
     sql.exec("CREATE TABLE IF NOT EXISTS docs(path TEXT PRIMARY KEY, json TEXT NOT NULL)");
     sql.exec("CREATE TABLE IF NOT EXISTS accounts(uid TEXT PRIMARY KEY, email TEXT UNIQUE, salt TEXT, hash TEXT, google TEXT UNIQUE, guest INTEGER NOT NULL, created INTEGER NOT NULL)");
     sql.exec("CREATE TABLE IF NOT EXISTS tokens(th TEXT PRIMARY KEY, uid TEXT NOT NULL, created INTEGER NOT NULL, seen INTEGER NOT NULL)");
+    // Çevrimdışı oyuncuya giden arkadaşlık mesajları bağlandığında iletilir.
+    sql.exec("CREATE TABLE IF NOT EXISTS inbox(id INTEGER PRIMARY KEY AUTOINCREMENT, uid TEXT NOT NULL, msg TEXT NOT NULL, at INTEGER NOT NULL)");
     install();
     globalThis.__tgFillMs = Number(this.env.FILL_MS ?? 8000);
     this.E = await import("./engine.gen.mjs");
@@ -116,6 +118,7 @@ export class Arena extends DurableObject {
     u.socks.add(ws);
     ws.send(JSON.stringify({ t: "hello", uid, now: Date.now() }));
     this.push(uid, ws);
+    this.flushInbox(uid, ws);
     ws.addEventListener("message", ev => this.onMessage(uid, ws, ev.data));
     const bye = () => {
       if (!u.socks.delete(ws)) return;
@@ -132,6 +135,82 @@ export class Arena extends DurableObject {
     u.unreact && u.unreact();
     u.z.stop();
     this.users.delete(uid);
+  }
+
+  flushInbox(uid, ws) {
+    const sql = this.ctx.storage.sql, cut = Date.now() - 14 * 864e5;
+    const rows = [...sql.exec("SELECT id, msg, at FROM inbox WHERE uid = ? ORDER BY id", uid)];
+    for (const r of rows) if (r.at > cut) try { ws.send(r.msg); } catch {}
+    if (rows.length) sql.exec("DELETE FROM inbox WHERE uid = ?", uid);
+  }
+
+  online(uid) { const u = this.users.get(uid); return !!u && u.socks.size > 0; }
+
+  // Oyuncunun durumu: menüde, bir masada bekliyor ya da maçta.
+  // Oyuncunun oturduğu masa: motorun takip ettiği masa ya da (yeni kurulduysa) oyuncu kaydındaki masa.
+  tableOf(uid) {
+    const z = this.users.get(uid)?.z;
+    if (z?.tableDoc) return z.tableDoc;
+    const at = this.store.docs.get(`players/${uid}`)?.seatAt;
+    return at ? this.store.docs.get(`tables/${at}`) ?? null : null;
+  }
+
+  status(uid) {
+    const t = this.tableOf(uid);
+    if (!t) return "menu";
+    if (t.status === "playing" && t.match) {
+      const p = t.match.s.players.find(x => x.userId === uid);
+      return p && !p.eliminated ? "match" : "menu";
+    }
+    return (t.status === "waiting" || t.status === "countdown") && t.seats.some(x => x.uid === uid) ? "table" : "menu";
+  }
+
+  profile(uid) {
+    const me = this.users.get(uid)?.z.state.me;
+    if (!me) throw Object.assign(new Error("no-profile"), { code: "no-profile", status: 400 });
+    return { name: me.username, avatar: me.avatar, level: me.level };
+  }
+
+  // Motor dışındaki çağrılar: arkadaş durumu, doğrudan arkadaşlık mesajı ve oyun içi davet.
+  arenaCall(uid, m, a) {
+    const u = this.users.get(uid), now = Date.now(), uidOk = x => typeof x === "string" && /^u_[A-Za-z0-9_-]{6,24}$/.test(x) && x !== uid;
+    const bad = code => Object.assign(new Error(code), { code, status: 400 });
+    if (m === "presence") {
+      const list = Array.isArray(a[0]) ? a[0].filter(x => typeof x === "string").slice(0, 100) : [];
+      const out = {};
+      for (const id of list) {
+        const p = this.store.docs.get(`players/${id}`);
+        out[id] = { on: this.online(id), st: this.online(id) ? this.status(id) : "off", name: p?.name ?? null, avatar: p?.avatar ?? null };
+      }
+      return out;
+    }
+    if (m === "friendTo") {
+      const q = a[0] ?? {};
+      if (!["req", "ok", "no", "cancel", "del"].includes(q.t) || !uidOk(q.to)) throw bad("bad-request");
+      u.friendHits = (u.friendHits ?? []).filter(t => now - t < 60e3);
+      if (u.friendHits.length >= 20) throw bad("rate-limited");
+      u.friendHits.push(now);
+      const f = JSON.stringify({ t: "friend", d: { t: q.t, from: uid, ...this.profile(uid) } });
+      if (this.online(q.to)) this.send(q.to, JSON.parse(f));
+      else {
+        const sql = this.ctx.storage.sql;
+        if ([...sql.exec("SELECT COUNT(*) AS n FROM inbox WHERE uid = ?", q.to)][0].n < 50) sql.exec("INSERT INTO inbox(uid, msg, at) VALUES(?, ?, ?)", q.to, f, now);
+      }
+      return true;
+    }
+    if (m === "invite") {
+      const to = a[0];
+      if (!uidOk(to)) throw bad("bad-request");
+      const t = this.tableOf(uid);
+      if (!t || !(t.status === "waiting" || t.status === "countdown") || !t.seats.some(x => x.uid === uid) || !t.code) throw bad("not-in-table");
+      if (!this.online(to)) throw bad("friend-offline");
+      u.invites = u.invites ?? new Map();
+      if (now - (u.invites.get(to) ?? 0) < 15e3) throw bad("rate-limited");
+      u.invites.set(to, now);
+      this.send(to, { t: "invite", d: { from: uid, ...this.profile(uid), code: t.code, table: t.name, mode: t.mode, fee: t.entryFee, seats: t.seats.length, max: t.maxPlayers } });
+      return true;
+    }
+    throw bad("bad-request");
   }
 
   frame(u) {
@@ -174,6 +253,10 @@ export class Arena extends DurableObject {
     if (u.calls.length >= 15) return reply({ ok: false, e: { code: "rate-limited", status: 429 } });
     u.calls.push(now);
     try {
+      if (msg.m === "presence" || msg.m === "friendTo" || msg.m === "invite") {
+        reply({ ok: true, v: this.arenaCall(uid, msg.m, Array.isArray(msg.a) ? msg.a : []) });
+        return;
+      }
       check(this.E, msg.m, msg.a ?? []);
       const v = await u.z[msg.m](...(msg.a ?? []));
       reply({ ok: true, v: v === undefined ? null : v });
