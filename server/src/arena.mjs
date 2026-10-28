@@ -5,6 +5,7 @@ import { install, events } from "./stubs.mjs";
 import { METHODS, check } from "./rules.mjs";
 import { randomId, sha256, hashPassword, sameString, normEmail, validPassword, verifyGoogle } from "./auth.mjs";
 import { blankGems, gemView, gemEvent, gemSpend, gemFrame, gemImport, cleanFriends } from "./extras.mjs";
+import { TIERS, SIZE, REAL_MAX, UP, DOWN, WEEK, bots, rank, prize, move } from "./league.mjs";
 
 const IDLE_MS = 5 * 60e3;
 
@@ -25,6 +26,8 @@ export class Arena extends DurableObject {
     // Çevrimdışı oyuncuya giden arkadaşlık mesajları bağlandığında iletilir.
     // Hesaba bağlı ek veriler (elmas cüzdanı, arkadaş listesi).
     sql.exec("CREATE TABLE IF NOT EXISTS extras(uid TEXT PRIMARY KEY, json TEXT NOT NULL)");
+    // Çevrimiçi lig grupları: her hafta oyuncunun hangi ligde hangi grupta olduğu.
+    sql.exec("CREATE TABLE IF NOT EXISTS lmembers(week TEXT NOT NULL, tier INTEGER NOT NULL, gid INTEGER NOT NULL, uid TEXT NOT NULL, PRIMARY KEY(week, uid))");
     sql.exec("CREATE TABLE IF NOT EXISTS inbox(id INTEGER PRIMARY KEY AUTOINCREMENT, uid TEXT NOT NULL, msg TEXT NOT NULL, at INTEGER NOT NULL)");
     install();
     globalThis.__tgFillMs = Number(this.env.FILL_MS ?? 8000);
@@ -168,6 +171,100 @@ export class Arena extends DurableObject {
     this.ctx.storage.sql.exec("INSERT INTO extras(uid, json) VALUES(?, ?) ON CONFLICT(uid) DO UPDATE SET json = excluded.json", uid, JSON.stringify(this.extras(uid)));
   }
 
+  // ---------------------------------------------------------------- çevrimiçi lig
+  leagueOf(uid) {
+    const x = this.extras(uid);
+    if (!x.league) x.league = { tier: 0, week: null, gid: null, pts: 0, played: false, pending: null, last: null };
+    return x.league;
+  }
+
+  // Bir oyuncunun o haftaki puanı: oyuncu kaydı o haftadaysa oradan, değilse lig kaydındaki son değerden.
+  ptsFor(uid, week) {
+    const p = this.store.docs.get(`players/${uid}`);
+    if (p && p.week === week) return { pts: p.wPoints | 0, played: (p.wGames | 0) > 0 };
+    const L = this.extras(uid).league;
+    if (L && L.week === week) return { pts: L.pts | 0, played: !!L.played };
+    if (L && L.last && L.last.week === week) return { pts: L.last.pts | 0, played: !!L.last.played };
+    return { pts: 0, played: false };
+  }
+
+  groupRows(week, tier, gid, now, me) {
+    const ids = [...this.ctx.storage.sql.exec("SELECT uid FROM lmembers WHERE week = ? AND tier = ? AND gid = ?", week, tier, gid)].map(r => r.uid);
+    const rows = ids.map(uid => {
+      const p = this.store.docs.get(`players/${uid}`);
+      return { id: uid, name: p?.name ?? "Oyuncu", avatar: p?.avatar ?? 0, level: p ? this.E.Us(p.xp) : 1, points: this.ptsFor(uid, week).pts, bot: false, me: uid === me };
+    });
+    return rank(rows.concat(bots(week, tier, gid, Math.max(0, SIZE - rows.length), now)));
+  }
+
+  assignGroup(week, tier, uid) {
+    const sql = this.ctx.storage.sql;
+    const groups = [...sql.exec("SELECT gid, COUNT(*) AS n FROM lmembers WHERE week = ? AND tier = ? GROUP BY gid ORDER BY gid", week, tier)];
+    const open = groups.find(g => g.n < REAL_MAX);
+    const gid = open ? open.gid : groups.length ? groups[groups.length - 1].gid + 1 : 0;
+    sql.exec("INSERT OR REPLACE INTO lmembers(week, tier, gid, uid) VALUES(?, ?, ?, ?)", week, tier, gid, uid);
+    return gid;
+  }
+
+  // Yeni haftada geçen hafta değerlendirilir (sonuç ve ödül bekler), oyuncu yeni gruba yerleşir.
+  // Testte hafta değişimini denemek için (yalnızca yerel; canlıda tanımlı değil).
+  leagueNow() { return Date.now() + (Number(this.env.LEAGUE_SHIFT_MS) || 0); }
+
+  league(uid) {
+    if (!this.users.get(uid)?.z.state.me) throw Object.assign(new Error("no-profile"), { code: "no-profile", status: 400 });
+    const now = this.leagueNow(), week = this.E.tl(now), L = this.leagueOf(uid);
+    if (L.week !== week) {
+      if (L.week && L.gid !== null) {
+        const r = this.ptsFor(uid, L.week);
+        if (r.played) {
+          const end = Date.parse(L.week + "T00:00:00Z") + WEEK;
+          const mine = this.groupRows(L.week, L.tier, L.gid, end, uid).find(x => x.me);
+          if (mine) {
+            const mv = move(L.tier, mine.rank);
+            L.pending = { week: L.week, tier: L.tier, rank: mine.rank, move: mv, to: L.tier + mv, prize: prize(L.tier, mine.rank) };
+            L.tier += mv;
+          }
+        }
+        L.last = { week: L.week, pts: r.pts, played: r.played };
+      }
+      L.week = week; L.gid = this.assignGroup(week, L.tier, uid); L.pts = 0; L.played = false;
+      this.saveExtras(uid);
+    }
+    return {
+      week, endsInMs: Date.parse(week + "T00:00:00Z") + WEEK - now, tier: L.tier, tiers: TIERS.map(t => ({ id: t.id, name: t.name })),
+      rows: this.groupRows(week, L.tier, L.gid, now, uid), up: UP, down: DOWN, size: SIZE,
+      prizes: { first: prize(L.tier, 1), second: prize(L.tier, 2), third: prize(L.tier, 3), mid: prize(L.tier, 4), low: prize(L.tier, SIZE) },
+      pending: L.pending
+    };
+  }
+
+  async leagueClaim(uid) {
+    const L = this.leagueOf(uid), p = L.pending;
+    if (!p) return { coins: 0, gems: 0 };
+    L.pending = null;
+    this.saveExtras(uid);
+    let coins = 0, gems = 0;
+    try { if (p.prize > 0) { await this.users.get(uid).z.grantReward(`league:${p.week}`, p.prize); coins = p.prize; } } catch {}
+    if (p.move > 0) {
+      const g = this.extras(uid).gems, key = "lgup:" + p.week;
+      if (!g.claims.includes(key)) {
+        g.balance += 5; g.claims.push(key); g.log.unshift({ n: 5, why: "Lig atladın!", at: Date.now() }); gems = 5;
+        this.saveExtras(uid);
+        this.send(uid, { t: "gems", s: gemView(g), granted: [{ n: 5, why: "Lig atladın!" }] });
+      }
+    }
+    return { coins, gems };
+  }
+
+  // Haftalık puan değiştikçe lig kaydına da yazılır (hafta dönünce geçen hafta doğru değerlendirilsin diye).
+  leagueSnap(uid) {
+    const me = this.users.get(uid)?.z.state.me, L = this.extras(uid).league;
+    if (!me || !L || L.week !== this.E.tl(this.leagueNow())) return;
+    const pts = me.weeklyPoints | 0, p = this.store.docs.get(`players/${uid}`);
+    const played = !!(p && p.week === L.week && (p.wGames | 0) > 0);
+    if (pts !== L.pts || played !== L.played) { L.pts = pts; L.played = L.played || played; this.saveExtras(uid); }
+  }
+
   online(uid) { const u = this.users.get(uid); return !!u && u.socks.size > 0; }
 
   // Oyuncunun durumu: menüde, bir masada bekliyor ya da maçta.
@@ -269,6 +366,7 @@ export class Arena extends DurableObject {
       const f = this.frame(u);
       if (f === u.last) return;
       u.last = f;
+      this.leagueSnap(uid);
       for (const ws of u.socks) try { ws.send(f); } catch {}
     }, 40);
   }
@@ -294,6 +392,8 @@ export class Arena extends DurableObject {
     if (u.calls.length >= 15) return reply({ ok: false, e: { code: "rate-limited", status: 429 } });
     u.calls.push(now);
     try {
+      if (msg.m === "league") return reply({ ok: true, v: this.league(uid) });
+      if (msg.m === "leagueClaim") return reply({ ok: true, v: await this.leagueClaim(uid) });
       if (["presence", "friendTo", "invite", "gemEvent", "gemSpend", "gemFrame", "gemImport", "friendsSave"].includes(msg.m)) {
         reply({ ok: true, v: this.arenaCall(uid, msg.m, Array.isArray(msg.a) ? msg.a : []) });
         return;
