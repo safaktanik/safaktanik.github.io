@@ -346,8 +346,23 @@ export class Arena extends DurableObject {
       return {
         name: p.name ?? "Oyuncu", avatar: p.avatar | 0, level: this.E.Us(p.xp | 0), wins, losses: p.losses | 0, games,
         winRate: games ? Math.round((wins * 100) / games) : 0, best: p.best ?? null,
+        weekly: p.week === this.E.tl(Date.now()) ? p.wPoints | 0 : 0,
         tier: L && TIERS[L.tier] ? TIERS[L.tier].name : null, st: this.online(id) ? this.status(id) : "off"
       };
+    }
+    // Arkadaşlar sıralaması: oyuncu ve arkadaşları, bu haftaki puana göre.
+    if (m === "friendsBoard") {
+      const wk = this.E.tl(Date.now()), ids = [uid, ...(this.extras(uid).friends?.list ?? []).map(f => f.uid)].slice(0, 101);
+      const rows = [];
+      for (const id of new Set(ids)) {
+        const p = this.store.docs.get(`players/${id}`);
+        if (!p) continue;
+        const L = this.extras(id).league;
+        rows.push({ id, name: p.name ?? "Oyuncu", avatar: p.avatar | 0, level: this.E.Us(p.xp | 0), points: p.week === wk ? p.wPoints | 0 : 0, tier: L && TIERS[L.tier] ? TIERS[L.tier].name : TIERS[0].name, on: this.online(id), me: id === uid });
+      }
+      rows.sort((a, b) => b.points - a.points || (a.me ? -1 : b.me ? 1 : 0) || String(a.name).localeCompare(String(b.name), "tr"));
+      rows.forEach((x, i) => { x.rank = i + 1; });
+      return rows;
     }
     if (m === "invite") {
       const to = a[0];
@@ -437,7 +452,7 @@ export class Arena extends DurableObject {
     try {
       if (msg.m === "league") return reply({ ok: true, v: this.league(uid) });
       if (msg.m === "leagueClaim") return reply({ ok: true, v: await this.leagueClaim(uid) });
-      if (["presence", "friendTo", "invite", "gemEvent", "gemSpend", "gemFrame", "gemImport", "friendsSave", "playerCard"].includes(msg.m)) {
+      if (["presence", "friendTo", "invite", "gemEvent", "gemSpend", "gemFrame", "gemImport", "friendsSave", "playerCard", "friendsBoard"].includes(msg.m)) {
         reply({ ok: true, v: this.arenaCall(uid, msg.m, Array.isArray(msg.a) ? msg.a : []) });
         return;
       }
