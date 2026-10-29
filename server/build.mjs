@@ -38,5 +38,8 @@ patch("this.local&&this.seedLocal(n)", "this.local&&!this.noSeed&&this.seedLocal
 patch("if(!D1(a,1))", "if(!D1(a,1)&&!(globalThis.__tgOwns&&globalThis.__tgOwns(this.uid,\"hero:\"+a)))");
 patch("!D1(t.avatar,Us(a.xp))", "!D1(t.avatar,Us(a.xp))&&!(globalThis.__tgOwns&&globalThis.__tgOwns(this.uid,\"hero:\"+t.avatar))");
 
+// Maç geçmişine açılan güvenli kare ve elenme bilgisi de yazılır (günlük görevler sunucuda doğrulanır).
+patch("mines_triggered:n.mineHits,", "mines_triggered:n.mineHits,safe_opened:n.safeOpened,elim:n.eliminationReason??null,");
+
 writeFileSync(join(here, "src", "engine.gen.mjs"), m);
 console.log(`motor hazır: ${(m.length / 1024).toFixed(0)} KB`);

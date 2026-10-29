@@ -351,6 +351,36 @@ export class Arena extends DurableObject {
     throw bad("bad-request");
   }
 
+  // Günün görevleri: ödül, sunucunun kendi gördüğüyle (maç geçmişi, güç kullanımı, bulmaca) doğrulanır.
+  questCount(uid, m, a) {
+    const r = m === "request" ? a[0] : null;
+    const ev = m === "scanCell" || r?.t === "scan" ? "sonar" : m === "power" ? a[1] : r?.t === "power" ? r.kind : null;
+    if (ev !== "sonar" && ev !== "pass" && ev !== "force") return;
+    const x = this.extras(uid), day = this.E._i(Date.now());
+    if (!x.qc || x.qc.day !== day) x.qc = { day, c: {} };
+    x.qc.c[ev] = (x.qc.c[ev] | 0) + 1;
+    this.saveExtras(uid);
+  }
+
+  questProgress(uid, day, ev) {
+    if (ev === "puzzle") return this.users.get(uid).z.claimedKeys().includes("puzzle:" + day) ? 1 : 0;
+    if (ev === "sonar" || ev === "pass" || ev === "force") { const qc = this.extras(uid).qc; return qc && qc.day === day ? qc.c[ev] | 0 : 0; }
+    const rec = (this.store.docs.get(`players/${uid}`)?.recent ?? []).filter(x => this.E._i(x.finished_at) === day);
+    if (ev === "match") return rec.length;
+    if (ev === "win") return rec.filter(x => x.final_rank === 1).length;
+    if (ev === "safe") return rec.reduce((n, x) => n + (x.safe_opened | 0), 0);
+    if (ev === "clean") return rec.filter(x => x.mines_triggered === 0 && !x.elim).length;
+    if (ev === "shrink") return rec.filter(x => x.mode === "shrink").length;
+    return 0;
+  }
+
+  questCheck(uid, key) {
+    const m = /^q:(\d{4}-\d{2}-\d{2}):([a-z0-9]+)$/.exec(key);
+    if (!m) return;
+    const q = this.E.Mp(m[1]).find(x => x.id === m[2]);
+    if (!q || this.questProgress(uid, m[1], q.event) < q.target) throw Object.assign(new Error("quest-not-done"), { code: "quest-not-done", status: 400 });
+  }
+
   frame(u) {
     return JSON.stringify({ t: "s", s: u.z.state, x: { claims: u.z.claimedKeys(), owned: u.z.ownedItems() }, now: Date.now() });
   }
@@ -399,7 +429,9 @@ export class Arena extends DurableObject {
         return;
       }
       check(this.E, msg.m, msg.a ?? []);
+      if (msg.m === "grantReward") this.questCheck(uid, msg.a[0]);
       const v = await u.z[msg.m](...(msg.a ?? []));
+      this.questCount(uid, msg.m, msg.a);
       reply({ ok: true, v: v === undefined ? null : v });
       this.push(uid);
     } catch (e) {
