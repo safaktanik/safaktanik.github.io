@@ -336,6 +336,19 @@ export class Arena extends DurableObject {
       this.saveExtras(uid);
       return true;
     }
+    // Sıralamadaki bir oyuncunun herkese açık kartı: ad, seviye, maç istatistikleri, ligi ve durumu.
+    if (m === "playerCard") {
+      const id = a[0];
+      if (typeof id !== "string" || !/^u_[A-Za-z0-9_-]{6,24}$/.test(id)) throw bad("bad-request");
+      const p = this.store.docs.get(`players/${id}`);
+      if (!p) throw bad("not-found");
+      const L = this.extras(id).league, games = p.games | 0, wins = p.wins | 0;
+      return {
+        name: p.name ?? "Oyuncu", avatar: p.avatar | 0, level: this.E.Us(p.xp | 0), wins, losses: p.losses | 0, games,
+        winRate: games ? Math.round((wins * 100) / games) : 0, best: p.best ?? null,
+        tier: L && TIERS[L.tier] ? TIERS[L.tier].name : null, st: this.online(id) ? this.status(id) : "off"
+      };
+    }
     if (m === "invite") {
       const to = a[0];
       if (!uidOk(to)) throw bad("bad-request");
@@ -424,7 +437,7 @@ export class Arena extends DurableObject {
     try {
       if (msg.m === "league") return reply({ ok: true, v: this.league(uid) });
       if (msg.m === "leagueClaim") return reply({ ok: true, v: await this.leagueClaim(uid) });
-      if (["presence", "friendTo", "invite", "gemEvent", "gemSpend", "gemFrame", "gemImport", "friendsSave"].includes(msg.m)) {
+      if (["presence", "friendTo", "invite", "gemEvent", "gemSpend", "gemFrame", "gemImport", "friendsSave", "playerCard"].includes(msg.m)) {
         reply({ ok: true, v: this.arenaCall(uid, msg.m, Array.isArray(msg.a) ? msg.a : []) });
         return;
       }
