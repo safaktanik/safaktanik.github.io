@@ -26,8 +26,8 @@ export function check(E, method, args, now = Date.now()) {
     if (key === "tanik-first-duel") { if (amount !== 250) throw err("bad-reward"); return; }
     let m = /^puzzle:(\d{4}-\d{2}-\d{2})$/.exec(key);
     if (m) {
-      // Günün Bulmacası: bugün ya da dün (saat farkı payı), en fazla 600.
-      if (!days.includes(m[1]) || amount > 600) throw err("bad-reward");
+      // Günün Bulmacası: bugün ya da dün (saat farkı payı), en fazla 300.
+      if (!days.includes(m[1]) || amount > 300) throw err("bad-reward");
       return;
     }
     m = /^q:(\d{4}-\d{2}-\d{2}):([a-z0-9]+)$/.exec(key);
