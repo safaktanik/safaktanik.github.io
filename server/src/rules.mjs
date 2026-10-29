@@ -4,7 +4,7 @@
 export const METHODS = new Set([
   "createProfile", "updateProfile", "claimDaily", "claimRescue", "grantReward", "purchase",
   "request", "move", "scanCell", "power", "react", "leaveMatch", "clearMatch", "stopWatching",
-  "joinByCode", "addBot", "removeBot", "leaderboard", "recentMatches", "transactions", "refreshMe", "friendSend"
+  "joinByCode", "addBot", "removeBot", "leaderboard", "recentMatches", "transactions", "refreshMe", "friendSend", "watchLobby"
 ]);
 
 const REQUESTS = new Set(["table.create", "table.join", "table.leave", "table.ready", "table.watch", "quick.start", "quick.cancel", "lobby.sub", "move", "scan", "power"]);

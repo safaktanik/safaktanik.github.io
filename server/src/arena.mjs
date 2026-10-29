@@ -346,6 +346,7 @@ export class Arena extends DurableObject {
       return {
         name: p.name ?? "Oyuncu", avatar: p.avatar | 0, level: this.E.Us(p.xp | 0), wins, losses: p.losses | 0, games,
         winRate: games ? Math.round((wins * 100) / games) : 0, best: p.best ?? null,
+        weekly: p.week === this.E.tl(Date.now()) ? p.wPoints | 0 : 0,
         tier: L && TIERS[L.tier] ? TIERS[L.tier].name : null, st: this.online(id) ? this.status(id) : "off"
       };
     }
