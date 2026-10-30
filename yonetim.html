@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="robots" content="noindex, nofollow" />
+<meta name="referrer" content="no-referrer" />
+<meta name="tanik-arena" content="https://safaktanik-github-io.safaktanik.workers.dev" />
+<title>Mine Duel · Yönetim</title>
+<style>
+:root{--bg:#0b1020;--panel:#131a33;--panel2:#1a2347;--line:#27315c;--text:#e8ecff;--mute:#9aa6d6;--blue:#4c7dff;--gold:#ffc83d;--green:#3ddc84;--red:#ff5d73;--purple:#b06cff;--r:12px}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--blue)}
+.hidden{display:none!important}
+.muted{color:var(--mute)}
+.small{font-size:.85rem}
+.pos{color:var(--green)}.neg{color:var(--red)}
+/* giriş */
+#login{min-height:100dvh;display:grid;place-items:center;padding:16px}
+.lbox{width:min(380px,100%);padding:28px 22px;border:1px solid var(--line);border-radius:18px;background:var(--panel);text-align:center}
+.lbox h1{margin:0 0 4px;font-size:1.35rem}
+.lbox p{margin:0 0 18px}
+#gbtn{display:flex;justify-content:center;min-height:44px}
+.dev{margin-top:18px;padding-top:14px;border-top:1px dashed var(--line);text-align:left}
+.dev label{display:block;margin:8px 0 4px;color:var(--mute);font-size:.85rem}
+.err{margin-top:12px;color:var(--red);font-weight:600}
+/* düzen */
+#app{display:grid;grid-template-columns:220px 1fr;grid-template-rows:56px 1fr;min-height:100dvh}
+header{grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+header b{font-size:1.05rem}
+header .who{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:.88rem;min-width:0}
+header .who span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.role{padding:2px 8px;border-radius:999px;background:var(--panel2);color:var(--gold);font-size:.75rem;font-weight:700;white-space:nowrap}
+nav{border-right:1px solid var(--line);background:var(--panel);padding:10px 8px;display:flex;flex-direction:column;gap:2px}
+nav button{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border:0;border-radius:10px;background:none;text-align:left;cursor:pointer;color:var(--mute)}
+nav button:hover{background:var(--panel2);color:var(--text)}
+nav button.on{background:var(--blue);color:#fff}
+nav .badge{margin-left:auto;min-width:20px;padding:0 6px;border-radius:999px;background:var(--red);color:#fff;font-size:.72rem;text-align:center}
+main{padding:18px;min-width:0}
+h2{margin:0 0 14px;font-size:1.25rem}
+h3{margin:0 0 10px;font-size:1rem}
+.card{border:1px solid var(--line);border-radius:var(--r);background:var(--panel);padding:14px;margin-bottom:14px;min-width:0}
+.grid{display:grid;gap:12px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+.kpi{border:1px solid var(--line);border-radius:var(--r);background:var(--panel);padding:12px 14px}
+.kpi b{display:block;font-size:1.6rem;line-height:1.2}
+.kpi span{color:var(--mute);font-size:.85rem}
+.cols2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.bars{display:grid;gap:6px}
+.bar{display:grid;grid-template-columns:120px 1fr 56px;gap:8px;align-items:center;font-size:.88rem}
+.bar i{display:block;height:10px;border-radius:6px;background:var(--blue)}
+.bar.alt i{background:var(--purple)}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end;height:130px}
+.days div{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;font-size:.72rem;color:var(--mute)}
+.days i{display:block;width:100%;max-width:34px;border-radius:6px 6px 0 0;background:var(--blue);min-height:2px}
+.days em{font-style:normal;color:var(--text);font-size:.78rem}
+.legend{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.legend button{padding:4px 10px;border:1px solid var(--line);border-radius:999px;background:none;cursor:pointer;font-size:.82rem}
+.legend button.on{background:var(--panel2);border-color:var(--blue)}
+/* tablo */
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--mute);font-weight:600;font-size:.8rem;white-space:nowrap}
+tr.click{cursor:pointer}
+tr.click:hover td{background:var(--panel2)}
+.tag{display:inline-block;padding:1px 8px;border-radius:999px;background:var(--panel2);font-size:.75rem;font-weight:700;white-space:nowrap}
+.tag.red{background:#4a1626;color:#ffb3bf}.tag.green{background:#123f2a;color:#9ff0c2}.tag.gold{background:#4a3b10;color:#ffe08a}
+/* form */
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input,select,textarea{padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#0d1430;outline:none;min-width:0}
+input:focus,select:focus,textarea:focus{border-color:var(--blue)}
+textarea{width:100%;resize:vertical}
+.field{display:grid;gap:4px;margin-bottom:10px}
+.field>span{color:var(--mute);font-size:.82rem}
+.btn{padding:9px 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);cursor:pointer;font-weight:600;white-space:nowrap}
+.btn:hover{border-color:var(--blue)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.danger{background:#5a1a2a;border-color:#8a2b42;color:#ffd1d9}
+.btn.ok{background:#14492f;border-color:#1f6b46;color:#c9ffe0}
+.btn:disabled{opacity:.5;cursor:default}
+.search{flex:1;min-width:180px}
+/* oyuncu detayı */
+#drawer{position:fixed;inset:0;z-index:50;display:flex;justify-content:flex-end;background:#0007}
+#drawer .dp{width:min(560px,100%);height:100%;overflow:auto;background:var(--bg);border-left:1px solid var(--line);padding:16px}
+.dhead{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.dhead h2{margin:0;overflow-wrap:anywhere}
+.dhead .x{margin-left:auto}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.kv div{padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.kv b{display:block}
+.kv span{color:var(--mute);font-size:.78rem}
+.acts{display:flex;flex-wrap:wrap;gap:8px}
+.list{display:grid;gap:6px}
+.li{padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--panel);font-size:.88rem;overflow-wrap:anywhere}
+/* pencere */
+#dlg{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:16px;background:#000a}
+#dlg .db{width:min(440px,100%);max-height:90dvh;overflow:auto;border:1px solid var(--line);border-radius:16px;background:var(--panel);padding:18px}
+#dlg h3{font-size:1.1rem}
+#dlg .warn{padding:10px;border-radius:10px;background:#3a1420;color:#ffc7d1;margin-bottom:10px;font-size:.88rem}
+#toast{position:fixed;left:50%;bottom:20px;z-index:70;transform:translateX(-50%);max-width:calc(100% - 32px);padding:10px 16px;border-radius:12px;background:#1f2a55;border:1px solid var(--line);box-shadow:0 6px 20px #0008;font-weight:600}
+#toast.bad{background:#4a1626;border-color:#8a2b42}
+.empty{padding:18px;text-align:center;color:var(--mute)}
+.split{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{padding:6px 12px;border:0;background:none;cursor:pointer;color:var(--mute)}
+.seg button.on{background:var(--panel2);color:var(--text)}
+/* telefon */
+@media (max-width:760px){
+  #app{grid-template-columns:1fr;grid-template-rows:52px 1fr auto}
+  header{padding:0 12px}
+  header .who span{display:none}
+  nav{grid-row:3;position:sticky;bottom:0;flex-direction:row;overflow-x:auto;border-right:0;border-top:1px solid var(--line);padding:6px;gap:4px;padding-bottom:max(6px,env(safe-area-inset-bottom))}
+  nav button{flex:none;width:auto;flex-direction:column;gap:2px;padding:6px 10px;font-size:.72rem}
+  nav button .ic{font-size:1.15rem}
+  nav .badge{position:absolute;margin:0 0 0 18px}
+  nav button{position:relative}
+  main{padding:12px}
+  .bar{grid-template-columns:96px 1fr 48px}
+}
+</style>
+</head>
+<body>
+<div id="login">
+  <div class="lbox">
+    <div style="font-size:2rem">🛡️</div>
+    <h1>Mine Duel · Yönetim</h1>
+    <p class="muted">Yalnızca yetkili yöneticiler girebilir.</p>
+    <div id="gbtn"><span class="muted small">Google girişi yükleniyor…</span></div>
+    <div id="devbox" class="dev hidden">
+      <b class="small">Yerel geliştirme girişi</b>
+      <label for="devkey">Geliştirici anahtarı</label><input id="devkey" type="password" autocomplete="off" style="width:100%" />
+      <label for="devrole">Rol</label><select id="devrole" style="width:100%"><option value="admin">Yönetici</option><option value="mod">Moderatör</option></select>
+      <button class="btn primary" id="devgo" style="width:100%;margin-top:10px">Giriş yap</button>
+    </div>
+    <div id="lerr" class="err" role="alert"></div>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <header><b>🛡️ Mine Duel · Yönetim</b><div class="who"><span id="who"></span><em class="role" id="role"></em><button class="btn" id="logout">Çıkış</button></div></header>
+  <nav id="nav" aria-label="Bölümler"></nav>
+  <main id="main" tabindex="-1"></main>
+</div>
+<div id="drawer" class="hidden" role="dialog" aria-modal="true" aria-label="Oyuncu detayı"><div class="dp" id="dp"></div></div>
+<div id="dlg" class="hidden" role="dialog" aria-modal="true"><div class="db" id="db"></div></div>
+<div id="toast" class="hidden" role="status"></div>
+
+<script>
+(function () {
+  "use strict";
+  // ---------------------------------------------------------------- ayarlar
+  var meta = document.querySelector('meta[name="tanik-arena"]');
+  var BASE = (meta && meta.content || "").replace(/\/$/, "");
+  try {
+    var dev = new URLSearchParams(location.search).get("arena");
+    if (dev && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(dev)) sessionStorage.setItem("tanik:admin-arena", dev);
+    BASE = sessionStorage.getItem("tanik:admin-arena") || BASE;
+  } catch (e) {}
+  var LOCAL = /^http:\/\/(localhost|127\.0\.0\.1)/.test(BASE);
+  var KEY = "tanik:admin";
+  var me = null, view = "dash", counts = {};
+
+  var MODES = { classic: "Son Kalan", territory: "Bölge Savaşı", treasure: "Hazine Avı", chain: "Zincir", hunter: "Mayın Avcısı", shrink: "Daralan Tahta", blitz: "Yıldırım" };
+  var TX = { "signup-bonus": "Başlangıç bakiyesi", "entry-fee": "Arena bileti", "entry-refund": "Bilet iadesi", "abort-refund": "Yarıda kalan maç iadesi", "match-prize": "Maç ödülü", "first-match-bonus": "İlk maç ödülü", "daily-reward": "Günlük ödül", "rescue-pack": "Yardım paketi", "weekly-prize": "Haftalık ödül", "quest-reward": "Görev/bulmaca/lig ödülü", "admin-adjust": "Yönetici düzeltmesi", "purchase": "Satın alma" };
+  var REASONS = { name: "Uygunsuz isim", cheat: "Hile şüphesi", behavior: "Kötü davranış", other: "Diğer" };
+  var ST = { off: "Çevrimdışı", menu: "Menüde", table: "Masada", match: "Maçta" };
+  var ERR = {
+    unauthorized: "Oturumun sona erdi, tekrar giriş yap.", forbidden: "Bu işlem için yetkin yok.", "not-admin": "Bu Google hesabı yönetici listesinde değil.",
+    "not-found": "Bulunamadı.", "reason-required": "Gerekçe yazmalısın (en az 3 harf).", "text-required": "Mesaj yazmalısın.", "bad-username": "Kullanıcı adı 3–16 harf, rakam, boşluk ya da _ olmalı.",
+    "insufficient-funds": "Oyuncunun bakiyesi bu kadar düşmeye yetmiyor.", "insufficient-gems": "Oyuncunun elması bu kadar düşmeye yetmiyor.", "too-large": "Miktar çok büyük.", "nothing-to-do": "Coin ya da elmas miktarı gir.",
+    "confirm-mismatch": "Onay için yazdığın ad oyuncunun adıyla aynı değil.", "no-profile": "Bu hesabın henüz oyuncu profili yok.", "rate-limited": "Çok fazla deneme, biraz bekle.",
+    "bad-token": "Google girişi doğrulanamadı.", "expired-token": "Google oturumunun süresi dolmuş, tekrar dene.", "google-disabled": "Sunucuda Google girişi kapalı.", network: "Sunucuya ulaşılamadı."
+  };
+  var errText = function (c) { return ERR[c] || (/^bad-/.test(c) ? "Geçersiz değer: " + c.slice(4) : "Hata: " + c); };
+
+  // ---------------------------------------------------------------- yardımcılar
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  var nf = new Intl.NumberFormat("tr-TR");
+  var n = function (x) { return nf.format(x || 0); };
+  function dt(t) { if (!t) return "—"; try { return new Date(t).toLocaleString("tr-TR", { day: "2-digit", month: "short", year: "2-digit", hour: "2-digit", minute: "2-digit" }); } catch (e) { return String(t); } }
+  function ago(t) { if (!t) return "—"; var m = Math.floor((Date.now() - t) / 6e4); return m < 1 ? "az önce" : m < 60 ? m + " dk önce" : m < 1440 ? Math.floor(m / 60) + " sa önce" : Math.floor(m / 1440) + " gün önce"; }
+  function left(t) { var m = Math.max(0, Math.round((t - Date.now()) / 6e4)); return m >= 1440 ? Math.floor(m / 1440) + " gün " + Math.floor((m % 1440) / 60) + " sa" : m >= 60 ? Math.floor(m / 60) + " sa " + (m % 60) + " dk" : m + " dk"; }
+  var tt;
+  function toast(msg, bad) { var t = $("toast"); t.textContent = msg; t.className = bad ? "bad" : ""; clearTimeout(tt); tt = setTimeout(function () { t.className = "hidden"; }, 3500); }
+  function tok() { try { var s = JSON.parse(sessionStorage.getItem(KEY) || "null"); return s && s.expires > Date.now() ? s : null; } catch (e) { return null; } }
+
+  function api(action, body) {
+    var s = tok();
+    return fetch(BASE + "/api/admin/" + action, { method: "POST", headers: Object.assign({ "content-type": "application/json" }, s ? { authorization: "Bearer " + s.token } : {}), body: JSON.stringify(body || {}) })
+      .catch(function () { throw { code: "network" }; })
+      .then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (j) {
+          if (r.status === 401 && action !== "login") { signOut(); throw { code: "unauthorized" }; }
+          if (!r.ok) throw { code: j.error || "server-error" };
+          return action === "login" ? j : j.v;
+        });
+      });
+  }
+  function run(p, okMsg, after) {
+    return p.then(function (v) { if (okMsg) toast(okMsg); if (after) after(v); return v; }).catch(function (e) { toast(errText(e && e.code), true); throw e; });
+  }
+
+  // ---------------------------------------------------------------- giriş
+  function showLogin(msg) { $("app").classList.add("hidden"); $("login").classList.remove("hidden"); $("lerr").textContent = msg || ""; }
+  function signed(j) {
+    try { sessionStorage.setItem(KEY, JSON.stringify(j)); } catch (e) {}
+    start();
+  }
+  function signOut() { try { sessionStorage.removeItem(KEY); } catch (e) {} me = null; showLogin("Oturumun sona erdi, tekrar giriş yap."); }
+  function initLogin() {
+    if (LOCAL) $("devbox").classList.remove("hidden");
+    $("devgo").onclick = function () {
+      api("login", { devKey: $("devkey").value, role: $("devrole").value, email: ($("devrole").value === "mod" ? "moderator" : "yonetici") + "@yerel" })
+        .then(signed).catch(function (e) { $("lerr").textContent = errText(e.code); });
+    };
+    fetch(BASE + "/api/config").then(function (r) { return r.json(); }).then(function (c) {
+      if (!c.google) { $("gbtn").innerHTML = '<span class="muted small">Sunucuda Google girişi ayarlı değil.</span>'; return; }
+      var sc = document.createElement("script"); sc.src = "https://accounts.google.com/gsi/client"; sc.async = true;
+      sc.onload = function () {
+        try {
+          google.accounts.id.initialize({ client_id: c.google, callback: function (res) {
+            $("lerr").textContent = "";
+            api("login", { credential: res.credential }).then(signed).catch(function (e) { $("lerr").textContent = errText(e.code); });
+          } });
+          $("gbtn").innerHTML = ""; google.accounts.id.renderButton($("gbtn"), { theme: "filled_blue", size: "large", text: "signin_with", locale: "tr", shape: "pill" });
+        } catch (e) { $("gbtn").innerHTML = '<span class="muted small">Google girişi açılamadı.</span>'; }
+      };
+      sc.onerror = function () { $("gbtn").innerHTML = '<span class="muted small">Google girişi yüklenemedi.</span>'; };
+      document.head.appendChild(sc);
+    }).catch(function () { $("gbtn").innerHTML = '<span class="muted small">Sunucuya ulaşılamadı.</span>'; });
+  }
+
+  // ---------------------------------------------------------------- iskelet
+  var VIEWS = [
+    ["dash", "📊", "Pano"], ["players", "👤", "Oyuncular"], ["reports", "🚩", "Şikayetler"], ["feedback", "💌", "Geri bildirim"],
+    ["suspicious", "🕵️", "Şüpheli"], ["league", "🏆", "Lig", true], ["economy", "💰", "Ekonomi", true], ["announce", "📣", "Duyuru ve bakım", true], ["log", "🧾", "İşlem kaydı", true]
+  ];
+  function start() {
+    var s = tok(); if (!s) return showLogin();
+    api("me").then(function (m) {
+      me = m; $("login").classList.add("hidden"); $("app").classList.remove("hidden");
+      $("who").textContent = m.email; $("role").textContent = m.role === "admin" ? "Yönetici" : "Moderatör";
+      renderNav(); go(location.hash.slice(1) || "dash");
+    }).catch(function () {});
+  }
+  function renderNav() {
+    $("nav").innerHTML = VIEWS.filter(function (v) { return !v[3] || me.role === "admin"; }).map(function (v) {
+      var c = counts[v[0]];
+      return '<button type="button" data-v="' + v[0] + '" class="' + (view === v[0] ? "on" : "") + '"><span class="ic" aria-hidden="true">' + v[1] + "</span><span>" + v[2] + "</span>" + (c ? '<em class="badge">' + c + "</em>" : "") + "</button>";
+    }).join("");
+  }
+  $("nav").addEventListener("click", function (e) { var b = e.target.closest("button[data-v]"); if (b) go(b.getAttribute("data-v")); });
+  $("logout").onclick = function () {
+    var s = tok();
+    (s ? fetch(BASE + "/api/admin/logout", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + s.token }, body: "{}" }).catch(function () {}) : Promise.resolve())
+      .then(function () { try { sessionStorage.removeItem(KEY); } catch (e) {} location.reload(); });
+  };
+  function go(v) {
+    var ok = VIEWS.some(function (x) { return x[0] === v && (!x[3] || me.role === "admin"); });
+    view = ok ? v : "dash"; history.replaceState(null, "", "#" + view); renderNav();
+    var m = $("main"); m.innerHTML = '<div class="empty">Yükleniyor…</div>';
+    ({ dash: vDash, players: vPlayers, reports: vReports, feedback: vFeedback, suspicious: vSuspicious, league: vLeague, economy: vEconomy, announce: vAnnounce, log: vLog })[view](m);
+  }
+
+  // ---------------------------------------------------------------- pano
+  var dashMetric = "active";
+  function vDash(m) {
+    api("stats").then(function (s) {
+      counts.reports = s.openReports; counts.feedback = s.newFeedback; renderNav();
+      var t = s.per[6];
+      var modes = Object.keys(s.modes).map(function (k) { return [k, s.modes[k]]; }).sort(function (a, b) { return b[1] - a[1]; });
+      var mt = modes.reduce(function (a, x) { return a + x[1]; }, 0) || 1;
+      var cin = Object.keys(s.coins.in).map(function (k) { return [k, s.coins.in[k]]; }).sort(function (a, b) { return b[1] - a[1]; });
+      var cout = Object.keys(s.coins.out).map(function (k) { return [k, s.coins.out[k]]; }).sort(function (a, b) { return b[1] - a[1]; });
+      var sin = cin.reduce(function (a, x) { return a + x[1]; }, 0), sout = cout.reduce(function (a, x) { return a + x[1]; }, 0);
+      var cmax = Math.max(1, cin.length ? cin[0][1] : 0, cout.length ? cout[0][1] : 0);
+      var series = function () {
+        var max = Math.max(1, Math.max.apply(null, s.per.map(function (d) { return d[dashMetric]; })));
+        return s.per.map(function (d) { var v = d[dashMetric]; return '<div title="' + esc(d.day) + ": " + v + '"><em>' + v + '</em><i style="height:' + Math.round((v / max) * 100) + '%"></i>' + esc(d.day.slice(8)) + "." + esc(d.day.slice(5, 7)) + "</div>"; }).join("");
+      };
+      m.innerHTML = '<h2>Pano</h2>' +
+        '<div class="grid kpis">' +
+        kpi(s.online, "Şu an çevrimiçi") + kpi(t.active, "Bugün oynayan") + kpi(s.active7, "Son 7 gün oynayan") + kpi(t.signups, "Bugün yeni hesap") +
+        kpi(t.matches, "Bugün biten maç") + kpi(s.accounts, "Toplam hesap") + kpi(s.openReports, "Açık şikayet") + kpi(s.banned, "Yasaklı oyuncu") +
+        "</div>" +
+        '<div class="grid cols2" style="margin-top:14px">' +
+        '<div class="card"><h3>Son 7 gün</h3><div class="legend" id="leg">' +
+        [["active", "Oynayan"], ["signups", "Yeni hesap"], ["matches", "Maç"]].map(function (x) { return '<button type="button" data-m="' + x[0] + '" class="' + (dashMetric === x[0] ? "on" : "") + '">' + x[1] + "</button>"; }).join("") +
+        '</div><div class="days" id="days">' + series() + "</div></div>" +
+        '<div class="card"><h3>Bugün oynanan modlar</h3>' + (modes.length ? '<div class="bars">' + modes.map(function (x) { var p = Math.round((x[1] * 100) / mt); return '<div class="bar"><span>' + esc(MODES[x[0]] || x[0]) + '</span><i style="width:' + p + '%"></i><span>%' + p + "</span></div>"; }).join("") + "</div>" : '<div class="empty">Bugün henüz maç bitmedi.</div>') + "</div>" +
+        "</div>" +
+        '<div class="card"><h3>Bugünkü coin akışı <span class="muted small">(giren <b class="pos">+' + n(sin) + '</b> · çıkan <b class="neg">−' + n(sout) + "</b>)</span></h3>" +
+        (cin.length || cout.length ? '<div class="grid cols2"><div class="bars">' + cin.map(function (x) { return '<div class="bar"><span>' + esc(TX[x[0]] || x[0]) + '</span><i style="width:' + Math.round((x[1] / cmax) * 100) + '%;background:var(--green)"></i><span class="pos">+' + n(x[1]) + "</span></div>"; }).join("") +
+          '</div><div class="bars">' + cout.map(function (x) { return '<div class="bar"><span>' + esc(TX[x[0]] || x[0]) + '</span><i style="width:' + Math.round((x[1] / cmax) * 100) + '%;background:var(--red)"></i><span class="neg">−' + n(x[1]) + "</span></div>"; }).join("") + "</div></div>"
+          : '<div class="empty">Bugün henüz coin hareketi yok.</div>') +
+        '<p class="muted small" style="margin:10px 0 0">Coin akışı ve maç sayıları, oyuncular çevrimiçiyken kaydedilir. Günler Türkiye saatine göredir.</p></div>';
+      $("leg").onclick = function (e) { var b = e.target.closest("button[data-m]"); if (!b) return; dashMetric = b.getAttribute("data-m"); $("days").innerHTML = series(); [].forEach.call($("leg").children, function (x) { x.classList.toggle("on", x === b); }); };
+    }).catch(function (e) { m.innerHTML = '<div class="empty">' + esc(errText(e.code)) + "</div>"; });
+  }
+  function kpi(v, l) { return '<div class="kpi"><b>' + n(v) + "</b><span>" + esc(l) + "</span></div>"; }
+
+  // ---------------------------------------------------------------- oyuncular
+  var lastQ = "";
+  function vPlayers(m) {
+    m.innerHTML = '<h2>Oyuncular</h2><div class="card"><form class="row" id="sf"><input class="search" id="q" placeholder="İsim, e-posta ya da oyuncu kimliği (u_…)" value="' + esc(lastQ) + '" aria-label="Oyuncu ara" /><button class="btn primary">Ara</button></form><p class="muted small" style="margin:8px 0 0">Boş aramada çevrimiçi ve en yeni oyuncular listelenir.</p></div><div class="card"><div class="tw" id="res"><div class="empty">Yükleniyor…</div></div></div>';
+    $("sf").onsubmit = function (e) { e.preventDefault(); lastQ = $("q").value.trim(); search(); };
+    search();
+  }
+  function search() {
+    api("search", { q: lastQ }).then(function (rows) {
+      $("res").innerHTML = rows.length ? '<table><thead><tr><th>Oyuncu</th><th>Seviye</th><th>Coin</th><th>Maç</th><th>Hesap</th><th>Durum</th></tr></thead><tbody>' + rows.map(function (r) {
+        return '<tr class="click" data-u="' + esc(r.uid) + '"><td><b>' + esc(r.name || "(profil yok)") + '</b><br><span class="muted small">' + esc(r.uid) + "</span></td><td>" + (r.level || "—") + "</td><td>" + n(r.balance) + "</td><td>" + n(r.games) + " <span class=\"muted small\">(" + n(r.wins) + " z)</span></td><td>" + (r.email ? esc(r.email) : r.google ? "Google" : r.guest ? '<span class="muted">Misafir</span>' : "—") + "</td><td>" +
+          (r.banned ? '<span class="tag red">Yasaklı</span> ' : "") + (r.online ? '<span class="tag green">Çevrimiçi</span>' : '<span class="muted small">Çevrimdışı</span>') + "</td></tr>";
+      }).join("") + "</tbody></table>" : '<div class="empty">Sonuç yok.</div>';
+    }).catch(function (e) { $("res").innerHTML = '<div class="empty">' + esc(errText(e.code)) + "</div>"; });
+  }
+  document.addEventListener("click", function (e) {
+    var r = e.target.closest("[data-u]");
+    if (r && !e.target.closest("#drawer .acts") && !e.target.closest("#dlg")) { e.preventDefault(); openPlayer(r.getAttribute("data-u")); }
+  });
+
+  // ---------------------------------------------------------------- oyuncu detayı
+  var cur = null;
+  function closeDrawer() { $("drawer").classList.add("hidden"); cur = null; }
+  $("drawer").addEventListener("click", function (e) { if (e.target === $("drawer") || e.target.closest(".x")) closeDrawer(); });
+  function openPlayer(uid) {
+    $("drawer").classList.remove("hidden"); $("dp").innerHTML = '<div class="empty">Yükleniyor…</div>';
+    api("player", { uid: uid }).then(function (p) { cur = p; renderPlayer(p); }).catch(function (e) { $("dp").innerHTML = '<div class="dhead"><h2>Oyuncu</h2><button class="btn x">Kapat</button></div><div class="empty">' + esc(errText(e.code)) + "</div>"; });
+  }
+  function renderPlayer(p) {
+    var pr = p.profile, admin = me.role === "admin";
+    var ban = p.mod.ban;
+    $("dp").innerHTML =
+      '<div class="dhead"><div><h2>' + esc(pr ? pr.name : "(profil yok)") + '</h2><span class="muted small">' + esc(p.uid) + "</span></div><button class=\"btn x\">Kapat</button></div>" +
+      (ban ? '<div class="card" style="border-color:#8a2b42;background:#2a0f18"><b>⛔ Yasaklı</b> — ' + (ban.until ? esc(dt(ban.until)) + " tarihine kadar (" + esc(left(ban.until)) + " kaldı)" : "kalıcı") + '<br><span class="small">Gerekçe: ' + esc(ban.reason) + " · " + esc(ban.by) + "</span></div>" : "") +
+      '<div class="acts card">' +
+      (pr ? '<button class="btn" data-a="rename">✏️ İsim değiştir</button>' : "") +
+      '<button class="btn" data-a="warn">📣 Mesaj / uyarı gönder</button>' +
+      (ban ? '<button class="btn ok" data-a="unban">✅ Yasağı kaldır</button>' : '<button class="btn danger" data-a="ban">⛔ Yasakla</button>') +
+      '<button class="btn" data-a="kick">🔒 Tüm cihazlardan çıkar</button>' +
+      (admin && pr ? '<button class="btn" data-a="adjust">💰 Coin / elmas düzelt</button>' : "") +
+      (admin ? '<button class="btn danger" data-a="delete">🗑️ Hesabı sil</button>' : "") +
+      "</div>" +
+      '<div class="kv">' +
+      kv(ST[p.status] || p.status, "Durum") + kv(pr ? "Sv " + pr.level : "—", "Seviye") + kv(pr ? n(pr.balance) : "—", "Coin") + kv(n(p.gems.balance), "Elmas") +
+      kv(pr ? n(pr.wins) + " / " + n(pr.losses) : "—", "Zafer / yenilgi") + kv(pr && pr.games ? "%" + Math.round((pr.wins * 100) / pr.games) : "—", "Kazanma oranı") +
+      kv(p.league ? p.league.tier + " · " + n(p.league.pts) + " p" : "—", "Lig (bu hafta)") + kv(p.sessions, "Açık oturum") +
+      kv(p.email || (p.google ? "Google hesabı" : p.guest ? "Misafir" : "—"), "Hesap") + kv(dt(p.created), "Kayıt") + kv(p.lastSeen ? ago(p.lastSeen) : "—", "Son görülme") + kv(p.friends.length, "Arkadaş") +
+      "</div>" +
+      section("Son maçlar", p.recent.length ? '<div class="tw"><table><thead><tr><th>Mod</th><th>Sıra</th><th>Coin</th><th>Puan</th><th>Zaman</th></tr></thead><tbody>' + p.recent.map(function (r) {
+        return "<tr><td>" + esc(MODES[r.mode] || r.mode) + '<br><span class="muted small">' + esc(r.table_name || "") + "</span></td><td>" + r.final_rank + "/" + r.players + "</td><td>" + n(r.prize) + '</td><td class="' + (r.points_delta >= 0 ? "pos" : "neg") + '">' + (r.points_delta >= 0 ? "+" : "") + r.points_delta + "</td><td>" + esc(ago(r.finished_at)) + "</td></tr>";
+      }).join("") + "</tbody></table></div>" : '<div class="empty">Maç yok.</div>') +
+      section("Bakiye hareketleri", p.tx.length ? '<div class="tw"><table><tbody>' + p.tx.map(function (x) {
+        return "<tr><td>" + esc(TX[x.transaction_type] || x.transaction_type) + '</td><td class="' + (x.amount >= 0 ? "pos" : "neg") + '">' + (x.amount >= 0 ? "+" : "") + n(x.amount) + '</td><td class="muted">' + n(x.balance_after) + '</td><td class="muted small">' + esc(dt(x.created_at)) + "</td></tr>";
+      }).join("") + "</tbody></table></div>" : '<div class="empty">Hareket yok.</div>') +
+      section("Uyarılar ve mesajlar", p.mod.warns.length ? '<div class="list">' + p.mod.warns.slice().reverse().map(function (w) { return '<div class="li">' + esc(w.text) + '<br><span class="muted small">' + esc(w.by || "") + " · " + esc(dt(w.at)) + (w.seen ? " · görüldü" : " · henüz görülmedi") + "</span></div>"; }).join("") + "</div>" : '<div class="empty">Yok.</div>') +
+      section("Hakkındaki şikayetler", p.reports.length ? '<div class="list">' + p.reports.map(function (r) { return '<div class="li"><b>' + esc(REASONS[r.reason] || r.reason) + "</b> " + (r.status === "open" ? '<span class="tag gold">Açık</span>' : '<span class="tag">Kapandı</span>') + (r.note ? "<br>" + esc(r.note) : "") + '<br><span class="muted small">' + esc(dt(r.at)) + "</span></div>"; }).join("") + "</div>" : '<div class="empty">Yok.</div>') +
+      section("Elmas", "<p style=\"margin:0 0 6px\">Sahip olunanlar: " + (p.gems.owned.length ? esc(p.gems.owned.join(", ")) : "—") + "</p>" + (p.gems.log.length ? '<div class="list">' + p.gems.log.map(function (g) { return '<div class="li"><span class="' + (g.n >= 0 ? "pos" : "neg") + '">' + (g.n >= 0 ? "+" : "") + g.n + "</span> " + esc(g.why) + ' <span class="muted small">' + esc(dt(g.at)) + "</span></div>"; }).join("") + "</div>" : "")) +
+      section("Bu oyuncuyla ilgili yönetici işlemleri", p.log.length ? '<div class="list">' + p.log.map(function (l) { return '<div class="li"><b>' + esc(l.action) + "</b> · " + esc(l.email) + ' <span class="muted small">' + esc(dt(l.at)) + "</span>" + (l.detail ? '<br><span class="small muted">' + esc(l.detail) + "</span>" : "") + "</div>"; }).join("") + "</div>" : '<div class="empty">Yok.</div>');
+    $("dp").querySelector(".acts").onclick = function (e) { var b = e.target.closest("button[data-a]"); if (b) action(b.getAttribute("data-a"), p); };
+  }
+  function kv(v, l) { return "<div><b>" + esc(v) + "</b><span>" + esc(l) + "</span></div>"; }
+  function section(t, body) { return '<div class="card" style="margin-top:12px"><h3>' + esc(t) + "</h3>" + body + "</div>"; }
+
+  // ---------------------------------------------------------------- işlem pencereleri
+  function dialog(title, html, onOk, okText, danger) {
+    $("db").innerHTML = "<h3>" + esc(title) + "</h3><form id=\"df\">" + html + '<div class="row" style="justify-content:flex-end;margin-top:6px"><button type="button" class="btn" id="dc">Vazgeç</button><button class="btn ' + (danger ? "danger" : "primary") + '" id="dok">' + esc(okText || "Kaydet") + "</button></div></form>";
+    $("dlg").classList.remove("hidden");
+    var f = $("df"), first = f.querySelector("input,select,textarea"); if (first) first.focus();
+    $("dc").onclick = closeDlg;
+    f.onsubmit = function (e) {
+      e.preventDefault(); var b = $("dok"); b.disabled = true;
+      Promise.resolve(onOk(f)).then(function () { closeDlg(); }).catch(function () { b.disabled = false; });
+    };
+  }
+  function closeDlg() { $("dlg").classList.add("hidden"); }
+  $("dlg").addEventListener("click", function (e) { if (e.target === $("dlg")) closeDlg(); });
+  document.addEventListener("keydown", function (e) { if (e.key !== "Escape") return; if (!$("dlg").classList.contains("hidden")) closeDlg(); else if (!$("drawer").classList.contains("hidden")) closeDrawer(); });
+  var fv = function (f, name) { var el = f.elements[name]; return el ? el.value.trim() : ""; };
+  var reasonField = function (ph) { return '<label class="field"><span>Gerekçe (oyuncu kaydında ve işlem kaydında görünür)</span><input name="reason" required minlength="3" maxlength="300" placeholder="' + esc(ph || "Örn. uygunsuz kullanıcı adı") + '" /></label>'; };
+  function refresh(p) { return api("player", { uid: p.uid }).then(function (x) { cur = x; renderPlayer(x); if (view === "players") search(); }); }
+
+  function action(a, p) {
+    var name = p.profile ? p.profile.name : p.uid;
+    if (a === "rename") dialog("İsim değiştir: " + name, '<label class="field"><span>Yeni kullanıcı adı (3–16 karakter)</span><input name="name" required maxlength="16" value="' + esc(name) + '" /></label>' + reasonField() + '<p class="muted small">Oyuncuya isminin değiştirildiğini ve gerekçesini bildiren bir mesaj gider.</p>',
+      function (f) { return run(api("rename", { uid: p.uid, name: fv(f, "name"), reason: fv(f, "reason") }), "İsim değiştirildi.", function () { refresh(p); }); });
+    if (a === "warn") dialog("Mesaj gönder: " + name, '<label class="field"><span>Mesaj (oyuncu oyuna girince ortada açılır)</span><textarea name="text" rows="4" required minlength="3" maxlength="500" placeholder="Örn. Lütfen maçlardan çıkıp durma, diğer oyuncuların keyfini kaçırıyor."></textarea></label>',
+      function (f) { return run(api("warn", { uid: p.uid, text: fv(f, "text") }), null, function (v) { toast(v.delivered ? "Mesaj iletildi (oyuncu şu an çevrimiçi)." : "Mesaj kaydedildi; oyuncu girince görecek."); refresh(p); }); }, "Gönder");
+    if (a === "ban") dialog("Yasakla: " + name, '<label class="field"><span>Süre</span><select name="hours"><option value="1">1 saat</option><option value="24" selected>1 gün</option><option value="72">3 gün</option><option value="168">7 gün</option>' + (me.role === "admin" ? '<option value="720">30 gün</option><option value="0">Kalıcı</option>' : "") + "</select></label>" + reasonField("Örn. hile, hakaret") + '<p class="muted small">Oyuncu hemen oyundan atılır ve süre boyunca çevrimiçi oynayamaz. Gerekçeyi kendisi de görür.</p>',
+      function (f) { return run(api("ban", { uid: p.uid, hours: Number(fv(f, "hours")), reason: fv(f, "reason") }), "Oyuncu yasaklandı.", function () { refresh(p); }); }, "Yasakla", true);
+    if (a === "unban") dialog("Yasağı kaldır: " + name, '<label class="field"><span>Not (isteğe bağlı)</span><input name="reason" maxlength="300" placeholder="Örn. itiraz kabul edildi" /></label>',
+      function (f) { return run(api("unban", { uid: p.uid, reason: fv(f, "reason") }), "Yasak kaldırıldı.", function () { refresh(p); }); }, "Kaldır");
+    if (a === "kick") dialog("Tüm cihazlardan çıkar: " + name, '<p>Oyuncunun ' + n(p.sessions) + ' açık oturumu kapatılır; tekrar giriş yapması gerekir. Hesabı ele geçirildiğinden şüphelenilen durumlar için.</p>',
+      function () { return run(api("kick", { uid: p.uid }), null, function (v) { toast(v.sessions + " oturum kapatıldı."); refresh(p); }); }, "Çıkış yaptır", true);
+    if (a === "adjust") dialog("Coin / elmas düzelt: " + name, '<div class="row"><label class="field" style="flex:1"><span>Coin (eksi ile düşer)</span><input name="coins" type="number" step="1" value="0" /></label><label class="field" style="flex:1"><span>Elmas (eksi ile düşer)</span><input name="gems" type="number" step="1" value="0" /></label></div>' + reasonField("Örn. sunucu hatasında kaybolan maç ödülü") + '<p class="muted small">Şu an: ' + n(p.profile.balance) + " coin · " + n(p.gems.balance) + " elmas. Bakiye hareketlerinde “Yönetici düzeltmesi” olarak görünür.</p>",
+      function (f) { return run(api("adjust", { uid: p.uid, coins: Number(fv(f, "coins")), gems: Number(fv(f, "gems")), reason: fv(f, "reason") }), "Düzeltme yapıldı.", function () { refresh(p); }); }, "Uygula");
+    if (a === "delete") dialog("Hesabı sil: " + name, '<div class="warn">Bu işlem geri alınamaz. Hesap, profil, bakiye, elmaslar, arkadaş listesi ve lig kaydı kalıcı olarak silinir (KVKK silme talebi için).</div>' + reasonField("Örn. oyuncunun silme talebi (e-posta ile)") + '<label class="field"><span>Onaylamak için oyuncunun adını aynen yaz: <b>' + esc(name) + '</b></span><input name="confirm" required autocomplete="off" /></label>',
+      function (f) { return run(api("deleteAccount", { uid: p.uid, reason: fv(f, "reason"), confirm: fv(f, "confirm") }), "Hesap silindi.", function () { closeDrawer(); if (view === "players") search(); }); }, "Kalıcı olarak sil", true);
+  }
+
+  // ---------------------------------------------------------------- şikayetler
+  var repSt = "open";
+  function vReports(m) {
+    m.innerHTML = '<div class="split"><h2 style="margin:0">Şikayetler</h2>' + seg("rs", [["open", "Açık"], ["done", "Kapanan"], ["all", "Tümü"]], repSt) + '</div><div class="card"><div id="rl"><div class="empty">Yükleniyor…</div></div></div>';
+    $("rs").onclick = function (e) { var b = e.target.closest("button[data-s]"); if (b) { repSt = b.getAttribute("data-s"); vReports(m); } };
+    api("reports", { status: repSt }).then(function (rows) {
+      counts.reports = repSt === "open" ? rows.length : counts.reports; renderNav();
+      $("rl").innerHTML = rows.length ? '<div class="list">' + rows.map(function (r) {
+        return '<div class="li"><div class="split" style="margin:0"><div><b>' + esc(REASONS[r.reason] || r.reason) + '</b> · şikayet edilen: <a href="#" data-u="' + esc(r.target) + '">' + esc(r.targetName) + "</a>" + (r.targetReports > 1 ? ' <span class="tag gold">' + r.targetReports + " şikayet</span>" : "") +
+          '<br><span class="muted small">Şikayet eden: <a href="#" data-u="' + esc(r.by) + '">' + esc(r.byName) + "</a> · " + esc(dt(r.at)) + "</span></div>" +
+          (r.status === "open" ? '<div class="row"><button class="btn" data-r="' + r.id + '" data-x="dismissed">Asılsız</button><button class="btn ok" data-r="' + r.id + '" data-x="actioned">İşlem yapıldı</button></div>' : '<span class="tag">' + esc(r.outcome || "kapandı") + "</span>") + "</div>" +
+          (r.note ? '<p style="margin:6px 0 0">“' + esc(r.note) + "”</p>" : "") + (r.handled_by ? '<span class="muted small">' + esc(r.handled_by) + " · " + esc(dt(r.handled_at)) + "</span>" : "") + "</div>";
+      }).join("") + "</div>" : '<div class="empty">Şikayet yok.</div>';
+    }).catch(function (e) { $("rl").innerHTML = '<div class="empty">' + esc(errText(e.code)) + "</div>"; });
+    $("rl").onclick = function (e) {
+      var b = e.target.closest("button[data-r]"); if (!b) return;
+      var id = Number(b.getAttribute("data-r")), x = b.getAttribute("data-x");
+      dialog(x === "actioned" ? "İşlem yapıldı olarak kapat" : "Asılsız olarak kapat", '<label class="field"><span>Not (isteğe bağlı)</span><input name="o" maxlength="200" placeholder="' + (x === "actioned" ? "Örn. isim değiştirildi, 1 gün yasak" : "Örn. davranış kurallara uygun") + '" /></label>',
+        function (f) { return run(api("report", { id: id, result: x, outcome: fv(f, "o") }), "Şikayet kapatıldı.", function () { vReports(m); }); }, "Kapat");
+    };
+  }
+  function seg(id, items, on) { return '<div class="seg" id="' + id + '">' + items.map(function (x) { return '<button type="button" data-s="' + x[0] + '" class="' + (x[0] === on ? "on" : "") + '">' + x[1] + "</button>"; }).join("") + "</div>"; }
+
+  // ---------------------------------------------------------------- geri bildirim
+  var fbSt = "new";
+  function vFeedback(m) {
+    m.innerHTML = '<div class="split"><h2 style="margin:0">Geri bildirim</h2>' + seg("fs", [["new", "Yeni"], ["done", "Okunan"], ["all", "Tümü"]], fbSt) + '</div><div class="card"><div id="fl"><div class="empty">Yükleniyor…</div></div></div>';
+    $("fs").onclick = function (e) { var b = e.target.closest("button[data-s]"); if (b) { fbSt = b.getAttribute("data-s"); vFeedback(m); } };
+    api("feedback", { status: fbSt }).then(function (rows) {
+      if (fbSt === "new") { counts.feedback = rows.length; renderNav(); }
+      $("fl").innerHTML = rows.length ? '<div class="list">' + rows.map(function (r) {
+        return '<div class="li"><div class="split" style="margin:0"><div><span class="tag">' + esc(r.kind || "Genel") + "</span> " + (r.stars ? "★".repeat(r.stars) + '<span class="muted">' + "★".repeat(5 - r.stars) + "</span>" : "") +
+          ' <span class="muted small">' + esc(dt(r.at)) + (r.version ? " · v" + esc(r.version) : "") + "</span></div>" + (r.status === "new" ? '<button class="btn" data-f="' + r.id + '">Okundu</button>' : "") + "</div>" +
+          '<p style="margin:8px 0;white-space:pre-wrap">' + esc(r.text) + "</p>" +
+          '<span class="muted small">' + (r.uid ? 'Oyuncu: <a href="#" data-u="' + esc(r.uid) + '">' + esc(r.playerName || r.uid) + "</a>" : "Hesapsız") + (r.name ? " · imza: " + esc(r.name) : "") + "</span>" +
+          (r.device ? '<details class="small muted"><summary>Cihaz</summary>' + esc(r.device) + "</details>" : "") + "</div>";
+      }).join("") + "</div>" : '<div class="empty">Geri bildirim yok.</div>';
+    }).catch(function (e) { $("fl").innerHTML = '<div class="empty">' + esc(errText(e.code)) + "</div>"; });
+    $("fl").onclick = function (e) { var b = e.target.closest("button[data-f]"); if (b) run(api("feedbackDone", { id: Number(b.getAttribute("data-f")) }), "Okundu olarak işaretlendi.", function () { vFeedback(m); }); };
+  }
+
+  // ---------------------------------------------------------------- şüpheli hareketler
+  function vSuspicious(m) {
+    api("suspicious").then(function (s) {
+      var link = function (p) { return '<a href="#" data-u="' + esc(p.uid) + '">' + esc(p.name || p.uid) + "</a>"; };
+      m.innerHTML = '<h2>Şüpheli hareketler</h2><p class="muted small">Bunlar otomatik işaretlerdir, kesin hile kanıtı değildir. Oyuncunun detayına bakıp karar ver.</p>' +
+        section("Aynı ağdan çok hesap (son 7 gün, 4+)", s.ips.length ? '<div class="list">' + s.ips.map(function (g) { return '<div class="li"><b>' + g.n + " hesap</b>: " + g.players.map(link).join(", ") + "</div>"; }).join("") + "</div>" : '<div class="empty">Yok.</div>') +
+        section("Sürekli aynı rakiple oynayanlar (son maçların 6+'sı)", s.pairs.length ? '<div class="list">' + s.pairs.map(function (x) { return '<div class="li">' + link(x.a) + " ↔ " + link(x.b) + ' <span class="tag gold">' + x.n + " maç</span></div>"; }).join("") + "</div>" : '<div class="empty">Yok.</div>') +
+        section("Olağandışı kazanma oranı (20+ maç, %85+)", s.winners.length ? '<div class="list">' + s.winners.map(function (x) { return '<div class="li">' + link(x) + " · %" + x.rate + " · " + n(x.games) + " maç</div>"; }).join("") + "</div>" : '<div class="empty">Yok.</div>') +
+        section("En yüksek bakiyeler (50.000+)", s.rich.length ? '<div class="list">' + s.rich.map(function (x) { return '<div class="li">' + link(x) + " · " + n(x.balance) + " coin</div>"; }).join("") + "</div>" : '<div class="empty">Yok.</div>');
+    }).catch(function (e) { m.innerHTML = '<div class="empty">' + esc(errText(e.code)) + "</div>"; });
+  }
+
+  // ---------------------------------------------------------------- lig
+  function vLeague(m) {
+    api("leagueView", {}).then(function (L) {
+      m.innerHTML = '<h2>Lig</h2><div class="grid kpis"><div class="kpi"><b>' + esc(L.week) + '</b><span>Bu hafta</span></div><div class="kpi"><b>' + esc(left(Date.now() + L.endsInMs)) + '</b><span>Bitmesine</span></div>' +
+        L.tiers.map(function (t) { var real = t.groups.reduce(function (a, g) { return a + g.real; }, 0); return '<div class="kpi"><b>' + n(real) + '</b><span>' + esc(t.tier) + " · " + t.groups.length + " grup</span></div>"; }).join("") + "</div>" +
+        '<div class="card" style="margin-top:14px"><h3>Bot seviyesi</h3><p class="muted small">Gruplardaki botların hafta sonu ulaşacağı puanı ölçekler. 1 = normal; düşük değer ilk 3\'e girmeyi kolaylaştırır. Değişiklik tüm gruplarda hemen etkili olur.</p><form class="row" id="bf"><input type="range" min="0.5" max="1.5" step="0.05" id="bm" value="' + L.botMul + '" style="flex:1;min-width:160px" aria-label="Bot seviyesi" /><b id="bmv" style="width:48px">' + L.botMul + '</b><button class="btn primary">Kaydet</button></form></div>' +
+        '<div class="card"><h3>Gruplar</h3>' + (L.tiers.some(function (t) { return t.groups.length; }) ? L.tiers.map(function (t, i) {
+          return t.groups.length ? "<p style=\"margin:8px 0 6px\"><b>" + esc(t.tier) + "</b></p><div class=\"row\">" + t.groups.map(function (g) { return '<button class="btn" data-t="' + i + '" data-g="' + g.gid + '">Grup ' + g.gid + " · " + g.real + " oyuncu</button>"; }).join("") + "</div>" : "";
+        }).join("") : '<div class="empty">Bu hafta henüz lige giren yok.</div>') + '<div id="gv" style="margin-top:12px"></div></div>';
+      $("bm").oninput = function () { $("bmv").textContent = this.value; };
+      $("bf").onsubmit = function (e) { e.preventDefault(); run(api("leagueCfg", { botMul: Number($("bm").value) }), "Bot seviyesi kaydedildi."); };
+      m.querySelector(".card:last-child").addEventListener("click", function (e) {
+        var b = e.target.closest("button[data-g]"); if (!b) return;
+        api("leagueView", { tier: Number(b.getAttribute("data-t")), gid: Number(b.getAttribute("data-g")) }).then(function (x) {
+          $("gv").innerHTML = '<div class="tw"><table><thead><tr><th>#</th><th>Oyuncu</th><th>Tür</th><th>Puan</th></tr></thead><tbody>' + x.rows.map(function (r) {
+            return "<tr" + (r.bot ? "" : ' class="click" data-u="' + esc(r.id) + '"') + "><td>" + r.rank + "</td><td>" + esc(r.name) + "</td><td>" + (r.bot ? '<span class="muted">Bot</span>' : '<span class="tag green">Oyuncu</span>') + "</td><td>" + n(r.points) + "</td></tr>";
+          }).join("") + "</tbody></table></div>";
+        }).catch(function (e) { toast(errText(e.code), true); });
+      });
+    }).catch(function (e) { m.innerHTML = '<div class="empty">' + esc(errText(e.code)) + "</div>"; });
+  }
+
+  // ---------------------------------------------------------------- ekonomi
+  function vEconomy(m) {
+    api("settings").then(function (S) {
+      var e = S.eco, d = S.ecoDefault, live = S.live.mul;
+      var untilV = e.eventUntil > Date.now() ? new Date(e.eventUntil - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 16) : "";
+      var num = function (k, label, step, min, max) { return '<label class="field"><span>' + label + ' <span class="muted">(varsayılan ' + d[k] + ')</span></span><input name="' + k + '" type="number" step="' + step + '" min="' + min + '" max="' + max + '" value="' + e[k] + '" required /></label>'; };
+      m.innerHTML = '<h2>Ekonomi</h2>' +
+        (live.event ? '<div class="card" style="border-color:var(--purple)"><b>🎉 ' + esc(live.event.name) + "</b> sürüyor · " + esc(left(live.event.until)) + " kaldı · maç x" + live.prize + " · görev x" + live.quest + " · bulmaca x" + live.puzzle + "</div>" : "") +
+        '<form id="ef"><div class="grid cols2"><div class="card"><h3>Günlük ödül</h3>' + num("daily", "Taban miktar", 10, 0, 5000) + num("streak", "Seri bonusu (her gün)", 10, 0, 1000) + num("maxStreak", "En fazla seri bonusu", 10, 0, 5000) + "</div>" +
+        '<div class="card"><h3>Süreli etkinlik</h3><label class="field"><span>Etkinlik adı (oyuncuların ana ekranında görünür)</span><input name="eventName" maxlength="40" placeholder="Örn. Çift Ödül Hafta Sonu" value="' + esc(e.eventName) + '" /></label>' +
+        '<label class="field"><span>Bitiş zamanı (boş = etkinlik yok, en fazla 14 gün)</span><input name="eventUntil" type="datetime-local" value="' + untilV + '" /></label>' +
+        '<div class="row">' + ["prizeMul:Maç ödülü", "questMul:Görev", "puzzleMul:Bulmaca"].map(function (x) { var k = x.split(":")[0]; return '<label class="field" style="flex:1;min-width:90px"><span>' + x.split(":")[1] + ' çarpanı</span><select name="' + k + '">' + [1, 1.5, 2, 3].map(function (v) { return '<option value="' + v + '"' + (Number(e[k]) === v ? " selected" : "") + ">x" + v + "</option>"; }).join("") + "</select></label>"; }).join("") + "</div></div></div>" +
+        '<div class="row"><button class="btn primary">Kaydet ve uygula</button><button type="button" class="btn" id="er">Varsayılana dön</button></div></form>' +
+        '<p class="muted small" style="margin-top:12px">Değişiklikler bağlı oyunculara hemen gider. Görev ve bulmaca çarpanı yalnızca etkinlik süresince ve çevrimiçi hesaplarda geçerlidir. Çevrimdışı oyunun ekonomisi etkilenmez.</p>';
+      $("ef").onsubmit = function (ev) {
+        ev.preventDefault(); var f = ev.target, u = fv(f, "eventUntil");
+        run(api("eco", { daily: Number(fv(f, "daily")), streak: Number(fv(f, "streak")), maxStreak: Number(fv(f, "maxStreak")), prizeMul: Number(fv(f, "prizeMul")), questMul: Number(fv(f, "questMul")), puzzleMul: Number(fv(f, "puzzleMul")), eventName: fv(f, "eventName"), eventUntil: u ? new Date(u).getTime() : 0 }), "Ekonomi ayarları uygulandı.", function () { vEconomy(m); });
+      };
+      $("er").onclick = function () { dialog("Varsayılana dön", "<p>Günlük ödül ve çarpanlar oyunun varsayılan değerlerine döner, süren etkinlik biter.</p>", function () { return run(api("eco", { reset: true }), "Varsayılan değerlere dönüldü.", function () { vEconomy(m); }); }, "Varsayılana dön"); };
+    }).catch(function (e) { m.innerHTML = '<div class="empty">' + esc(errText(e.code)) + "</div>"; });
+  }
+
+  // ---------------------------------------------------------------- duyuru ve bakım
+  function vAnnounce(m) {
+    api("settings").then(function (S) {
+      var a = S.announce, mt = S.maint || { on: false, msg: "" };
+      m.innerHTML = '<h2>Duyuru ve bakım</h2>' +
+        '<div class="card"><h3>Duyuru</h3>' + (a && (!a.until || a.until > Date.now()) ? '<div class="li" style="margin-bottom:10px"><b>Yayında:</b> ' + esc(a.text) + '<br><span class="muted small">' + esc(a.by) + " · " + esc(dt(a.at)) + (a.until ? " · " + esc(left(a.until)) + " sonra kalkar" : " · süresiz") + '</span><div class="row" style="margin-top:8px"><button class="btn danger" id="ac">Duyuruyu kaldır</button></div></div>' : '<p class="muted">Şu an yayında duyuru yok.</p>') +
+        '<form id="af"><label class="field"><span>Metin (en fazla 200 karakter; oyuncuların ana ekranında görünür)</span><textarea name="text" rows="2" maxlength="200" required placeholder="Örn. Bu akşam 22:00\'de yeni mod geliyor!"></textarea></label>' +
+        '<div class="row"><label class="field" style="flex:1;min-width:140px"><span>Tür</span><select name="tone"><option value="info">📣 Bilgi</option><option value="event">🎁 Etkinlik</option><option value="warn">⚠️ Uyarı</option></select></label><label class="field" style="flex:1;min-width:140px"><span>Süre</span><select name="dur"><option value="0">Süresiz</option><option value="3">3 saat</option><option value="24" selected>1 gün</option><option value="72">3 gün</option><option value="168">7 gün</option></select></label></div>' +
+        '<button class="btn primary">Yayınla</button></form></div>' +
+        '<div class="card"><h3>Bakım modu</h3><p class="muted small">Açıkken oyuncular yeni masa kuramaz, masaya ya da hızlı maça giremez; süren maçlar etkilenmez. Ana ekranda bakım uyarısı görünür.</p>' +
+        '<form id="mf"><label class="field"><span>Oyunculara gösterilecek mesaj</span><input name="msg" maxlength="200" value="' + esc(mt.msg || "") + '" placeholder="Örn. 15 dakikalık bakım, birazdan döneceğiz." /></label>' +
+        '<div class="row"><span>Durum: ' + (mt.on ? '<b class="neg">AÇIK</b>' : '<b class="pos">Kapalı</b>') + "</span>" + (mt.on ? '<button type="button" class="btn ok" id="moff">Bakımı bitir</button>' : '<button class="btn danger">Bakımı başlat</button>') + "</div></form></div>";
+      if ($("ac")) $("ac").onclick = function () { run(api("announce", { clear: true }), "Duyuru kaldırıldı.", function () { vAnnounce(m); }); };
+      $("af").onsubmit = function (ev) { ev.preventDefault(); var f = ev.target, h = Number(fv(f, "dur")); run(api("announce", { text: fv(f, "text"), tone: fv(f, "tone"), until: h ? Date.now() + h * 3600e3 : 0 }), "Duyuru yayınlandı.", function () { vAnnounce(m); }); };
+      $("mf").onsubmit = function (ev) { ev.preventDefault(); var msg = fv(ev.target, "msg"); dialog("Bakım modunu başlat", "<p>Oyuncular yeni maç başlatamayacak. Emin misin?</p>", function () { return run(api("maint", { on: true, msg: msg }), "Bakım modu açıldı.", function () { vAnnounce(m); }); }, "Başlat", true); };
+      if ($("moff")) $("moff").onclick = function () { run(api("maint", { on: false, msg: fv($("mf"), "msg") }), "Bakım modu kapatıldı.", function () { vAnnounce(m); }); };
+    }).catch(function (e) { m.innerHTML = '<div class="empty">' + esc(errText(e.code)) + "</div>"; });
+  }
+
+  // ---------------------------------------------------------------- işlem kaydı
+  var ACT = { login: "Giriş", "login-denied": "Reddedilen giriş", rename: "İsim değiştirme", warn: "Mesaj/uyarı", ban: "Yasak", unban: "Yasak kaldırma", "logout-all": "Tüm cihazlardan çıkış", adjust: "Coin/elmas düzeltme", "delete-account": "Hesap silme", announce: "Duyuru", "announce-clear": "Duyuru kaldırma", "maint-on": "Bakım başladı", "maint-off": "Bakım bitti", eco: "Ekonomi ayarı", "eco-reset": "Ekonomi sıfırlama", "league-bots": "Lig bot seviyesi", "report-dismissed": "Şikayet: asılsız", "report-actioned": "Şikayet: işlem yapıldı", "feedback-done": "Geri bildirim okundu" };
+  function vLog(m) {
+    api("log", {}).then(function (rows) {
+      m.innerHTML = '<h2>İşlem kaydı</h2><div class="card"><div class="tw">' + (rows.length ? '<table><thead><tr><th>Zaman</th><th>Yönetici</th><th>İşlem</th><th>Oyuncu</th><th>Ayrıntı</th></tr></thead><tbody>' + rows.map(function (r) {
+        var d = ""; try { var o = JSON.parse(r.detail || "null"); d = o ? Object.keys(o).map(function (k) { return k + ": " + (typeof o[k] === "object" ? JSON.stringify(o[k]) : o[k]); }).join(" · ") : ""; } catch (e) { d = r.detail || ""; }
+        return '<tr><td class="small">' + esc(dt(r.at)) + '</td><td class="small">' + esc(r.email) + "</td><td>" + esc(ACT[r.action] || r.action) + "</td><td>" + (r.target ? '<a href="#" data-u="' + esc(r.target) + '">' + esc(r.target) + "</a>" : "—") + '</td><td class="small muted" style="max-width:360px;overflow-wrap:anywhere">' + esc(d) + "</td></tr>";
+      }).join("") + "</tbody></table>" : '<div class="empty">Kayıt yok.</div>') + "</div></div>";
+    }).catch(function (e) { m.innerHTML = '<div class="empty">' + esc(errText(e.code)) + "</div>"; });
+  }
+
+  initLogin();
+  if (tok()) start(); else showLogin();
+})();
+</script>
+</body>
+</html>
