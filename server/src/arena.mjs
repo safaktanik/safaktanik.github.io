@@ -508,7 +508,7 @@ export class Arena extends DurableObject {
     } catch (e) {
       const code = e?.code ?? String(e?.message ?? "");
       if (/token|google/.test(code) && !e?.status) return this.json(req, { error: code }, 401);
-      return this.json(req, { error: e?.status ? code : "server-error" }, e?.status ?? 500);
+      return this.json(req, { error: e?.status ? code : "server-error", ...(e?.email !== undefined ? { email: e.email } : {}) }, e?.status ?? 500);
     }
   }
 

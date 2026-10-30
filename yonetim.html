@@ -195,7 +195,7 @@ textarea{width:100%;resize:vertical}
       .then(function (r) {
         return r.json().catch(function () { return {}; }).then(function (j) {
           if (r.status === 401 && action !== "login") { signOut(); throw { code: "unauthorized" }; }
-          if (!r.ok) throw { code: j.error || "server-error" };
+          if (!r.ok) throw { code: j.error || "server-error", email: j.email };
           return action === "login" ? j : j.v;
         });
       });
@@ -224,7 +224,9 @@ textarea{width:100%;resize:vertical}
         try {
           google.accounts.id.initialize({ client_id: c.google, callback: function (res) {
             $("lerr").textContent = "";
-            api("login", { credential: res.credential }).then(signed).catch(function (e) { $("lerr").textContent = errText(e.code); });
+            api("login", { credential: res.credential }).then(signed).catch(function (e) {
+              $("lerr").textContent = e.code === "not-admin" ? "Bu Google hesabı (" + (e.email || "e-postası okunamadı") + ") yönetici listesinde değil. Cloudflare'deki ADMIN_EMAILS değerinin bu adresle birebir aynı olduğundan emin ol." : errText(e.code);
+            });
           } });
           $("gbtn").innerHTML = ""; google.accounts.id.renderButton($("gbtn"), { theme: "filled_blue", size: "large", text: "signin_with", locale: "tr", shape: "pill" });
         } catch (e) { $("gbtn").innerHTML = '<span class="muted small">Google girişi açılamadı.</span>'; }

@@ -176,7 +176,7 @@ export class Admin {
     }
     const g = await verifyGoogle(body.credential, this.A.googleId());
     const role = g.email && list[g.email];
-    if (!role) { this.log(g.email || "?", "login-denied", null, null); throw err("not-admin", 403); }
+    if (!role) { this.log(g.email || "?", "login-denied", null, null); throw Object.assign(err("not-admin", 403), { email: g.email || null }); }
     return this.issue(g.email, role);
   }
   async issue(email, role) {
