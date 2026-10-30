@@ -59,8 +59,11 @@ export async function verifyGoogle(idToken, clientId) {
   if (!clientId) throw new Error("google-disabled");
   const parts = String(idToken ?? "").split(".");
   if (parts.length !== 3) throw new Error("bad-token");
-  const head = JSON.parse(new TextDecoder().decode(fromB64u(parts[0])));
-  const body = JSON.parse(new TextDecoder().decode(fromB64u(parts[1])));
+  let head, body;
+  try {
+    head = JSON.parse(new TextDecoder().decode(fromB64u(parts[0])));
+    body = JSON.parse(new TextDecoder().decode(fromB64u(parts[1])));
+  } catch { throw new Error("bad-token"); }
   if (head.alg !== "RS256") throw new Error("bad-token");
   const jwk = (await googleKeys()).find(k => k.kid === head.kid);
   if (!jwk) throw new Error("bad-token");
