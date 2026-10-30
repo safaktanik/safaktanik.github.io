@@ -1,6 +1,8 @@
 name = "safaktanik-github-io"
 main = "src/index.mjs"
 compatibility_date = "2025-09-01"
+# Cloudflare panelinden eklenen değişkenler (ör. ADMIN_EMAILS) her yüklemede korunur.
+keep_vars = true
 
 [[durable_objects.bindings]]
 name = "ARENA"
