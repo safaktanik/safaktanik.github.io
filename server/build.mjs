@@ -41,5 +41,8 @@ patch("!D1(t.avatar,Us(a.xp))", "!D1(t.avatar,Us(a.xp))&&!(globalThis.__tgOwns&&
 // Maç geçmişine açılan güvenli kare ve elenme bilgisi de yazılır (günlük görevler sunucuda doğrulanır).
 patch("mines_triggered:n.mineHits,", "mines_triggered:n.mineHits,safe_opened:n.safeOpened,elim:n.eliminationReason??null,");
 
+// Yönetim panelinden açılan etkinliklerde maç ödülü çarpanı (varsayılan 1).
+patch('n.prize>0&&this.tx(E,"match-prize",n.prize)', 'n.prize>0&&this.tx(E,"match-prize",Math.round(n.prize*(globalThis.__tgPrizeMul||1)))');
+
 writeFileSync(join(here, "src", "engine.gen.mjs"), m);
 console.log(`motor hazır: ${(m.length / 1024).toFixed(0)} KB`);

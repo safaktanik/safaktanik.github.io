@@ -18,8 +18,8 @@ function rnd(seed) {
 }
 
 // Grup botları: hafta + lig + grup tohumlu; hafta boyunca kendi temposunda puan toplar.
-export function bots(week, tier, gid, count, now) {
-  const r = rnd(`${week}:${tier}:${gid}`), cap = TIERS[tier].cap, used = new Set(), out = [];
+export function bots(week, tier, gid, count, now, mul = 1) {
+  const r = rnd(`${week}:${tier}:${gid}`), cap = TIERS[tier].cap * mul, used = new Set(), out = [];
   const f = Math.max(0, Math.min(1, (now - Date.parse(week + "T00:00:00Z")) / WEEK));
   for (let j = 0; j < count; j++) {
     let k; do { k = Math.floor(r() * NAMES.length); } while (used.has(k)); used.add(k);

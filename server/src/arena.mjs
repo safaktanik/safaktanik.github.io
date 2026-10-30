@@ -6,6 +6,7 @@ import { METHODS, check } from "./rules.mjs";
 import { randomId, sha256, hashPassword, sameString, normEmail, validPassword, verifyGoogle } from "./auth.mjs";
 import { blankGems, gemView, gemEvent, gemSpend, gemFrame, gemImport, cleanFriends } from "./extras.mjs";
 import { TIERS, SIZE, REAL_MAX, UP, DOWN, WEEK, bots, rank, prize, move } from "./league.mjs";
+import { Admin, initAdmin } from "./admin.mjs";
 
 const IDLE_MS = 5 * 60e3;
 
@@ -29,11 +30,15 @@ export class Arena extends DurableObject {
     // Çevrimiçi lig grupları: her hafta oyuncunun hangi ligde hangi grupta olduğu.
     sql.exec("CREATE TABLE IF NOT EXISTS lmembers(week TEXT NOT NULL, tier INTEGER NOT NULL, gid INTEGER NOT NULL, uid TEXT NOT NULL, PRIMARY KEY(week, uid))");
     sql.exec("CREATE TABLE IF NOT EXISTS inbox(id INTEGER PRIMARY KEY AUTOINCREMENT, uid TEXT NOT NULL, msg TEXT NOT NULL, at INTEGER NOT NULL)");
+    initAdmin(sql);
     install();
     globalThis.__tgFillMs = Number(this.env.FILL_MS ?? 8000);
     this.E = await import("./engine.gen.mjs");
     this.extrasCache = new Map();
     globalThis.__tgOwns = (uid, item) => this.extras(uid).gems.owned.includes(item);
+    this.admin = new Admin(this);
+    this.admin.apply();
+    this.admin.prune();
     const initial = {};
     for (const r of sql.exec("SELECT path, json FROM docs")) initial[r.path] = JSON.parse(r.json);
     this.saved = new Map(Object.entries(initial).map(([k, v]) => [k, JSON.stringify(v)]));
@@ -109,6 +114,12 @@ export class Arena extends DurableObject {
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
     server.accept();
+    const ban = this.admin.banned(uid);
+    if (ban) {
+      server.send(JSON.stringify({ t: "banned", d: { until: ban.until || 0, reason: ban.reason } }));
+      server.close(4003, "banned");
+      return new Response(null, { status: 101, webSocket: client });
+    }
     this.attach(uid, server);
     return new Response(null, { status: 101, webSocket: client });
   }
@@ -130,6 +141,9 @@ export class Arena extends DurableObject {
     const x = this.extras(uid);
     ws.send(JSON.stringify({ t: "gems", s: gemView(x.gems), fresh: !x.gems.imported && !x.gems.claims.length && !x.gems.balance }));
     if (x.friends) ws.send(JSON.stringify({ t: "friends", s: x.friends }));
+    ws.send(JSON.stringify({ t: "cfg", c: this.admin.publicCfg() }));
+    this.admin.deliverNotices(uid, ws);
+    this.admin.seen(uid);
     ws.addEventListener("message", ev => this.onMessage(uid, ws, ev.data));
     const bye = () => {
       if (!u.socks.delete(ws)) return;
@@ -194,7 +208,7 @@ export class Arena extends DurableObject {
       const p = this.store.docs.get(`players/${uid}`);
       return { id: uid, name: p?.name ?? "Oyuncu", avatar: p?.avatar ?? 0, level: p ? this.E.Us(p.xp) : 1, points: this.ptsFor(uid, week).pts, bot: false, me: uid === me };
     });
-    return rank(rows.concat(bots(week, tier, gid, Math.max(0, SIZE - rows.length), now)));
+    return rank(rows.concat(bots(week, tier, gid, Math.max(0, SIZE - rows.length), now, this.admin.cfg("league")?.botMul ?? 1)));
   }
 
   assignGroup(week, tier, uid) {
@@ -425,6 +439,7 @@ export class Arena extends DurableObject {
       if (f === u.last) return;
       u.last = f;
       this.leagueSnap(uid);
+      try { this.admin.track(uid, u); } catch {}
       for (const ws of u.socks) try { ws.send(f); } catch {}
     }, 40);
   }
@@ -451,12 +466,15 @@ export class Arena extends DurableObject {
     u.calls.push(now);
     try {
       if (msg.m === "league") return reply({ ok: true, v: this.league(uid) });
+      if (msg.m === "report") return reply({ ok: true, v: this.admin.report(uid, Array.isArray(msg.a) ? msg.a : []) });
+      if (this.admin.maintenance() && (["joinByCode", "addBot"].includes(msg.m) || (msg.m === "request" && ["table.create", "table.join", "quick.start"].includes(msg.a?.[0]?.t))))
+        return reply({ ok: false, e: { code: "maintenance", status: 503 } });
       if (msg.m === "leagueClaim") return reply({ ok: true, v: await this.leagueClaim(uid) });
       if (["presence", "friendTo", "invite", "gemEvent", "gemSpend", "gemFrame", "gemImport", "friendsSave", "playerCard", "friendsBoard"].includes(msg.m)) {
         reply({ ok: true, v: this.arenaCall(uid, msg.m, Array.isArray(msg.a) ? msg.a : []) });
         return;
       }
-      check(this.E, msg.m, msg.a ?? []);
+      check(this.E, msg.m, msg.a ?? [], Date.now(), this.admin.mul());
       if (msg.m === "grantReward") this.questCheck(uid, msg.a[0]);
       const v = await u.z[msg.m](...(msg.a ?? []));
       this.questCount(uid, msg.m, msg.a);
@@ -464,6 +482,33 @@ export class Arena extends DurableObject {
       this.push(uid);
     } catch (e) {
       reply({ ok: false, e: { code: e?.code ?? "server-error", status: e?.status ?? 500 } });
+    }
+  }
+
+  // ---------------------------------------------------------------- yönetim paneli
+  async adminApi(req, p) {
+    if (req.method === "OPTIONS") return this.cors(req, new Response(null, { status: 204 }));
+    if (!this.originOk(req)) return this.json(req, { error: "forbidden-origin" }, 403);
+    if (req.method !== "POST") return this.json(req, { error: "not-found" }, 404);
+    const body = await req.json().catch(() => ({}));
+    try {
+      if (p === "/api/admin/login") {
+        if (this.limited(req, 10, "adm:")) return this.json(req, { error: "rate-limited" }, 429);
+        return this.json(req, await this.admin.login(body, req));
+      }
+      const me = await this.admin.who((req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, ""));
+      if (!me) return this.json(req, { error: "unauthorized" }, 401);
+      if (p === "/api/admin/logout") {
+        this.ctx.storage.sql.exec("DELETE FROM admin_tokens WHERE th = ?", await sha256("adm:" + (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "")));
+        return this.json(req, { ok: true });
+      }
+      const action = p.slice("/api/admin/".length);
+      if (!/^[a-zA-Z]{2,20}$/.test(action)) return this.json(req, { error: "not-found" }, 404);
+      return this.json(req, { ok: true, v: await this.admin.run(me, action, body) });
+    } catch (e) {
+      const code = e?.code ?? String(e?.message ?? "");
+      if (/token|google/.test(code) && !e?.status) return this.json(req, { error: code }, 401);
+      return this.json(req, { error: e?.status ? code : "server-error" }, e?.status ?? 500);
     }
   }
 
@@ -487,8 +532,8 @@ export class Arena extends DurableObject {
     return this.cors(req, new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } }));
   }
 
-  limited(req, max = 20) {
-    const ip = req.headers.get("CF-Connecting-IP") ?? "yerel", now = Date.now();
+  limited(req, max = 20, bucket = "") {
+    const ip = bucket + (req.headers.get("CF-Connecting-IP") ?? "yerel"), now = Date.now();
     const h = (this.hits.get(ip) ?? []).filter(t => now - t < 60e3);
     h.push(now);
     this.hits.set(ip, h);
@@ -524,7 +569,16 @@ export class Arena extends DurableObject {
   async api(req, url) {
     const p = url.pathname, sql = this.ctx.storage.sql;
     if (req.method === "GET" && p === "/api/config")
-      return this.json(req, { ok: true, google: this.googleId() || null, online: this.users.size });
+      return this.json(req, { ok: true, google: this.googleId() || null, online: this.users.size, ...this.admin.publicCfg() });
+    if (p.startsWith("/api/admin/")) return this.adminApi(req, p);
+    if (p === "/api/feedback" && req.method === "POST") {
+      if (!this.originOk(req)) return this.json(req, { error: "forbidden-origin" }, 403);
+      if (this.limited(req, 6, "fb:")) return this.json(req, { error: "rate-limited" }, 429);
+      const body = await req.json().catch(() => ({}));
+      const uid = await this.uidOf((req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, ""));
+      try { await this.admin.feedbackIn(req, body, uid); return this.json(req, { ok: true }); }
+      catch (e) { return this.json(req, { error: e?.code ?? "server-error" }, e?.status ?? 500); }
+    }
     if (!p.startsWith("/api/auth/")) return this.json(req, { error: "not-found" }, 404);
     if (!this.originOk(req)) return this.json(req, { error: "forbidden-origin" }, 403);
     if (this.limited(req)) return this.json(req, { error: "rate-limited" }, 429);
@@ -540,6 +594,7 @@ export class Arena extends DurableObject {
       if (p === "/api/auth/guest") {
         const uid = this.newUid();
         sql.exec("INSERT INTO accounts(uid, guest, created) VALUES(?, 1, ?)", uid, Date.now());
+        await this.admin.signup(uid, req);
         return done(uid);
       }
       if (p === "/api/auth/register" || p === "/api/auth/upgrade") {
@@ -551,6 +606,7 @@ export class Arena extends DurableObject {
         if (p === "/api/auth/register") {
           const uid = this.newUid();
           sql.exec("INSERT INTO accounts(uid, email, salt, hash, guest, created) VALUES(?, ?, ?, ?, 0, ?)", uid, email, salt, hash, Date.now());
+          await this.admin.signup(uid, req);
           return done(uid);
         }
         const uid = await this.uidOf(bearer);
@@ -580,6 +636,7 @@ export class Arena extends DurableObject {
         }
         const uid = this.newUid();
         sql.exec("INSERT INTO accounts(uid, google, guest, created) VALUES(?, ?, 0, ?)", uid, g.sub, Date.now());
+        await this.admin.signup(uid, req);
         return done(uid);
       }
       if (p === "/api/auth/logout") {

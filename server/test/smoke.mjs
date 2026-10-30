@@ -1,13 +1,18 @@
 // Canlı sunucu duman testi: profil ve maç oluşturmaz, sıralamayı etkilemez.
 // Kullanım: node test/smoke.mjs https://...workers.dev
 const BASE = process.argv[2];
-const ORIGIN = "https://safaktanik.github.io";
+const ORIGIN = process.env.SMOKE_ORIGIN || "https://safaktanik.github.io";
 if (!BASE) { console.error("adres gerekli"); process.exit(1); }
 const ok = (c, m) => { if (!c) { console.error("HATA:", m); process.exit(1); } console.log("✓", m); };
 const H = { "content-type": "application/json", origin: ORIGIN };
 
 const health = await fetch(BASE + "/health");
 ok(health.ok, "sunucu ayakta");
+// Yönetim paneli kilitli olmalı: anahtarsız erişim yok, geliştirici anahtarı canlıda çalışmaz.
+const adm1 = await fetch(BASE + "/api/admin/stats", { method: "POST", headers: H, body: "{}" });
+ok(adm1.status === 401, "yönetim paneli anahtarsız açılmıyor");
+const adm2 = await fetch(BASE + "/api/admin/login", { method: "POST", headers: H, body: JSON.stringify({ devKey: "yerel-test-anahtari-123" }) });
+ok(adm2.status === 401 || adm2.status === 403, "geliştirici anahtarıyla yönetici girişi kapalı (" + adm2.status + ")");
 const cfg = await (await fetch(BASE + "/api/config", { headers: H })).json();
 ok(cfg.ok === true, "ayar ucu çalışıyor (Google: " + (cfg.google ? "açık" : "kapalı") + ")");
 if (cfg.google) console.log("  Google istemci kimliği:", JSON.stringify(cfg.google), cfg.google.length + " karakter");
