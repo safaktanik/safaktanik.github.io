@@ -11,6 +11,42 @@ const REQUESTS = new Set(["table.create", "table.join", "table.leave", "table.re
 
 const err = code => Object.assign(new Error(code), { code, status: 400 });
 
+// Motor, tarayıcıdaki arayüzün doğru türde değer gönderdiğini varsayar; sunucuda türler önceden denetlenir.
+// (Örn. masa ücreti olarak yazı gönderilirse sınır kontrolleri atlanıyor ve bakiyeler bozuluyordu.)
+const str = (v, max = 64) => typeof v === "string" && v.length <= max;
+const optStr = (v, max = 64) => v === undefined || v === null || str(v, max);
+const int = v => Number.isInteger(v);
+const optInt = v => v === undefined || v === null || int(v);
+const optBool = v => v === undefined || typeof v === "boolean";
+const optNum = v => v === undefined || v === null || (typeof v === "number" && Number.isFinite(v));
+const bad = ok => { if (!ok) throw err("bad-request"); };
+
+function shape(method, a) {
+  switch (method) {
+    case "createProfile": return bad(str(a[0], 40) && int(a[1]));
+    case "updateProfile": { const p = a[0]; return bad(p && typeof p === "object" && !Array.isArray(p) && optStr(p.username, 40) && optInt(p.avatar)); }
+    case "move": return bad(str(a[0]) && int(a[1]) && optStr(a[2], 16));
+    case "scanCell": return bad(str(a[0]) && int(a[1]));
+    case "power": return bad(str(a[0]) && str(a[1], 16));
+    case "react": return bad(str(a[0]) && str(a[1], 16));
+    case "joinByCode": return bad(str(a[0], 16));
+    case "addBot": case "removeBot": return bad(str(a[0]));
+    case "purchase": return bad(str(a[0]) && int(a[1]));
+    case "request": {
+      const r = a[0];
+      if (r.t === "table.create") return bad(optStr(r.tier, 16) && optStr(r.mode, 16) && optStr(r.name, 60) && optStr(r.password, 40) && optInt(r.entryFee) && optInt(r.boardSize) && optInt(r.capacity) && optBool(r.private) && (r.options === undefined || r.options === null || (typeof r.options === "object" && !Array.isArray(r.options))));
+      if (r.t === "table.join") return bad(str(r.tableId) && optStr(r.password, 40));
+      if (r.t === "table.ready") return bad(typeof r.ready === "boolean");
+      if (r.t === "table.watch") return bad(str(r.tableId));
+      if (r.t === "quick.start") return bad(optStr(r.tier, 16) && optStr(r.mode, 16) && optNum(r.maxFee));
+      if (r.t === "move") return bad(str(r.matchId) && int(r.index) && optStr(r.action, 16));
+      if (r.t === "scan") return bad(str(r.matchId) && int(r.index));
+      if (r.t === "power") return bad(str(r.matchId) && str(r.kind, 16));
+      return;
+    }
+  }
+}
+
 export function check(E, method, args, now = Date.now(), mul = { quest: 1, puzzle: 1 }) {
   if (!METHODS.has(method)) throw err("bad-request");
   if (!Array.isArray(args) || args.length > 6) throw err("bad-request");
@@ -18,6 +54,7 @@ export function check(E, method, args, now = Date.now(), mul = { quest: 1, puzzl
     const r = args[0];
     if (!r || typeof r !== "object" || !REQUESTS.has(r.t)) throw err("bad-request");
   }
+  shape(method, args);
   if (method === "grantReward") {
     const [key, amount] = args;
     if (typeof key !== "string" || !Number.isInteger(amount) || amount <= 0) throw err("bad-request");

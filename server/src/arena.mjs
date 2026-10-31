@@ -336,7 +336,7 @@ export class Arena extends DurableObject {
     if (m === "gemEvent" || m === "gemSpend" || m === "gemFrame" || m === "gemImport") {
       const x = this.extras(uid), g = x.gems;
       let granted = [];
-      if (m === "gemEvent") granted = gemEvent(this.E, g, a[0], a[1], { me: u.z.state.me, claims: u.z.claimedKeys(), now });
+      if (m === "gemEvent") granted = gemEvent(this.E, g, a[0], a[1], { me: u.z.state.me, claims: u.z.claimedKeys(), now, games: this.store.docs.get(`players/${uid}`)?.games | 0 });
       else if (m === "gemSpend") { if (typeof a[0] !== "string") throw bad("bad-request"); gemSpend(this.E, g, a[0]); }
       else if (m === "gemFrame") gemFrame(g, a[0] ?? null);
       else gemImport(this.E, g, a[0]);
@@ -386,6 +386,7 @@ export class Arena extends DurableObject {
       if (!this.online(to)) throw bad("friend-offline");
       u.invites = u.invites ?? new Map();
       if (now - (u.invites.get(to) ?? 0) < 15e3) throw bad("rate-limited");
+      if ([...u.invites.values()].filter(t => now - t < 60e3).length >= 10) throw bad("rate-limited");
       u.invites.set(to, now);
       this.send(to, { t: "invite", d: { from: uid, ...this.profile(uid), code: t.code, table: t.name, mode: t.mode, fee: t.entryFee, seats: t.seats.length, max: t.maxPlayers } });
       return true;
@@ -475,6 +476,7 @@ export class Arena extends DurableObject {
         return;
       }
       check(this.E, msg.m, msg.a ?? [], Date.now(), this.admin.mul());
+      if (msg.m === "createProfile" && (u.z.state.me || this.store.docs.get(`players/${uid}`))) throw Object.assign(new Error("profile-exists"), { code: "profile-exists", status: 409 });
       if (msg.m === "grantReward") this.questCheck(uid, msg.a[0]);
       const v = await u.z[msg.m](...(msg.a ?? []));
       this.questCount(uid, msg.m, msg.a);
