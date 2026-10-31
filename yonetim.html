@@ -308,7 +308,7 @@ textarea{width:100%;resize:vertical}
   // ---------------------------------------------------------------- oyuncular
   var lastQ = "";
   function vPlayers(m) {
-    m.innerHTML = '<h2>Oyuncular</h2><div class="card"><form class="row" id="sf"><input class="search" id="q" placeholder="İsim, e-posta ya da oyuncu kimliği (u_…)" value="' + esc(lastQ) + '" aria-label="Oyuncu ara" /><button class="btn primary">Ara</button></form><p class="muted small" style="margin:8px 0 0">Boş aramada çevrimiçi ve en yeni oyuncular listelenir.</p></div><div class="card"><div class="tw" id="res"><div class="empty">Yükleniyor…</div></div></div>';
+    m.innerHTML = '<h2>Oyuncular</h2><div class="card"><form class="row" id="sf"><input class="search" id="q" placeholder="' + (me.role === "admin" ? "İsim, e-posta ya da oyuncu kimliği (u_…)" : "İsim ya da oyuncu kimliği (u_…)") + '" value="' + esc(lastQ) + '" aria-label="Oyuncu ara" /><button class="btn primary">Ara</button></form><p class="muted small" style="margin:8px 0 0">Boş aramada çevrimiçi ve en yeni oyuncular listelenir.</p></div><div class="card"><div class="tw" id="res"><div class="empty">Yükleniyor…</div></div></div>';
     $("sf").onsubmit = function (e) { e.preventDefault(); lastQ = $("q").value.trim(); search(); };
     search();
   }
@@ -453,6 +453,7 @@ textarea{width:100%;resize:vertical}
         section("Aynı ağdan çok hesap (son 7 gün, 4+)", s.ips.length ? '<div class="list">' + s.ips.map(function (g) { return '<div class="li"><b>' + g.n + " hesap</b>: " + g.players.map(link).join(", ") + "</div>"; }).join("") + "</div>" : '<div class="empty">Yok.</div>') +
         section("Sürekli aynı rakiple oynayanlar (son maçların 6+'sı)", s.pairs.length ? '<div class="list">' + s.pairs.map(function (x) { return '<div class="li">' + link(x.a) + " ↔ " + link(x.b) + ' <span class="tag gold">' + x.n + " maç</span></div>"; }).join("") + "</div>" : '<div class="empty">Yok.</div>') +
         section("Olağandışı kazanma oranı (20+ maç, %85+)", s.winners.length ? '<div class="list">' + s.winners.map(function (x) { return '<div class="li">' + link(x) + " · %" + x.rate + " · " + n(x.games) + " maç</div>"; }).join("") + "</div>" : '<div class="empty">Yok.</div>') +
+        (s.broken && s.broken.length ? section("Bozuk bakiye (düzeltilmesi gerekir)", '<div class="list">' + s.broken.map(function (x) { return '<div class="li">' + link(x) + ' · bakiye: <b class="neg">' + esc(x.balance) + '</b> <span class="muted small">— oyuncu detayından “Coin / elmas düzelt” ile istediğin miktarı ver; bozuk bakiye sıfırdan başlar.</span></div>'; }).join("") + "</div>") : "") +
         section("En yüksek bakiyeler (50.000+)", s.rich.length ? '<div class="list">' + s.rich.map(function (x) { return '<div class="li">' + link(x) + " · " + n(x.balance) + " coin</div>"; }).join("") + "</div>" : '<div class="empty">Yok.</div>');
     }).catch(function (e) { m.innerHTML = '<div class="empty">' + esc(errText(e.code)) + "</div>"; });
   }

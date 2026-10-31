@@ -9,6 +9,20 @@ const MOD_ACTIONS = new Set(["stats", "search", "player", "rename", "warn", "ban
 const err = (code, status = 400) => Object.assign(new Error(code), { code, status });
 
 // "a@b.com, mod:c@d.com" → { "a@b.com": "admin", "c@d.com": "mod" }
+function maskEmail(e) {
+  const [u, d] = String(e).split("@");
+  return d ? u.slice(0, 1) + "***@" + d : "***";
+}
+function maskEmails(v) {
+  if (Array.isArray(v)) return v.map(maskEmails);
+  if (v && typeof v === "object") {
+    const o = {};
+    for (const k of Object.keys(v)) o[k] = k === "email" && typeof v[k] === "string" && v[k].includes("@") && !/@yerel$/.test(v[k]) ? maskEmail(v[k]) : maskEmails(v[k]);
+    return o;
+  }
+  return v;
+}
+
 export function adminList(env) {
   const out = {};
   for (const raw of String(env.ADMIN_EMAILS ?? "").split(",")) {
@@ -162,7 +176,11 @@ export class Admin {
     const text = String(body.mesaj ?? "").trim().slice(0, 3000), stars = Math.max(0, Math.min(5, body.puan | 0));
     if (!text && !stars) throw err("bad-request");
     const kind = String(body.tur ?? "").slice(0, 30), name = String(body.isim ?? "").slice(0, 40), device = String(body.cihaz ?? "").slice(0, 300), version = String(body.surum ?? "").slice(0, 20);
-    if ([...this.sql.exec("SELECT COUNT(*) AS n FROM feedback")][0].n > 5000) this.sql.exec("DELETE FROM feedback WHERE id IN (SELECT id FROM feedback WHERE status = 'done' ORDER BY id LIMIT 500)");
+    if ([...this.sql.exec("SELECT COUNT(*) AS n FROM feedback")][0].n > 5000) {
+      this.sql.exec("DELETE FROM feedback WHERE id IN (SELECT id FROM feedback WHERE status = 'done' ORDER BY id LIMIT 500)");
+      // Hepsi okunmamışsa en eskiler silinir (sahte gönderimlerle depo şişmesin).
+      if ([...this.sql.exec("SELECT COUNT(*) AS n FROM feedback")][0].n > 5000) this.sql.exec("DELETE FROM feedback WHERE id IN (SELECT id FROM feedback ORDER BY id LIMIT 500)");
+    }
     this.sql.exec("INSERT INTO feedback(at, uid, kind, stars, text, name, device, version) VALUES(?, ?, ?, ?, ?, ?, ?, ?)", Date.now(), uid, kind, stars, text || "(yalnızca puan)", name || null, device || null, version || null);
   }
 
@@ -203,7 +221,10 @@ export class Admin {
     if (me.role !== "admin" && !MOD_ACTIONS.has(action)) throw err("forbidden", 403);
     const fn = this["do_" + action];
     if (typeof fn !== "function") throw err("not-found", 404);
-    return fn.call(this, a ?? {}, me);
+    if (!a || typeof a !== "object" || Array.isArray(a)) a = {};
+    const v = await fn.call(this, a, me);
+    // Moderatör oyuncu e-postalarını tam görmez (kişisel veri; moderasyon için gerekmez).
+    return me.role === "admin" || action === "me" ? v : maskEmails(v);
   }
 
   do_me(a, me) { return me; }
@@ -248,7 +269,7 @@ export class Admin {
     };
   }
 
-  do_search(a) {
+  do_search(a, me) {
     const q = String(a.q ?? "").trim().toLowerCase().slice(0, 60), out = [], seen = new Set();
     const add = uid => { if (!seen.has(uid) && this.A.account(uid)) { seen.add(uid); out.push(this.row(uid)); } };
     if (!q) {
@@ -256,8 +277,10 @@ export class Admin {
       for (const r of this.sql.exec("SELECT uid FROM accounts ORDER BY created DESC LIMIT 30")) add(r.uid);
       return out.slice(0, 50);
     }
-    if (/^u_[a-z0-9_-]+$/i.test(a.q?.trim())) add(a.q.trim());
-    for (const r of this.sql.exec("SELECT uid FROM accounts WHERE email LIKE ? LIMIT 20", `%${q}%`)) add(r.uid);
+    const raw = String(a.q ?? "").trim();
+    if (/^u_[a-z0-9_-]+$/i.test(raw)) add(raw);
+    // E-postayla arama yalnızca yönetici için (moderatör bir adresin kayıtlı olup olmadığını öğrenemesin).
+    if (me.role === "admin") for (const r of this.sql.exec("SELECT uid FROM accounts WHERE email LIKE ? LIMIT 20", `%${q}%`)) add(r.uid);
     for (const [k, v] of this.A.store.docs) {
       if (out.length >= 50) break;
       if (k.startsWith("players/u_") && String(v.name ?? "").toLowerCase().includes(q)) add(k.slice(8));
@@ -367,6 +390,8 @@ export class Admin {
     let bal = null;
     if (coins) {
       await this.writePlayer(uid, p => {
+        // Bozulmuş (sayı olmayan) bakiye düzeltmede sıfırdan başlar.
+        if (typeof p.balance !== "number" || !Number.isFinite(p.balance)) p.balance = 0;
         if (p.balance + coins < 0) throw err("insufficient-funds");
         p.balance += coins;
         p.tx = [{ id: "x" + randomId(9), transaction_type: "admin-adjust", amount: coins, balance_after: p.balance, created_at: Date.now() }, ...(p.tx ?? [])].slice(0, 40);
@@ -398,6 +423,14 @@ export class Admin {
     for (const k of [...this.A.store.docs.keys()]) if (k === `players/${uid}` || k.startsWith(`players/${uid}/`)) await db.doc(k).delete();
     for (const q of ["DELETE FROM tokens WHERE uid = ?", "DELETE FROM extras WHERE uid = ?", "DELETE FROM lmembers WHERE uid = ?", "DELETE FROM inbox WHERE uid = ?", "DELETE FROM signups WHERE uid = ?", "DELETE FROM activity WHERE uid = ?", "UPDATE feedback SET uid = NULL WHERE uid = ?", "DELETE FROM accounts WHERE uid = ?"]) sql.exec(q, uid);
     this.A.extrasCache.delete(uid);
+    // Silinen oyuncu başkalarının arkadaş listelerinden ve bekleyen isteklerinden de çıkarılır.
+    for (const row of [...sql.exec("SELECT uid FROM extras WHERE json LIKE ?", `%"${uid}"%`)]) {
+      const x = this.A.extras(row.uid), f = x.friends;
+      if (!f) continue;
+      for (const k of ["list", "out", "inc"]) if (Array.isArray(f[k])) f[k] = f[k].filter(e => e.uid !== uid);
+      this.A.saveExtras(row.uid);
+      this.A.send(row.uid, { t: "friends", s: f });
+    }
     this.log(me.email, "delete-account", uid, { name, reason });
     return { ok: true };
   }
@@ -448,7 +481,11 @@ export class Admin {
       out.push({ tier: TIERS[t].name, groups: groups.map(g => ({ gid: g.gid, real: g.n })) });
     }
     let rows = null;
-    if (a.tier !== undefined && a.gid !== undefined) rows = this.A.groupRows(wk, Number(a.tier), Number(a.gid), now, null);
+    if (a.tier !== undefined && a.gid !== undefined) {
+      const t = Number(a.tier), g = Number(a.gid);
+      if (!Number.isInteger(t) || t < 0 || t >= TIERS.length || !Number.isInteger(g) || g < 0) throw err("bad-request");
+      rows = this.A.groupRows(wk, t, g, now, null);
+    }
     return { week: wk, endsInMs: Date.parse(wk + "T00:00:00Z") + 7 * DAY - now, tiers: out, rows, botMul: this.cfg("league")?.botMul ?? 1 };
   }
 
@@ -481,7 +518,7 @@ export class Admin {
     // Aynı ağdan son 7 günde 4+ hesap
     const ips = [...sql.exec("SELECT iph, COUNT(*) AS n FROM signups WHERE iph IS NOT NULL AND at > ? GROUP BY iph HAVING n >= 4 ORDER BY n DESC LIMIT 20", Date.now() - 7 * DAY)]
       .map(r => ({ n: r.n, players: [...sql.exec("SELECT uid FROM signups WHERE iph = ? ORDER BY at DESC LIMIT 12", r.iph)].map(x => ({ uid: x.uid, name: nm(x.uid) })) }));
-    const winners = [], pairs = new Map(), rich = [];
+    const winners = [], pairs = new Map(), rich = [], broken = [];
     for (const [k, p] of this.A.store.docs) {
       if (!k.startsWith("players/u_") || k.split("/").length !== 2) continue;
       const uid = k.slice(8);
@@ -490,12 +527,14 @@ export class Admin {
       for (const r of p.recent ?? []) if (r.players === 2 && r.group && String(r.group).startsWith("u_")) c[r.group] = (c[r.group] | 0) + 1;
       for (const [o, n] of Object.entries(c)) if (n >= 6) { const key = [uid, o].sort().join("|"); pairs.set(key, Math.max(pairs.get(key) ?? 0, n)); }
       if ((p.balance | 0) >= 50000) rich.push({ uid, name: p.name, balance: p.balance });
+      if (typeof p.balance !== "number" || !Number.isFinite(p.balance) || !Number.isInteger(p.balance) || p.balance < 0) broken.push({ uid, name: p.name, balance: String(p.balance) });
     }
     return {
       ips,
       winners: winners.sort((a, b) => b.rate - a.rate).slice(0, 20),
       pairs: [...pairs].map(([k, n]) => { const [a, b] = k.split("|"); return { a: { uid: a, name: nm(a) }, b: { uid: b, name: nm(b) }, n }; }).slice(0, 20),
-      rich: rich.sort((a, b) => b.balance - a.balance).slice(0, 10)
+      rich: rich.sort((a, b) => b.balance - a.balance).slice(0, 10),
+      broken: broken.slice(0, 50)
     };
   }
   do_log(a) {

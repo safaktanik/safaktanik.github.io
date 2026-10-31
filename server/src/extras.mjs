@@ -36,6 +36,8 @@ export function gemEvent(E, g, kind, arg, ctx) {
     else if (lv > g.lastLevel) { const from = g.lastLevel; g.lastLevel = lv; for (let l = from + 1; l <= lv; l++) grant(g, 5, "lvl:" + l, "Seviye " + l + "!", out); }
   } else if (kind === "badge") {
     if (typeof arg !== "string" || !Object.prototype.hasOwnProperty.call(E.ts, arg)) throw err("bad-request");
+    // Madalyalar maç sonunda kazanılır: oynanan maçtan fazla madalya ödülü verilmez.
+    if (g.claims.filter(k => k.startsWith("badge:")).length >= (ctx.games | 0)) return out;
     grant(g, 3, "badge:" + arg, "Yeni madalya", out);
   } else if (kind === "quests") {
     if (!days.includes(arg)) throw err("bad-request");
@@ -74,10 +76,17 @@ export function gemFrame(g, id) {
 export function gemImport(E, g, snap) {
   if (g.imported) return;
   g.imported = true;
-  const bal = Math.max(0, Math.min(100, Math.floor(Number(snap?.balance) || 0)));
+  // Çevrimdışı cüzdan doğrulanamaz: aktarılan elmas ve eşyaların toplam değeri 100 elması geçemez.
+  let budget = 100;
+  const bal = Math.max(0, Math.min(budget, Math.floor(Number(snap?.balance) || 0)));
   g.balance += bal;
-  for (const it of Array.isArray(snap?.owned) ? snap.owned.slice(0, 20) : [])
-    if (typeof it === "string" && priceOf(E, it) !== null && !g.owned.includes(it)) g.owned.push(it);
+  budget -= bal;
+  for (const it of Array.isArray(snap?.owned) ? snap.owned.slice(0, 20) : []) {
+    const price = typeof it === "string" ? priceOf(E, it) : null;
+    if (price === null || g.owned.includes(it) || price > budget) continue;
+    g.owned.push(it);
+    budget -= price;
+  }
   if (typeof snap?.frame === "string" && g.owned.includes("frame:" + snap.frame)) g.frame = snap.frame;
   if (bal) g.log.unshift({ n: bal, why: "Bu cihazdan aktarıldı", at: Date.now() });
 }
