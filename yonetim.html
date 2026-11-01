@@ -171,7 +171,7 @@ textarea{width:100%;resize:vertical}
     unauthorized: "Oturumun sona erdi, tekrar giriş yap.", forbidden: "Bu işlem için yetkin yok.", "not-admin": "Bu Google hesabı yönetici listesinde değil.",
     "not-found": "Bulunamadı.", "reason-required": "Gerekçe yazmalısın (en az 3 harf).", "text-required": "Mesaj yazmalısın.", "bad-username": "Kullanıcı adı 3–16 harf, rakam, boşluk ya da _ olmalı.",
     "insufficient-funds": "Oyuncunun bakiyesi bu kadar düşmeye yetmiyor.", "insufficient-gems": "Oyuncunun elması bu kadar düşmeye yetmiyor.", "too-large": "Miktar çok büyük.", "nothing-to-do": "Coin ya da elmas miktarı gir.",
-    "confirm-mismatch": "Onay için yazdığın ad oyuncunun adıyla aynı değil.", "no-profile": "Bu hesabın henüz oyuncu profili yok.", "rate-limited": "Çok fazla deneme, biraz bekle.",
+    "confirm-mismatch": "Onay için yazdığın ad oyuncunun adıyla aynı değil.", "bad-origin": "Geçerli bir https:// adresi yaz.", "no-profile": "Bu hesabın henüz oyuncu profili yok.", "rate-limited": "Çok fazla deneme, biraz bekle.",
     "bad-token": "Google girişi doğrulanamadı.", "expired-token": "Google oturumunun süresi dolmuş, tekrar dene.", "google-disabled": "Sunucuda Google girişi kapalı.", network: "Sunucuya ulaşılamadı."
   };
   var errText = function (c) { return ERR[c] || (/^bad-/.test(c) ? "Geçersiz değer: " + c.slice(4) : "Hata: " + c); };
@@ -239,7 +239,7 @@ textarea{width:100%;resize:vertical}
   // ---------------------------------------------------------------- iskelet
   var VIEWS = [
     ["dash", "📊", "Pano"], ["players", "👤", "Oyuncular"], ["reports", "🚩", "Şikayetler"], ["feedback", "💌", "Geri bildirim"],
-    ["suspicious", "🕵️", "Şüpheli"], ["league", "🏆", "Lig", true], ["economy", "💰", "Ekonomi", true], ["announce", "📣", "Duyuru ve bakım", true], ["log", "🧾", "İşlem kaydı", true]
+    ["suspicious", "🕵️", "Şüpheli"], ["league", "🏆", "Lig", true], ["economy", "💰", "Ekonomi", true], ["announce", "📣", "Duyuru ve bakım", true], ["origins", "🌐", "İzinli siteler", true], ["log", "🧾", "İşlem kaydı", true]
   ];
   function start() {
     var s = tok(); if (!s) return showLogin();
@@ -264,8 +264,8 @@ textarea{width:100%;resize:vertical}
   function go(v) {
     var ok = VIEWS.some(function (x) { return x[0] === v && (!x[3] || me.role === "admin"); });
     view = ok ? v : "dash"; history.replaceState(null, "", "#" + view); renderNav();
-    var m = $("main"); m.innerHTML = '<div class="empty">Yükleniyor…</div>';
-    ({ dash: vDash, players: vPlayers, reports: vReports, feedback: vFeedback, suspicious: vSuspicious, league: vLeague, economy: vEconomy, announce: vAnnounce, log: vLog })[view](m);
+    var m = $("main"); m.onclick = null; m.innerHTML = '<div class="empty">Yükleniyor…</div>';
+    ({ dash: vDash, players: vPlayers, reports: vReports, feedback: vFeedback, suspicious: vSuspicious, league: vLeague, economy: vEconomy, announce: vAnnounce, origins: vOrigins, log: vLog })[view](m);
   }
 
   // ---------------------------------------------------------------- pano
@@ -521,8 +521,29 @@ textarea{width:100%;resize:vertical}
     }).catch(function (e) { m.innerHTML = '<div class="empty">' + esc(errText(e.code)) + "</div>"; });
   }
 
+  // ---------------------------------------------------------------- izinli siteler
+  function vOrigins(m) {
+    api("origins", {}).then(function (o) { renderOrigins(m, o); }).catch(function (e) { m.innerHTML = '<div class="empty">' + esc(errText(e.code)) + "</div>"; });
+  }
+  function renderOrigins(m, o) {
+    var tag = function (x) { return '<span class="tag">' + esc(x) + "</span>"; };
+    m.innerHTML = '<h2>İzinli siteler</h2><p class="muted small">Oyun başka bir sitede (ör. Playgama) açıldığında o sitenin adresi sunucuya izinli olmalı; yoksa çevrimiçi giriş ve maçlar çalışmaz. Engellenen istekler aşağıda görünür, tek tıkla izin verebilirsin.</p>' +
+      section("Son engellenen siteler", o.blocked.length ? '<div class="list">' + o.blocked.map(function (b) {
+        return '<div class="li"><div class="split" style="margin:0"><div><b>' + esc(b.origin) + '</b><br><span class="muted small">' + n(b.n) + " istek · son " + esc(ago(b.last)) + '</span></div><button class="btn ok" data-add="' + esc(b.origin) + '">İzin ver</button></div></div>';
+      }).join("") + "</div>" : '<div class="empty">Engellenen istek yok. (Sunucu yeniden başlayınca bu liste sıfırlanır.)</div>') +
+      section("Panelden eklenenler", (o.list.length ? '<div class="list">' + o.list.map(function (x) { return '<div class="li"><div class="split" style="margin:0"><b>' + esc(x) + '</b><button class="btn danger" data-rm="' + esc(x) + '">Kaldır</button></div></div>'; }).join("") + "</div>" : '<div class="empty">Yok.</div>') +
+        '<form class="row" id="of" style="margin-top:10px"><input class="search" name="o" placeholder="https://ornek-site.com" aria-label="Site adresi" /><button class="btn primary">Ekle</button></form>') +
+      section("Sabit izinler (sunucu ayarı)", '<p style="margin:0 0 6px">' + o.fixed.map(tag).join(" ") + '</p><p class="muted small" style="margin:0">Alt alan adları: ' + (o.suffixes.length ? o.suffixes.map(tag).join(" ") : "—") + "</p>");
+    m.onclick = function (e) {
+      var b = e.target.closest("button[data-add],button[data-rm]"); if (!b) return;
+      var body = b.hasAttribute("data-add") ? { add: b.getAttribute("data-add") } : { remove: b.getAttribute("data-rm") };
+      run(api("origins", body), body.add ? "Siteye izin verildi." : "Site kaldırıldı.", function (x) { renderOrigins(m, x); });
+    };
+    $("of").onsubmit = function (e) { e.preventDefault(); var v = fv(e.target, "o"); if (v) run(api("origins", { add: v }), "Siteye izin verildi.", function (x) { renderOrigins(m, x); }); };
+  }
+
   // ---------------------------------------------------------------- işlem kaydı
-  var ACT = { login: "Giriş", "login-denied": "Reddedilen giriş", rename: "İsim değiştirme", warn: "Mesaj/uyarı", ban: "Yasak", unban: "Yasak kaldırma", "logout-all": "Tüm cihazlardan çıkış", adjust: "Coin/elmas düzeltme", "delete-account": "Hesap silme", announce: "Duyuru", "announce-clear": "Duyuru kaldırma", "maint-on": "Bakım başladı", "maint-off": "Bakım bitti", eco: "Ekonomi ayarı", "eco-reset": "Ekonomi sıfırlama", "league-bots": "Lig bot seviyesi", "report-dismissed": "Şikayet: asılsız", "report-actioned": "Şikayet: işlem yapıldı", "feedback-done": "Geri bildirim okundu" };
+  var ACT = { login: "Giriş", "login-denied": "Reddedilen giriş", rename: "İsim değiştirme", warn: "Mesaj/uyarı", ban: "Yasak", unban: "Yasak kaldırma", "logout-all": "Tüm cihazlardan çıkış", adjust: "Coin/elmas düzeltme", "delete-account": "Hesap silme", announce: "Duyuru", "announce-clear": "Duyuru kaldırma", "maint-on": "Bakım başladı", "maint-off": "Bakım bitti", eco: "Ekonomi ayarı", "eco-reset": "Ekonomi sıfırlama", "league-bots": "Lig bot seviyesi", "origin-add": "Site izni eklendi", "origin-remove": "Site izni kaldırıldı", "report-dismissed": "Şikayet: asılsız", "report-actioned": "Şikayet: işlem yapıldı", "feedback-done": "Geri bildirim okundu" };
   function vLog(m) {
     api("log", {}).then(function (rows) {
       m.innerHTML = '<h2>İşlem kaydı</h2><div class="card"><div class="tw">' + (rows.length ? '<table><thead><tr><th>Zaman</th><th>Yönetici</th><th>İşlem</th><th>Oyuncu</th><th>Ayrıntı</th></tr></thead><tbody>' + rows.map(function (r) {
