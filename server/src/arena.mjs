@@ -102,6 +102,13 @@ export class Arena extends DurableObject {
   async fetch(req) {
     await this.ready;
     const url = new URL(req.url);
+    if (req.method === "OPTIONS") {
+      const o = req.headers.get("Origin"), ok = !!o && this.originOk(req);
+      return new Response(null, {
+        status: ok ? 204 : 403,
+        headers: ok ? { "Access-Control-Allow-Origin": o, "Access-Control-Allow-Methods": "GET, POST", "Access-Control-Allow-Headers": "content-type, authorization", "Access-Control-Max-Age": "86400", Vary: "Origin" } : {}
+      });
+    }
     if (url.pathname === "/arena") return this.socket(req, url);
     return this.api(req, url);
   }
@@ -515,10 +522,15 @@ export class Arena extends DurableObject {
   }
 
   // ---------------------------------------------------------------- hesaplar
+  // İzinli siteler: ALLOWED_ORIGINS, ALLOWED_ORIGIN_SUFFIXES (ör. ".playgama.com" alt alan adları)
+  // ve yönetim panelinden eklenenler. Reddedilen siteler panelde görünür.
   originOk(req) {
     const o = req.headers.get("Origin");
     if (!o) return true;
-    return (this.env.ALLOWED_ORIGINS ?? "").split(",").map(s => s.trim()).includes(o);
+    if ((this.env.ALLOWED_ORIGINS ?? "").split(",").map(s => s.trim()).includes(o)) return true;
+    if (this.admin.originAllowed(o)) return true;
+    this.admin.noteBlocked(o);
+    return false;
   }
 
   cors(req, res) {

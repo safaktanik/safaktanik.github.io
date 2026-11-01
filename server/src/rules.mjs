@@ -67,6 +67,12 @@ export function check(E, method, args, now = Date.now(), mul = { quest: 1, puzzl
       if (!days.includes(m[1]) || amount > Math.round(300 * Math.max(1, mul.puzzle || 1))) throw err("bad-reward");
       return;
     }
+    m = /^ad:(\d{4}-\d{2}-\d{2}):([1-5])$/.exec(key);
+    if (m) {
+      // Oyun portalındaki ödüllü reklam: günde en fazla 5 kez, her biri 100 (anahtar tekrar kullanılamaz).
+      if (!days.includes(m[1]) || amount !== 100) throw err("bad-reward");
+      return;
+    }
     m = /^q:(\d{4}-\d{2}-\d{2}):([a-z0-9]+)$/.exec(key);
     if (m) {
       // Günün görevleri: o günün listesinde olmalı ve ödül birebir aynı olmalı.

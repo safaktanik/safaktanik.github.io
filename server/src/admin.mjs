@@ -100,6 +100,24 @@ export class Admin {
   }
   maintenance() { const m = this.cfg("maint"); return !!(m && m.on); }
 
+  // ------------------------------------------------------------ izinli siteler (oyun portalları)
+  originAllowed(o) {
+    let u;
+    try { u = new URL(o); } catch { return false; }
+    if (u.protocol !== "https:") return false;
+    if ((this.cfg("origins")?.list ?? []).includes(u.origin)) return true;
+    return String(this.A.env.ALLOWED_ORIGIN_SUFFIXES ?? "").split(",").map(s => s.trim().toLowerCase()).filter(s => s.startsWith("."))
+      .some(sfx => u.hostname === sfx.slice(1) || u.hostname.endsWith(sfx));
+  }
+  noteBlocked(o) {
+    const s = String(o).slice(0, 200);
+    this.blocked = this.blocked ?? new Map();
+    const b = this.blocked.get(s) ?? { origin: s, n: 0, first: Date.now() };
+    b.n++; b.last = Date.now();
+    this.blocked.set(s, b);
+    if (this.blocked.size > 30) this.blocked.delete(this.blocked.keys().next().value);
+  }
+
   // ------------------------------------------------------------ istatistik kayıtları
   seen(uid) {
     try { this.sql.exec("INSERT OR IGNORE INTO activity(day, uid) VALUES(?, ?)", this.day(), uid); } catch {}
@@ -487,6 +505,29 @@ export class Admin {
       rows = this.A.groupRows(wk, t, g, now, null);
     }
     return { week: wk, endsInMs: Date.parse(wk + "T00:00:00Z") + 7 * DAY - now, tiers: out, rows, botMul: this.cfg("league")?.botMul ?? 1 };
+  }
+
+  do_origins(a, me) {
+    const cur = this.cfg("origins")?.list ?? [];
+    if (a.add !== undefined || a.remove !== undefined) {
+      let list = cur.slice();
+      if (a.add !== undefined) {
+        let u;
+        try { u = new URL(String(a.add)); } catch { throw err("bad-origin"); }
+        if (u.protocol !== "https:" || u.origin === "null") throw err("bad-origin");
+        if (!list.includes(u.origin)) list.push(u.origin);
+        this.blocked?.delete(u.origin);
+        this.log(me.email, "origin-add", null, { origin: u.origin });
+      }
+      if (a.remove !== undefined) { list = list.filter(x => x !== String(a.remove)); this.log(me.email, "origin-remove", null, { origin: String(a.remove) }); }
+      this.setCfg("origins", { list: list.slice(0, 50) });
+    }
+    return {
+      fixed: String(this.A.env.ALLOWED_ORIGINS ?? "").split(",").map(s => s.trim()).filter(Boolean),
+      suffixes: String(this.A.env.ALLOWED_ORIGIN_SUFFIXES ?? "").split(",").map(s => s.trim()).filter(Boolean),
+      list: this.cfg("origins")?.list ?? [],
+      blocked: [...(this.blocked?.values() ?? [])].sort((x, y) => y.last - x.last)
+    };
   }
 
   // ---- 3. aşama

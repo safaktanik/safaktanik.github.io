@@ -17,3 +17,5 @@ ALLOWED_ORIGINS = "https://safaktanik.github.io,http://localhost:8765"
 # Google ile giriş için OAuth istemci kimliği (herkese açık bir değerdir, gizli değil).
 GOOGLE_CLIENT_ID = "176619676500-60k0nh1divff6utvqf8ehkibslt4kbqa.apps.googleusercontent.com"
 FILL_MS = "8000"
+# Oyun portalları: bu alan adlarının alt alan adlarından gelen istekler kabul edilir (yalnızca https).
+ALLOWED_ORIGIN_SUFFIXES = ".playgama.com,.playgama.games"
