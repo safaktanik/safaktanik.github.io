@@ -9,6 +9,8 @@ export const METHODS = new Set([
 
 const REQUESTS = new Set(["table.create", "table.join", "table.leave", "table.ready", "table.watch", "quick.start", "quick.cancel", "lobby.sub", "move", "scan", "power"]);
 
+import { badName } from "./names.mjs";
+
 const err = code => Object.assign(new Error(code), { code, status: 400 });
 
 // Motor, tarayıcıdaki arayüzün doğru türde değer gönderdiğini varsayar; sunucuda türler önceden denetlenir.
@@ -55,6 +57,9 @@ export function check(E, method, args, now = Date.now(), mul = { quest: 1, puzzl
     if (!r || typeof r !== "object" || !REQUESTS.has(r.t)) throw err("bad-request");
   }
   shape(method, args);
+  // Küfürlü/hakaret içeren oyuncu ve arena adları reddedilir.
+  const nm = method === "createProfile" ? args[0] : method === "updateProfile" ? args[0].username : method === "request" && args[0].t === "table.create" ? args[0].name : null;
+  if (typeof nm === "string" && badName(nm)) throw err("bad-name");
   if (method === "grantReward") {
     const [key, amount] = args;
     if (typeof key !== "string" || !Number.isInteger(amount) || amount <= 0) throw err("bad-request");
